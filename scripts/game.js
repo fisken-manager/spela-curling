@@ -23,7 +23,7 @@ async function init() {
     
     renderer = new Renderer(canvas);
     input = new InputHandler(canvas, state, physics);
-    scrollController = new ScrollController(state);
+    scrollController = new ScrollController(state, audio);
     
     await audio.init('song.wav');
     
