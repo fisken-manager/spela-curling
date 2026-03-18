@@ -3,12 +3,14 @@ import { GameState } from './state.js';
 import { Physics } from './physics.js';
 import { InputHandler } from './input.js';
 import { Renderer } from './renderer.js';
+import { ScrollController } from './scroll.js';
 
 const audio = new AudioController();
 const state = new GameState();
 const physics = new Physics();
 let input = null;
 let renderer = null;
+let scrollController = null;
 let lastTime = 0;
 
 async function init() {
@@ -21,19 +23,21 @@ async function init() {
     
     renderer = new Renderer(canvas);
     input = new InputHandler(canvas, state, physics);
+    scrollController = new ScrollController(state);
     
     await audio.init('song.wav');
-    console.log('Renderer ready');
     
+    console.log('All systems ready');
     requestAnimationFrame(gameLoop);
 }
 
 function gameLoop(timestamp) {
-    const deltaTime = (timestamp - lastTime) / 1000;
+    const deltaTime = Math.min((timestamp - lastTime) / 1000, 0.1);
     lastTime = timestamp;
     
     update(deltaTime);
     renderer.render(state);
+    scrollController.update(state);
     
     requestAnimationFrame(gameLoop);
 }
