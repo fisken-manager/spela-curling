@@ -44,25 +44,34 @@ this.contentElement.style.transform = `translateY(${-scrollableDistance + scroll
     syncAudio(state) {
         if (!this.audio || !this.audio.audioBuffer) return;
         
-        const progress = state.scrollProgress;
         const velocity = state.phase === 'moving' 
             ? Math.sqrt(state.stone.vx ** 2 + state.stone.vy ** 2)
             : 0;
         
-        this.audio.setPosition(progress);
-        
-        const baseRate = velocity / this.audio.maxVelocity || 1;
-        const rate = Math.max(0.1, Math.min(2, baseRate));
-        
-        const direction = state.stone.vy > 0 ? 1 : -1;
+        // Calculate playback rate: 0.25x when slow, up to 2x when fast
+        const maxVelocity = 25;
+        const rate = Math.max(0.25, Math.min(2, velocity / maxVelocity + 0.25));
         
         if (state.phase === 'moving') {
-            this.audio.setPlaybackRate(rate * direction);
+            // Resume audio context on user interaction
+            this.audio.resumeContext();
+            
+            // Set playback rate
+            this.audio.setPlaybackRate(rate);
+            
+            // Start playing if not already
             if (!this.audio.isPlaying) {
+                // Sync position to scroll progress when starting
+                this.audio.setPosition(state.scrollProgress);
                 this.audio.play();
             }
         } else {
-            this.audio.stop();
+            // Stone stopped - stop audio and sync position
+            if (this.audio.isPlaying) {
+                this.audio.stop();
+                // Update position to where stone is now
+                this.audio.setPosition(state.scrollProgress);
+            }
         }
     }
 
