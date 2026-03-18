@@ -3,6 +3,72 @@ export class Renderer {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         this.stoneRadius = 30;
+        this.particles = [];
+        this.prevStoneX = null;
+    }
+
+    addParticle(x, y, vx, vy, color, life = 1) {
+        this.particles.push({
+            x: x,
+            y: y,
+            vx: vx,
+            vy: vy,
+            color: color,
+            life: life,
+            maxLife: life
+        });
+    }
+
+    updateParticles(deltaTime) {
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+            const p = this.particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.life -= deltaTime;
+            p.vy += 5 * deltaTime;
+            
+            if (p.life <= 0) {
+                this.particles.splice(i, 1);
+            }
+        }
+    }
+
+    drawParticles() {
+        for (const p of this.particles) {
+            const alpha = p.life / p.maxLife;
+            this.ctx.beginPath();
+            this.ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+            this.ctx.fillStyle = `rgba(${p.color}, ${alpha})`;
+            this.ctx.fill();
+        }
+    }
+
+    addWallBounceParticles(x, y) {
+        for (let i = 0; i < 10; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 5 + 2;
+            this.addParticle(
+                x + Math.random() * 10,
+                y + Math.random() * 10,
+                Math.cos(angle) * speed,
+                Math.sin(angle) * speed,
+                '255, 200, 100',
+                0.5
+            );
+        }
+    }
+
+    addSweepParticles(x, y) {
+        for (let i = 0; i < 3; i++) {
+            this.addParticle(
+                x + (Math.random() - 0.5) * 100,
+                y + (Math.random() - 0.5) * 50,
+                (Math.random() - 0.5) * 2,
+                Math.random() * 2,
+                '66, 153, 225',
+                0.3
+            );
+        }
     }
 
     resize(width, height) {
@@ -109,5 +175,33 @@ export class Renderer {
         this.drawStone(state);
         this.drawAimLine(state);
         this.drawPowerBar(state);
+        
+        if (state.phase === 'moving') {
+            const stoneScreenX = state.screenWidth / 2;
+            const stoneScreenY = state.screenHeight * 0.7;
+            
+            if (state.isSweeping) {
+                this.addSweepParticles(stoneScreenX, stoneScreenY);
+            }
+            
+            if (this.prevStoneX !== null) {
+                const leftBound = state.stone.radius;
+                const rightBound = state.screenWidth - state.stone.radius;
+                const atLeftWall = state.stone.x <= leftBound + 5;
+                const atRightWall = state.stone.x >= rightBound - 5;
+                const justHitWall = (atLeftWall || atRightWall) && 
+                    Math.abs(state.stone.x - this.prevStoneX) > 1;
+                
+                if (justHitWall) {
+                    const wallX = atLeftWall ? leftBound : rightBound;
+                    this.addWallBounceParticles(wallX, stoneScreenY);
+                }
+            }
+            this.prevStoneX = state.stone.x;
+        } else {
+            this.prevStoneX = null;
+        }
+        
+        this.drawParticles();
     }
 }

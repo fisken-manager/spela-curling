@@ -36,6 +36,7 @@ function gameLoop(timestamp) {
     lastTime = timestamp;
     
     update(deltaTime);
+    renderer.updateParticles(deltaTime);
     renderer.render(state);
     scrollController.update(state);
     
