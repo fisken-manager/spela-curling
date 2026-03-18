@@ -1,8 +1,9 @@
 export class InputHandler {
-    constructor(canvas, state, physics) {
+    constructor(canvas, state, physics, audio) {
         this.canvas = canvas;
         this.state = state;
         this.physics = physics;
+        this.audio = audio;
         
         this.isPointerDown = false;
         this.pointerX = 0;
@@ -27,6 +28,10 @@ export class InputHandler {
         this.isPointerDown = true;
         this.pointerX = e.clientX;
         this.pointerY = e.clientY;
+        
+        if (this.audio && this.audio.audioContext) {
+            this.audio.resumeContext();
+        }
         
         if (this.state.phase === 'resting') {
             this.state.phase = 'charging';
