@@ -31,7 +31,8 @@ export class ScrollController {
             state.stone.y = 0;
         }
         
-        const scrollOffset = state.scrollProgress * scrollableDistance;
+        // Start at bottom (scrollProgress=0 shows bottom), scroll up to top (scrollProgress=1 shows top)
+        const scrollOffset = scrollableDistance - (state.scrollProgress * scrollableDistance);
         this.contentElement.style.transform = `translateY(-${scrollOffset}px)`;
         
         this.syncAudio(state);
