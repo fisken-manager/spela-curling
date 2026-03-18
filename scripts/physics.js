@@ -17,11 +17,11 @@ export class Physics {
         stone.vx *= friction;
         stone.vy *= friction;
         
-        // Update position
+        // Update world position
         stone.x += stone.vx;
         stone.y += stone.vy;
         
-        // Wall bounces
+        // Wall bounces (horizontal)
         const leftBound = stone.radius;
         const rightBound = state.screenWidth - stone.radius;
         
@@ -31,6 +31,16 @@ export class Physics {
         } else if (stone.x > rightBound) {
             stone.x = rightBound;
             stone.vx = -stone.vx * this.wallBounceEnergy;
+        }
+        
+        // Update scroll progress based on stone Y
+        const maxScroll = state.pageHeight - state.screenHeight;
+        state.scrollProgress = stone.y / maxScroll;
+        
+        // Loop when reaching top
+        if (state.scrollProgress >= 1) {
+            state.scrollProgress = 0;
+            stone.y = 0;
         }
         
         // Check if stopped
@@ -47,7 +57,7 @@ export class Physics {
         const speed = (state.power / 100) * this.maxVelocity;
         
         stone.vx = Math.sin(state.aimAngle) * speed;
-        stone.vy = -Math.cos(state.aimAngle) * speed; // Negative because Y increases downward
+        stone.vy = Math.cos(state.aimAngle) * speed; // Positive = moving up in scroll
         
         state.phase = 'moving';
         state.power = 0;
