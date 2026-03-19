@@ -346,6 +346,12 @@ drawPowerUps(state) {
         this.ctx.fillText(`scroll: ${state.scrollProgress.toFixed(3)} pageH: ${state.pageHeight}`, 10, 20);
         this.ctx.fillText(`worldY: ${state.stone.worldY.toFixed(0)} maxScroll: ${maxScroll}`, 10, 35);
         this.ctx.fillText(`lives: ${state.lives}`, 10, 50);
+
+        this.ctx.fillStyle = '#48bb78';
+        this.ctx.font = 'bold 24px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText(`Score: ${Math.floor(state.score)}`, state.screenWidth / 2, 40);
+
         if (state.frictionBoost) {
             this.ctx.fillStyle = 'gold';
             this.ctx.fillText(`BOOST: ${state.frictionBoost.timer.toFixed(1)}s`, 10, 65);
