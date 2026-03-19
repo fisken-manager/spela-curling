@@ -59,6 +59,32 @@ function setupControls() {
     });
 }
 
+function setupGameOverUI() {
+    const restartBtn = document.getElementById('restart-btn');
+    const gameOverOverlay = document.getElementById('game-over');
+    const finalScoreEl = document.querySelector('.final-score');
+    
+    restartBtn.addEventListener('click', () => {
+        state.resetGame();
+        state.initPowerUps();
+        state.initScoringOrbs();
+        gameOverOverlay.classList.add('hidden');
+    });
+    
+    const originalRender = renderer.render.bind(renderer);
+    renderer.render = (state, deltaTime) => {
+        originalRender(state, deltaTime);
+        checkGameOver(state, gameOverOverlay, finalScoreEl);
+    };
+}
+
+function checkGameOver(state, overlay, scoreEl) {
+    if (state.gameOver) {
+        overlay.classList.remove('hidden');
+        scoreEl.textContent = Math.floor(state.score);
+    }
+}
+
 async function init() {
     console.log('Curling Scroll initialized');
     state.updateScreenDimensions();
@@ -71,6 +97,7 @@ async function init() {
     input = new InputHandler(canvas, state, physics, audio);
     scrollController = new ScrollController(state, audio);
     setupControls();
+    setupGameOverUI();
     
     state.initPowerUps();
     state.initScoringOrbs();
