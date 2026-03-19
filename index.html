@@ -9,6 +9,29 @@
 </head>
 <body>
     <canvas id="game-canvas"></canvas>
+    <div id="physics-controls">
+        <h3>Physics Tuning</h3>
+        <label>
+            <span>Friction: <span id="friction-val">0.01</span></span>
+            <input type="range" id="friction" min="0.001" max="0.5" step="0.001" value="0.01">
+        </label>
+        <label>
+            <span>Curl Strength: <span id="curl-val">0.05</span></span>
+            <input type="range" id="curl" min="0" max="1" step="0.01" value="0.05">
+        </label>
+        <label>
+            <span>Angular Decay: <span id="angDecay-val">0.5</span></span>
+            <input type="range" id="angDecay" min="0.01" max="2" step="0.01" value="0.5">
+        </label>
+        <label>
+            <span>Max Velocity: <span id="maxVel-val">25</span></span>
+            <input type="range" id="maxVel" min="5" max="50" step="1" value="25">
+        </label>
+        <label>
+            <span>Rotation Range: <span id="rotRange-val">10</span></span>
+            <input type="range" id="rotRange" min="0" max="30" step="1" value="10">
+        </label>
+    </div>
     <div id="content">
         <section class="content-section">
             <h1>Welcome to Curling Scroll</h1>
@@ -36,6 +59,57 @@
             <h2>Section 6</h2>
             <p>End of content - loops back to start.</p>
         </section>
+        <section class="content-section lyrics">
+            <p>Slänga kvasten upp i luften</p>
+            <p>Spela slagning blejsa stenen</p>
+            <p>Jättearg och jätteledsen</p>
+            <p>Smälla kvasten tappa modet</p>
+            <p>Rakt igenom rakt igenom</p>
+            <p>Oj den gliider</p>
+            <p>Kasta stenar in i boet men den gliider</p>
+            <p>Spela curling spela curling</p>
+            <p>Slänga kvasten upp i luften</p>
+            <p>Spela slagning blejsa stenen</p>
+            <p>Jättearg och jätteledsen</p>
+            <p>Smälla kvasten tappa modet</p>
+            <p>Rakt igenom rakt igenom</p>
+            <p>Oj den gliider</p>
+            <p>Kasta stenar in i boet men den gliider</p>
+            <p>Spela curling spela curling</p>
+        </section>
+        <section class="curling-sheet-section">
+            <div class="curling-sheet">
+                <div class="curling-house curling-house-top">
+                    <div class="ring ring-outer"></div>
+                    <div class="ring ring-middle"></div>
+                    <div class="ring ring-inner"></div>
+                    <div class="ring ring-button"></div>
+                </div>
+                <div class="curling-tee-line curling-tee-line-top"></div>
+                <div class="curling-hog-line curling-hog-line-top"></div>
+                <div class="curling-centre-line"></div>
+                <div class="curling-text-between-hogs">
+                    <span>Nästan där</span>
+                    <span>Bara lite till</span>
+                    <span>Snart där</span>
+                </div>
+                <div class="curling-hog-line curling-hog-line-bottom"></div>
+                <div class="curling-tee-line curling-tee-line-bottom"></div>
+                <div class="curling-house curling-house-bottom">
+                    <div class="ring ring-outer"></div>
+                    <div class="ring ring-middle"></div>
+                    <div class="ring ring-inner"></div>
+                    <div class="ring ring-button"></div>
+                </div>
+            </div>
+        </section>
+    </div>
+    <div id="game-over" class="hidden">
+        <div class="game-over-content">
+            <div class="game-over-title">Game Over</div>
+            <div class="final-score">0</div>
+            <button id="restart-btn">Play Again</button>
+        </div>
     </div>
     <script type="module" src="scripts/game.js"></script>
 </body>
