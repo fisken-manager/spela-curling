@@ -23,6 +23,10 @@ html, body {
 #content {
     position: absolute;
     width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    left: 0;
+    right: 0;
     will-change: transform;
 }
 
@@ -63,4 +67,239 @@ body {
     background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
     color: #e2e8f0;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+#physics-controls {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 15px;
+    border-radius: 8px;
+    z-index: 100;
+    font-size: 12px;
+    min-width: 180px;
+    pointer-events: auto;
+}
+
+#physics-controls h3 {
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+#physics-controls label {
+    display: block;
+    margin-bottom: 8px;
+}
+
+#physics-controls label span {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2px;
+}
+
+#physics-controls input[type="range"] {
+    width: 100%;
+    cursor: pointer;
+}
+
+.curling-sheet-section {
+    width: 100%;
+}
+
+.curling-sheet {
+    position: relative;
+    width: 100%;
+    background: #e2e8f0;
+    aspect-ratio: 1 / 45;
+}
+
+.curling-sheet::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, rgba(255,255,255,0.4) 0%, transparent 1%, transparent 99%, rgba(0,0,0,0.1)100%);
+    pointer-events: none;
+}
+
+.curling-centre-line {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #4a5568;
+    transform: translateX(-50%);
+    z-index: 1;
+}
+
+.curling-house {
+    position: absolute;
+    left: 0;
+    right: 0;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+}
+
+.curling-house-top {
+    top: 1.1%;
+}
+
+.curling-house-bottom {
+    bottom: 1.1%;
+}
+
+.curling-house .ring {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    aspect-ratio: 1 / 1;
+}
+
+.curling-house .ring-outer {
+    width: 100%;
+    background: #3182ce;
+}
+
+.curling-house .ring-middle {
+    width: 66%;
+    background: #fff;
+}
+
+.curling-house .ring-inner {
+    width: 33%;
+    background: #c53030;
+}
+
+.curling-house .ring-button {
+    width: 12%;
+    background: #fff;
+    z-index: 1;
+}
+
+.curling-hog-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: #4a5568;
+    z-index: 2;
+}
+
+.curling-hog-line-top {
+    top: 5.45%;
+}
+
+.curling-hog-line-bottom {
+    bottom: 5.45%;
+}
+
+.curling-text-between-hogs {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 5.45%;
+    bottom: 5.45%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 1.2rem;
+    color: #4a5568;
+    font-weight: 600;
+    z-index: 3;
+}
+
+.curling-tee-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #4a5568;
+    z-index: 2;
+}
+
+.curling-tee-line-top {
+    top: 2.2%;
+}
+
+.curling-tee-line-bottom {
+    bottom: 2.2%;
+}
+
+.lyrics {
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.lyrics p {
+    font-size: 3.6rem;
+    margin-bottom: 20rem;
+    line-height: 1.4;
+}
+
+#game-over {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+#game-over.hidden {
+    display: none;
+}
+
+.game-over-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.game-over-title {
+    font-size: 2.5rem;
+    color: #a0aec0;
+    text-transform: uppercase;
+    letter-spacing: 0.3em;
+}
+
+.final-score {
+    font-size: 6rem;
+    font-weight: bold;
+    color: #48bb78;
+    text-shadow: 0 0 30px rgba(72, 187, 120, 0.8);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+#restart-btn {
+    padding: 15px 40px;
+    font-size: 1.5rem;
+    background: #48bb78;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+}
+
+#restart-btn:hover {
+    background: #38a169;
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(72, 187, 120, 0.4);
+}
+
+#restart-btn:active {
+    transform: scale(0.98);
 }
