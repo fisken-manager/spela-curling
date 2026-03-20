@@ -831,18 +831,18 @@ addPowerUpParticles(state, powerUp) {
         const screenY = state.screenHeight * 0.5;
         
         const color = orb.type === 'purple' ? '147, 122, 234' : '72, 187, 120';
-        const count = orb.type === 'purple' ? 25 : 15;
+        const count = orb.type === 'purple' ? 8 : 5;
         
         for (let i = 0; i < count; i++) {
             const angle = Math.random() * Math.PI * 2;
-            const speed = Math.random() * 6 + 2;
+            const speed = Math.random() * 4 + 2;
             this.addParticle(
                 screenX,
                 screenY,
                 Math.cos(angle) * speed,
                 Math.sin(angle) * speed,
                 color,
-                0.6
+                0.4
             );
         }
     }

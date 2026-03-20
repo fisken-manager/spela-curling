@@ -441,6 +441,6 @@ triggerScreenShake(intensity, duration) {
     }
 
 triggerRingFlash(x, y, color) {
-        this.ringFlash = { x, y, color, radius: 0, maxRadius: 200, duration: 0.4, timer: 0.4 };
+        this.ringFlash = { x, y, color, radius: 0, maxRadius: 60, duration: 0.2, timer: 0.2 };
     }
 }
