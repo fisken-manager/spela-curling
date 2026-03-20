@@ -309,7 +309,7 @@ checkPowerUps(state) {
             text: multipliedPoints > basePoints ? `+${multipliedPoints} x${state.comboMultiplier}` : `+${basePoints}`,
             startTime: now,
             duration: 800,
-            scale: 1 + (state.comboMultiplier - 1) * 0.1, // Bigger for higher combo
+            scale: 1 + (state.comboMultiplier - 1) * 0.1,
             isCombo: multipliedPoints > basePoints
         });
         
@@ -317,11 +317,6 @@ checkPowerUps(state) {
         
         const color = orb.type === 'purple' ? '147, 122, 234' : '72, 187, 120';
         state.triggerRingFlash(screenX, screenY, color);
-        
-        // Screen shake for high combos
-        if (state.comboMultiplier >= 3) {
-            state.triggerScreenShake(3 + state.comboMultiplier, 0.1);
-        }
     }
 
     collectPowerUp(state, powerUp) {

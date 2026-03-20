@@ -207,6 +207,8 @@ export class GameState {
         this.comboTimeout = 500;
         this.recentScore = 0;
         this.scoreAnimations = [];
+        this.lastScore = 0;
+        this.scoreJumpAnimation = null;
     }
     
     initPowerUps() {

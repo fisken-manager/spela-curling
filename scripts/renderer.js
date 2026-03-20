@@ -918,36 +918,84 @@ addPowerUpParticles(state, powerUp) {
 
     drawScoreText(state) {
         const baseY = 40;
-        let scale = 1;
-        let color = '#48bb78';
+        const centerX = state.screenWidth / 2;
         
-        // Check for recent score for visual effect
-        if (state.recentScore > 0) {
-            const intensity = Math.min(state.recentScore / 1000, 1);
-            scale = 1 + intensity * 0.3;
+        // Track score changes for dramatic effects
+        if (state.score !== state.lastScore) {
+            const scoreIncrease = state.score - state.lastScore;
+            state.lastScore = state.score;
             
-            if (state.recentScore >= 500) {
-                color = '#ff3232'; // Red for big scores
-            } else if (state.recentScore >= 200) {
-                color = '#ffc832'; // Gold for medium
-            } else if (state.recentScore >= 100) {
-                color = '#ffd700'; // Yellow
+            // Trigger dramatic effect for score jumps
+            if (scoreIncrease >= 50) {
+                // Big score jump - shake and flash
+                const intensity = Math.min(5 + scoreIncrease / 20, 20);
+                state.triggerScreenShake(intensity, 0.15);
+                
+                // Add score jump animation
+                state.scoreJumpAnimation = {
+                    value: Math.floor(state.score),
+                    scale: 1.5 + Math.min(scoreIncrease / 100, 1),
+                    startTime: Date.now(),
+                    duration: 600
+                };
+            } else if (scoreIncrease >= 25) {
+                // Medium score jump
+                state.scoreJumpAnimation = {
+                    value: Math.floor(state.score),
+                    scale: 1.2,
+                    startTime: Date.now(),
+                    duration: 400
+                };
             }
         }
         
+        // Calculate display scale based on score jump animation
+        let scale = 1;
+        let glowIntensity = 0;
+        
+        if (state.scoreJumpAnimation) {
+            const elapsed = Date.now() - state.scoreJumpAnimation.startTime;
+            const progress = Math.min(elapsed / state.scoreJumpAnimation.duration, 1);
+            
+            if (progress < 1) {
+                // Bounce effect: grow then shrink
+                const bounce = Math.sin(progress * Math.PI);
+                scale = 1 + (state.scoreJumpAnimation.scale - 1) * bounce;
+                glowIntensity = bounce;
+            } else {
+                state.scoreJumpAnimation = null;
+            }
+        }
+        
+        // Apply recent score color
+        let color = '#48bb78';
+        if (state.recentScore >= 500) {
+            color = '#ff3232';
+        } else if (state.recentScore >= 200) {
+            color = '#ffc832';
+        } else if (state.recentScore >= 100) {
+            color = '#ffd700';
+        }
+        
+        const fontSize = Math.floor(24* scale);
+        
         this.ctx.save();
         this.ctx.fillStyle = color;
-        this.ctx.font = `bold ${Math.floor(24 * scale)}px Arial`;
+        this.ctx.font = `bold ${fontSize}px Arial`;
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
         
-        // Draw shadow for readability
-        this.ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-        this.ctx.shadowBlur = 4;
-        this.ctx.shadowOffsetX = 2;
-        this.ctx.shadowOffsetY = 2;
+        // Glow effect for dramatic momentif (glowIntensity > 0) {
+            this.ctx.shadowColor = color;
+            this.ctx.shadowBlur = 20 * glowIntensity;
+        } else {
+            this.ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+            this.ctx.shadowBlur = 4;
+            this.ctx.shadowOffsetX = 2;
+            this.ctx.shadowOffsetY = 2;
+        }
         
-        this.ctx.fillText(`Score: ${Math.floor(state.score)}`, state.screenWidth / 2, baseY);
+        this.ctx.fillText(`Score: ${Math.floor(state.score)}`, centerX, baseY);
         
         this.ctx.restore();
     }
