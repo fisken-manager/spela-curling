@@ -272,7 +272,7 @@ checkPowerUps(state) {
             
             const collisionDistance = config[orb.type].radius + stone.radius;
             
-            if (dy< collisionDistance && dx < collisionDistance) {
+            if (dy < collisionDistance && dx < collisionDistance) {
                 this.collectScoringOrb(state, orb);
             }
         }

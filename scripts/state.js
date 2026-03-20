@@ -413,6 +413,9 @@ export class GameState {
         for (const superBoostPowerUp of this.superBoostPowerUps) {
             superBoostPowerUp.collected = false;
         }
+        for (const orb of this.scoringOrbs) {
+            orb.collected = false;
+        }
         this.phase = 'resting';
         this.stone.x = 0;
         this.stone.worldY = 0;
