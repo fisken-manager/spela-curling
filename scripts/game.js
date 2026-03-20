@@ -170,7 +170,13 @@ async function init() {
     state.initPowerUps();
     state.initScoringOrbs();
     
-    await audio.init('song.wav');
+    await audio.init([
+        'assets/song_1.mp3',
+        'assets/song_2.mp3',
+        'assets/song_3.mp3',
+        'assets/song_4.mp3',
+        'assets/song_5.mp3'
+    ]);
     
     console.log('All systems ready');
     requestAnimationFrame(gameLoop);

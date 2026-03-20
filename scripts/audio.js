@@ -8,16 +8,27 @@ export class AudioController {
         this.playbackRate = 1;
         this.lastStartTime = 0;
         this.maxVelocity = 25;
+        this.playlist = [];
+        this.currentIndex = 0;
+        this.audioBuffers = [];
+        this.manuallyStopped = false;
     }
 
-    async init(audioUrl) {
+    async init(playlist) {
         this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        this.playlist = playlist;
+        this.currentIndex = 0;
         
-        const response = await fetch(audioUrl);
-        const arrayBuffer = await response.arrayBuffer();
-        this.audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+        for (const url of playlist) {
+            const response = await fetch(url);
+            const arrayBuffer = await response.arrayBuffer();
+            const buffer = await this.audioContext.decodeAudioData(arrayBuffer);
+            this.audioBuffers.push(buffer);
+            console.log(`Loaded: ${url} (${buffer.duration}s)`);
+        }
         
-        console.log(`Audio loaded: ${this.audioBuffer.duration}s`);
+        this.audioBuffer = this.audioBuffers[0];
+        console.log(`Playlist ready: ${playlist.length} tracks`);
     }
 
     resumeContext() {
@@ -30,6 +41,7 @@ export class AudioController {
         if (!this.audioBuffer || this.isPlaying) return;
         
         this.resumeContext();
+        this.manuallyStopped = false;
         
         this.sourceNode = this.audioContext.createBufferSource();
         this.sourceNode.buffer = this.audioBuffer;
@@ -44,11 +56,24 @@ export class AudioController {
         
         this.sourceNode.onended = () => {
             this.isPlaying = false;
+            if (!this.manuallyStopped) {
+                this.advanceTrack();
+            }
         };
+    }
+
+    advanceTrack() {
+        this.currentIndex = (this.currentIndex + 1) % this.playlist.length;
+        this.audioBuffer = this.audioBuffers[this.currentIndex];
+        this.currentPosition = 0;
+        console.log(`Now playing: ${this.playlist[this.currentIndex]}`);
+        this.play();
     }
 
     stop() {
         if (!this.isPlaying) return;
+        
+        this.manuallyStopped = true;
         
         const elapsedTime = this.audioContext.currentTime - this.lastStartTime;
         this.currentPosition += (elapsedTime * this.playbackRate) / this.audioBuffer.duration;
