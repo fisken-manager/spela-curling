@@ -31,131 +31,466 @@ html, body {
     will-change: transform;
 }
 
-.content-section {
+/* ===== HERO SECTION ===== */
+.hero-section {
     min-height: 100vh;
-    padding: 60px 20px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     text-align: center;
+    padding: 60px 20px;
+    background: linear-gradient(180deg, #0a0a0a 0%, #1a202c 50%, #2d3748 100%);
+    position: relative;
 }
 
-.content-section h1 {
-    font-size: 3rem;
+.hero-section::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: 
+        radial-gradient(ellipse at 20% 80%, rgba(255, 0, 110, 0.1) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(57, 255, 20, 0.05) 0%, transparent 40%);
+    pointer-events: none;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 1;
+}
+
+.glitch-title {
+    font-family: 'Nosifer', cursive;
+    font-size: clamp(2rem, 10vw, 4rem);
+    color: #ff006e;
+    text-shadow: 
+        2px 2px 0 #fbff00,
+        4px 4px 0 #39ff14,
+        0 0 30px rgba(255, 0, 110, 0.5);
     margin-bottom: 1rem;
+    animation: glitch 3s infinite;
 }
 
-.content-section h2 {
-    font-size: 2rem;
-    margin-bottom: 1rem;
+@keyframes glitch {
+    0%, 100% { transform: translate(0); }
+    20% { transform: translate(-1px, 1px); }
+    40% { transform: translate(1px, -1px); }
+    60% { transform: translate(-1px, -1px); }
+    80% { transform: translate(1px, 1px); }
 }
 
-.content-section p {
-    font-size: 1.2rem;
-    max-width: 600px;
-    line-height: 1.6;
-    margin-bottom: 1rem;
+.hero-subtitle {
+    font-family: 'UnifrakturMaguntia', cursive;
+    font-size: clamp(1.2rem, 4vw, 2rem);
+    color: #f5f5dc;
+    letter-spacing: 0.3em;
+    margin-bottom: 2rem;
 }
 
-.content-section img {
-    max-width: 100%;
-    height: auto;
-    margin: 1rem 0;
+.hero-quote {
+    background: rgba(0, 0, 0, 0.5);
+    border-left: 4px solid #ff006e;
+    padding: 1.5rem;
+    margin: 2rem 0;
+    max-width: 400px;
 }
 
-body {
-    background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
-    color: #e2e8f0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+.hero-quote p {
+    font-family: 'Permanent Marker', cursive;
+    font-size: 1.1rem;
+    color: #fbff00;
+    line-height: 1.4;
 }
 
-#physics-controls {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: rgba(0, 0, 0, 0.8);
-    padding: 15px;
-    border-radius: 8px;
-    z-index: 100;
-    font-size: 12px;
-    min-width: 180px;
-    pointer-events: auto;
-    touch-action: auto;
-}
-
-#physics-controls h3 {
-    margin-bottom: 10px;
-    font-size: 14px;
-    cursor: pointer;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-    pointer-events: auto;
-}
-
-#physics-controls h3:hover {
-    color: #90cdf4;
-}
-
-.toggle-arrow {
-    font-size: 10px;
-    margin-left: 8px;
-    transition: transform 0.2s ease;
-}
-
-#physics-controls.collapsed .toggle-arrow {
-    transform: rotate(-90deg);
-}
-
-#physics-controls.collapsed #controls-content {
-    display: none;
-}
-
-#physics-controls label {
+.quote-author {
     display: block;
-    margin-bottom: 8px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: #b87333;
+    margin-top: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
 }
 
-#physics-controls label span {
+.hero-instruction {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 3rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+}
+
+/* ===== SECTION HEADER ===== */
+.section-header {
+    text-align: center;
+    padding: 60px 20px 40px;
+    background: linear-gradient(180deg, #0a0a0a 0%, #1a202c 100%);
+}
+
+.section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5em;
+    color: #b87333;
+    display: block;
+    margin-bottom: 1rem;
+}
+
+.section-header h2 {
+    font-family: 'Creepster', cursive;
+    font-size: clamp(2rem, 8vw, 3.5rem);
+    color: #8b0000;
+    text-shadow: 2px 2px 0 #ff006e;
+    margin-bottom: 1rem;
+}
+
+.section-desc {
+    font-family: 'Work Sans', sans-serif;
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.8);
+    max-width: 400px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+/* ===== VICTIMS SECTION ===== */
+.victims-section {
+    background: linear-gradient(180deg, #1a202c 0%, #0a0a0a 100%);
+    padding-bottom: 40px;
+}
+
+.victims-grid {
     display: flex;
-    justify-content: space-between;
-    margin-bottom: 2px;
+    flex-direction: column;
+    gap: 20px;
+    padding: 0 20px;
 }
 
-#physics-controls input[type="range"] {
+.victim-card {
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    gap: 15px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 2px solid #ff006e;
+    padding: 15px;
+    position: relative;
+    overflow: hidden;
+}
+
+.victim-card:nth-child(2) { border-color: #39ff14; }
+.victim-card:nth-child(3) { border-color: #fbff00; }
+.victim-card:nth-child(4) { border-color: #8b0000; }
+.victim-card:nth-child(5) { border-color: #00d4ff; }
+
+.victim-number {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    font-family: 'Rubik Mono One', sans-serif;
+    font-size: 2rem;
+    color: rgba(255, 255, 255, 0.1);
+    z-index: 1;
+}
+
+.victim-img {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    filter: grayscale(0.3) contrast(1.2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.victim-info h3 {
+    font-family: 'Keania One', cursive;
+    font-size: 1.3rem;
+    color: #f5f5dc;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+}
+
+.victim-quote {
+    font-family: 'Special Elite', monospace;
+    font-size: 0.85rem;
+    color: #ff006e;
+    font-style: italic;
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+}
+
+.victim-desc {
+    font-family: 'Work Sans', sans-serif;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.6);
+    line-height: 1.4;
+}
+
+.dala-quote-box {
+    margin: 40px 20px;
+    padding: 20px;
+    background: rgba(251, 255, 0, 0.05);
+    border-left: 4px solid #fbff00;
+}
+
+.dala-quote-box p {
+    font-family: 'Permanent Marker', cursive;
+    font-size: 1.2rem;
+    color: #fbff00;
+    text-align: center;
+}
+
+/* ===== PROVERBS SECTION ===== */
+.proverbs-section {
+    background: linear-gradient(180deg, #0a0a0a 0%, #4a0080 50%, #0a0a0a 100%);
+    padding: 40px 20px;
+}
+
+.proverbs-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+}
+
+.proverb-card {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    text-align: center;
+}
+
+.proverb-card:nth-child(odd) {
+    border-left: 3px solid #ff006e;
+}
+
+.proverb-card:nth-child(even) {
+    border-right: 3px solid #39ff14;
+}
+
+.proverb-text {
+    font-family: 'Metal Mania', cursive;
+    font-size: 1.1rem;
+    color: #f5f5dc;
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+}
+
+.proverb-origin {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: #b87333;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+/* ===== ENKAN SECTION ===== */
+.enkan-section {
+    background: linear-gradient(180deg, #1a202c 0%, #0a0a0a 100%);
+    padding-bottom: 40px;
+}
+
+.enkan-gallery {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 0 10px;
+}
+
+.enkan-item {
+    position: relative;
+    overflow: hidden;
+    background: #0a0a0a;
+    border: 2px solid #39ff14;
+}
+
+.enkan-item.large {
+    grid-column: span 2;
+}
+
+.enkan-item.wide {
+    grid-column: span 2;
+}
+
+.enkan-item img {
     width: 100%;
-    cursor: pointer;
+    height: 150px;
+    object-fit: cover;
+    filter: contrast(1.1);
 }
 
-#physics-controls .debug-section {
-    margin-top: 15px;
-    padding-top: 10px;
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
+.enkan-item.large img,
+.enkan-item.wide img {
+    height: 200px;
 }
 
-#physics-controls .debug-section h4 {
-    margin-bottom: 8px;
-    font-size: 12px;
-    color: #a0aec0;
+.enkan-caption {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.9);
+    padding: 10px;
 }
 
-#physics-controls .debug-section button {
-    padding: 5px 10px;
-    margin-right: 5px;
-    margin-bottom: 5px;
-    font-size: 11px;
-    background: #4a5568;
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-family: inherit;
+.enkan-caption h3 {
+    font-family: 'Bangers', cursive;
+    font-size: 1rem;
+    color: #f5f5dc;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
-#physics-controls .debug-section button:hover {
-    background: #718096;
+.enkan-caption p {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: #b87333;
+    margin-top: 3px;
 }
 
+/* ===== MANIFESTO SECTION ===== */
+.manifesto-section {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    background: linear-gradient(180deg, #0a0a0a 0%, #8b0000 50%, #0a0a0a 100%);
+    position: relative;
+}
+
+.manifesto-section::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: 
+        linear-gradient(90deg, rgba(255, 0, 110, 0.05) 1px, transparent 1px),
+        linear-gradient(rgba(255, 0, 110, 0.05) 1px, transparent 1px);
+    background-size: 30px 30px;
+    pointer-events: none;
+}
+
+.manifesto-content {
+    position: relative;
+    z-index: 1;
+    max-width: 400px;
+}
+
+.manifesto-content h2 {
+    font-family: 'Nosifer', cursive;
+    font-size: clamp(1.5rem, 6vw, 2.5rem);
+    color: #ff006e;
+    text-align: center;
+    margin-bottom: 2rem;
+    line-height: 1.2;
+    animation: glitch 3s infinite;
+}
+
+.manifesto-body {
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid #ff006e;
+    padding: 25px;
+    transform: rotate(1deg);
+}
+
+.manifesto-body p {
+    font-family: 'Work Sans', sans-serif;
+    font-size: 0.95rem;
+    color: #f5f5dc;
+    line-height: 1.8;
+    margin-bottom: 1rem;
+    text-indent: 1rem;
+}
+
+.manifesto-quote {
+    margin: 20px 0;
+    padding: 15px;
+    background: rgba(139, 0, 0, 0.3);
+    border-left: 3px solid #8b0000;
+}
+
+.manifesto-quote p {
+    font-family: 'Permanent Marker', cursive;
+    font-size: 1rem;
+    color: #fbff00;
+    text-indent: 0;
+    margin: 0;
+}
+
+.manifesto-signature {
+    font-family: 'Permanent Marker', cursive;
+    font-size: 1.2rem;
+    color: #fbff00;
+    text-align: right;
+    margin-top: 1.5rem;
+    transform: rotate(-2deg);
+}
+
+.manifesto-signature span {
+    display: block;
+    font-size: 0.8rem;
+    color: #ff006e;
+    margin-top: 0.3rem;
+}
+
+/* ===== LYRICS SECTION ===== */
+.lyrics-section {
+    background: linear-gradient(180deg, #0a0a0a 0%, #1a202c 100%);
+    padding: 60px 20px;
+    text-align: center;
+}
+
+.lyrics-header {
+    margin-bottom: 3rem;
+}
+
+.lyrics-header h2 {
+    font-family: 'Metal Mania', cursive;
+    font-size: clamp(2rem, 8vw, 3rem);
+    color: #39ff14;
+    text-shadow: 0 0 20px rgba(57, 255, 20, 0.3);
+}
+
+.lyrics-content {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.lyrics-stanza {
+    margin-bottom: 3rem;
+}
+
+.lyrics-stanza p {
+    font-family: 'Special Elite', monospace;
+    font-size: 1.3rem;
+    color: #f5f5dc;
+    line-height: 2;
+    margin-bottom: 0.5rem;
+}
+
+.lyrics-chorus {
+    font-family: 'Bangers', cursive;
+    font-size: 1.8rem;
+    color: #ff006e;
+    letter-spacing: 0.1em;
+    margin-top: 1rem;
+}
+
+.lyrics-quote {
+    margin-top: 3rem;
+    padding: 20px;
+    background: rgba(0, 212, 255, 0.05);
+    border: 1px solid rgba(0, 212, 255, 0.3);
+}
+
+.lyrics-quote p {
+    font-family: 'Lacquer', sans-serif;
+    font-size: 1rem;
+    color: #00d4ff;
+    font-style: italic;
+}
+
+/* ===== CURLING SHEET ===== */
 .curling-sheet-section {
     width: 100%;
 }
@@ -262,7 +597,7 @@ body {
     flex-direction: column;
     justify-content: space-around;
     align-items: center;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Space Mono', monospace;
     font-size: 1.2rem;
     color: #4a5568;
     font-weight: 600;
@@ -286,23 +621,176 @@ body {
     bottom: 2.2%;
 }
 
-.lyrics {
-    background: rgba(0, 0, 0, 0.6);
+/* ===== ENDING SECTION ===== */
+.ending-section {
+    min-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    background: linear-gradient(180deg, #0a0a0a 0%, #000000 100%);
+    text-align: center;
 }
 
-.lyrics p {
-    font-size: 3.6rem;
-    margin-bottom: 20rem;
-    line-height: 1.4;
+.ending-content h2 {
+    font-family: 'Nosifer', cursive;
+    font-size: clamp(1.5rem, 6vw, 2.5rem);
+    color: #8b0000;
+    margin-bottom: 1rem;
 }
 
+.ending-content p {
+    font-family: 'Work Sans', sans-serif;
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 2rem;
+}
+
+.final-quote {
+    background: rgba(255, 0, 110, 0.1);
+    border: 1px solid rgba(255, 0, 110, 0.3);
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.final-quote p {
+    font-family: 'Permanent Marker', cursive;
+    font-size: 1.1rem;
+    color: #ff006e;
+    margin: 0;
+}
+
+.loop-text {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    color: #39ff14;
+    margin-top: 3rem;
+}
+
+/* ===== MARQUEE ===== */
+.marquee-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #ff006e;
+    color: #0a0a0a;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    padding: 8px 0;
+    overflow: hidden;
+    z-index: 100;
+}
+
+.marquee-content {
+    display: inline-block;
+    white-space: nowrap;
+    animation: marquee 20s linear infinite;
+}
+
+@keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+/* ===== PHYSICS CONTROLS ===== */
+#physics-controls {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.9);
+    padding: 15px;
+    border-radius: 8px;
+    z-index: 100;
+    font-size: 12px;
+    min-width: 180px;
+    pointer-events: auto;
+    touch-action: auto;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-family: 'Space Mono', monospace;
+}
+
+#physics-controls h3 {
+    margin-bottom: 10px;
+    font-size: 12px;
+    cursor: pointer;
+    user-select: none;
+    color: #ff006e;
+}
+
+#physics-controls h3:hover {
+    color: #fbff00;
+}
+
+.toggle-arrow {
+    font-size: 10px;
+    margin-left: 8px;
+    transition: transform 0.2s ease;
+}
+
+#physics-controls.collapsed .toggle-arrow {
+    transform: rotate(-90deg);
+}
+
+#physics-controls.collapsed #controls-content {
+    display: none;
+}
+
+#physics-controls label {
+    display: block;
+    margin-bottom: 8px;
+}
+
+#physics-controls label span {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+#physics-controls input[type="range"] {
+    width: 100%;
+    cursor: pointer;
+}
+
+#physics-controls .debug-section {
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+#physics-controls .debug-section h4 {
+    margin-bottom: 8px;
+    font-size: 11px;
+    color: #b87333;
+}
+
+#physics-controls .debug-section button {
+    padding: 5px 10px;
+    margin-right: 5px;
+    margin-bottom: 5px;
+    font-size: 10px;
+    background: #4a5568;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Space Mono', monospace;
+}
+
+#physics-controls .debug-section button:hover {
+    background: #ff006e;
+}
+
+/* ===== GAME OVER ===== */
 #game-over {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.85);
+    background: rgba(0, 0, 0, 0.9);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -321,8 +809,9 @@ body {
 }
 
 .game-over-title {
+    font-family: 'Nosifer', cursive;
     font-size: 2.5rem;
-    color: #a0aec0;
+    color: #8b0000;
     text-transform: uppercase;
     letter-spacing: 0.3em;
 }
@@ -330,74 +819,70 @@ body {
 .final-score {
     font-size: 6rem;
     font-weight: bold;
-    color: #48bb78;
-    text-shadow: 0 0 30px rgba(72, 187, 120, 0.8);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #39ff14;
+    text-shadow: 0 0 30px rgba(57, 255, 20, 0.5);
+    font-family: 'Rubik Mono One', sans-serif;
+}
+
+.game-over-money {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.5rem;
+    color: #fbff00;
+    margin-bottom: 10px;
 }
 
 #restart-btn {
     padding: 15px 40px;
-    font-size: 1.5rem;
-    background: #48bb78;
+    font-size: 1.2rem;
+    background: #ff006e;
     color: #fff;
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    font-family: inherit;
+    font-family: 'Bangers', cursive;
+    letter-spacing: 0.1em;
     transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
 }
 
 #restart-btn:hover {
-    background: #38a169;
+    background: #fbff00;
+    color: #0a0a0a;
     transform: scale(1.05);
-    box-shadow: 0 4px 15px rgba(72, 187, 120, 0.4);
-}
-
-#restart-btn:active {
-    transform: scale(0.98);
-}
-
-.game-over-money {
-    font-size: 1.5rem;
-    color: #ffd700;
-    margin-bottom: 10px;
+    box-shadow: 0 4px 20px rgba(251, 255, 0, 0.4);
 }
 
 .buy-life-btn {
     padding: 12px 30px;
     font-size: 1.2rem;
-    background: #ffd700;
-    color: #1a202c;
+    background: #fbff00;
+    color: #0a0a0a;
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    font-family: inherit;
+    font-family: 'Bangers', cursive;
     font-weight: bold;
     transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
     margin-bottom: 10px;
 }
 
 .buy-life-btn:hover {
-    background: #ffed4a;
+    background: #fff;
     transform: scale(1.05);
-    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
-}
-
-.buy-life-btn:active {
-    transform: scale(0.98);
+    box-shadow: 0 4px 20px rgba(251, 255, 0, 0.5);
 }
 
 .buy-life-btn.hidden {
     display: none;
 }
 
+/* ===== LOOP TRANSITION ===== */
 #loop-transition {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: black;
+    background: #0a0a0a;
     z-index: 2000;
     opacity: 0;
     pointer-events: none;
@@ -412,12 +897,13 @@ body {
 }
 
 #loop-text {
-    color: white;
-    font-size: 5rem;
+    color: #ff006e;
+    font-size: 4rem;
     font-weight: bold;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Nosifer', cursive;
     opacity: 0;
     transition: opacity 0.25s ease-in-out;
+    text-shadow: 0 0 30px rgba(255, 0, 110, 0.5);
 }
 
 #loop-text.active {
