@@ -135,16 +135,27 @@ function update(deltaTime) {
 }
 
 function updateCombo(deltaTime) {
-    const now = Date.now();
-    
-    // Reset combo multiplier after timeout
-    if (state.lastOrbTime > 0 && now - state.lastOrbTime > state.comboTimeout) {
-        state.comboMultiplier = 1;
+        const now = Date.now();
+        
+        // Initialize combo state if needed
+        if (state.comboMultiplier === undefined) {
+            state.comboMultiplier = 1;
+        }
+        if (state.lastOrbTime === undefined) {
+            state.lastOrbTime = 0;
+        }
+        if (state.recentScore === undefined) {
+            state.recentScore = 0;
+        }
+        
+        // Reset combo multiplier after timeout
+        if (state.lastOrbTime > 0 && now - state.lastOrbTime > state.comboTimeout) {
+            state.comboMultiplier = 1;
+        }
+        
+        // Decay recentScore over time (for visual effect)
+        state.recentScore = Math.max(0, state.recentScore - deltaTime * 100);
     }
-    
-    // Decay recentScore over time (for visual effect)
-    state.recentScore = Math.max(0, state.recentScore - deltaTime * 100);
-}
 
 function updatePower(deltaTime) {
     if (state.phase === 'charging' && state.input.isDragging) {
