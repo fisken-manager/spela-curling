@@ -1003,20 +1003,14 @@ drawScoreText(state) {
         
         this.ctx.fillText(`Score: ${Math.floor(currentScore)}`, centerX, baseY);
         
-        this.ctx.restore();
-        
-        // Draw money in yellow
+        // Draw money in yellow to the right
         const money = state.money || 0;
-        this.ctx.save();
+        const moneyText = `$${money}`;
         this.ctx.fillStyle = '#ffd700';
         this.ctx.font = 'bold 20px Arial';
-        this.ctx.textAlign = 'center';
-        this.ctx.textBaseline = 'middle';
-        this.ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-        this.ctx.shadowBlur = 4;
-        this.ctx.shadowOffsetX = 2;
-        this.ctx.shadowOffsetY = 2;
-        this.ctx.fillText(`$${money}`, centerX, baseY + 30);
+        this.ctx.textAlign = 'left';
+        this.ctx.fillText(moneyText, centerX + 80, baseY);
+        
         this.ctx.restore();
     }
 
