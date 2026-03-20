@@ -198,9 +198,9 @@ export class GameState {
         this.gameOver = false;
         this.scoringOrbs = [];
         this.scoringOrbConfig = {
-            green: { radius: 15, points: 25 },
-            purple: { radius: 18, points: 100 },
-            yellow: { radius: 12, money: 1 }
+            green: { radius: 8, points: 25 },
+            purple: { radius: 9, points: 100 },
+            yellow: { radius: 6, money: 1 }
         };
         
         // Combo system
