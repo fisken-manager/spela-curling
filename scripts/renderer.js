@@ -1005,59 +1005,6 @@ drawScoreText(state) {
         
         this.ctx.restore();
     }
-        }
-        
-        // Calculate display scale based on score jump animation
-        let scale = 1;
-        let glowIntensity = 0;
-        
-        if (state.scoreJumpAnimation) {
-            const elapsed = Date.now() - state.scoreJumpAnimation.startTime;
-            const progress = Math.min(elapsed / state.scoreJumpAnimation.duration, 1);
-            
-            if (progress < 1) {
-                // Bounce effect: grow then shrink
-                const bounce = Math.sin(progress * Math.PI);
-                scale = 1 + (state.scoreJumpAnimation.scale - 1) * bounce;
-                glowIntensity = bounce;
-            } else {
-                state.scoreJumpAnimation = null;
-            }
-        }
-        
-        // Apply recent score color
-        let color = '#48bb78';
-        if (state.recentScore >= 500) {
-            color = '#ff3232';
-        } else if (state.recentScore >= 200) {
-            color = '#ffc832';
-        } else if (state.recentScore >= 100) {
-            color = '#ffd700';
-        }
-        
-        const fontSize = Math.floor(24 * scale);
-        
-        this.ctx.save();
-        this.ctx.fillStyle = color;
-        this.ctx.font = `bold ${fontSize}px Arial`;
-        this.ctx.textAlign = 'center';
-        this.ctx.textBaseline = 'middle';
-        
-        // Glow effect for dramatic moment
-        if (glowIntensity > 0) {
-            this.ctx.shadowColor = color;
-            this.ctx.shadowBlur = 20 * glowIntensity;
-        } else {
-            this.ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-            this.ctx.shadowBlur = 4;
-            this.ctx.shadowOffsetX = 2;
-            this.ctx.shadowOffsetY = 2;
-        }
-        
-        this.ctx.fillText(`Score: ${Math.floor(state.score)}`, centerX, baseY);
-        
-        this.ctx.restore();
-    }
 
     updateSuperBoostImageEffect(state, deltaTime) {
         if (!state.superBoostImageEffect) return;
