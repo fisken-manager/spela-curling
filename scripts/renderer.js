@@ -922,28 +922,28 @@ drawScoreText(state) {
         
         // Initialize lastScore if needed
         if (state.lastScore === undefined) {
-            state.lastScore = state.score;
+            state.lastScore = state.score || 0;
         }
         
+        // Ensure score is a number
+        const currentScore = state.score || 0;
+        
         // Track score changes for dramatic effects
-        if (state.score !== state.lastScore) {
-            const scoreIncrease = state.score - state.lastScore;
-            state.lastScore = state.score;
+        if (currentScore !== state.lastScore) {
+            const scoreIncrease = currentScore - state.lastScore;
+            state.lastScore = currentScore;
             
-            // Trigger dramatic effect for score jumps
+            // Add score jump animation (no screen shake)
             if (scoreIncrease >= 50) {
-                const intensity = Math.min(5 + scoreIncrease / 20, 20);
-                state.triggerScreenShake(intensity, 0.15);
-                
                 state.scoreJumpAnimation = {
-                    value: Math.floor(state.score),
+                    value: Math.floor(currentScore),
                     scale: 1.5 + Math.min(scoreIncrease / 100, 1),
                     startTime: Date.now(),
                     duration: 600
                 };
             } else if (scoreIncrease >= 25) {
                 state.scoreJumpAnimation = {
-                    value: Math.floor(state.score),
+                    value: Math.floor(currentScore),
                     scale: 1.2,
                     startTime: Date.now(),
                     duration: 400
@@ -968,11 +968,12 @@ drawScoreText(state) {
         }
         
         let color = '#48bb78';
-        if (state.recentScore >= 500) {
+        const recentScore = state.recentScore || 0;
+        if (recentScore >= 500) {
             color = '#ff3232';
-        } else if (state.recentScore >= 200) {
+        } else if (recentScore >= 200) {
             color = '#ffc832';
-        } else if (state.recentScore >= 100) {
+        } else if (recentScore >= 100) {
             color = '#ffd700';
         }
         
@@ -994,7 +995,7 @@ drawScoreText(state) {
             this.ctx.shadowOffsetY = 2;
         }
         
-        this.ctx.fillText(`Score: ${Math.floor(state.score)}`, centerX, baseY);
+        this.ctx.fillText(`Score: ${Math.floor(currentScore)}`, centerX, baseY);
         
         this.ctx.restore();
     }
