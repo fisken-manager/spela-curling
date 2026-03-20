@@ -280,7 +280,7 @@ export class GameState {
             const orbProgress = baseProgress + progressOffset;
             
             if (orbProgress <= 1) {
-                const centerX = (random(groupSeed + 3) - 0.5) * 160;
+                const centerX = (random(groupSeed + 3) - 0.5) * 320;
                 
                 const orbs = this.generatePatternOrbs(pattern, count, centerX, orbProgress);
                 for (const orb of orbs) {
@@ -304,7 +304,7 @@ export class GameState {
                 
                 if (orbProgress > 1) continue;
                 
-                const orbX = (random(purpleSeed + 1) - 0.5) * 160;
+                const orbX = (random(purpleSeed + 1) - 0.5) * 320;
                 
                 this.scoringOrbs.push({
                     id: `orb-${orbId++}`,
@@ -319,14 +319,14 @@ export class GameState {
     
     generatePatternOrbs(pattern, count, centerX, baseProgress) {
         const orbs = [];
-        const spacing = 0.003;
+        const spacing = 0.006; // Double the vertical spacing
         
         switch (pattern) {
             case 'arcLeft':
                 for (let i = 0; i < count; i++) {
                     const angle = (Math.PI * 0.3) + (i / (count - 1 || 1)) * (Math.PI * 0.4);
                     orbs.push({
-                        x: centerX - Math.cos(angle) * 40,
+                        x: centerX - Math.cos(angle) * 80,
                         scrollProgress: baseProgress - (count / 2 - i) * spacing
                     });
                 }
@@ -335,7 +335,7 @@ export class GameState {
                 for (let i = 0; i < count; i++) {
                     const angle = (Math.PI * 0.3) + (i / (count - 1 || 1)) * (Math.PI * 0.4);
                     orbs.push({
-                        x: centerX + Math.cos(angle) * 40,
+                        x: centerX + Math.cos(angle) * 80,
                         scrollProgress: baseProgress - (count / 2 - i) * spacing
                     });
                 }
@@ -343,10 +343,10 @@ export class GameState {
             case 'diamond':
                 const diamondPositions = [
                     { x: 0, y: 0 },
-                    { x: -30, y: -1 },
-                    { x: 30, y: -1 },
-                    { x: -30, y: 1 },
-                    { x: 30, y: 1 }
+                    { x: -60, y: -2 },
+                    { x: 60, y: -2 },
+                    { x: -60, y: 2 },
+                    { x: 60, y: 2 }
                 ];
                 for (const pos of diamondPositions) {
                     orbs.push({
@@ -365,10 +365,10 @@ export class GameState {
                 break;
             case 'box':
                 const boxPositions = [
-                    { x: -25, y: -1 },
-                    { x: 25, y: -1 },
-                    { x: -25, y: 1 },
-                    { x: 25, y: 1 }
+                    { x: -50, y: -2 },
+                    { x: 50, y: -2 },
+                    { x: -50, y: 2 },
+                    { x: 50, y: 2 }
                 ];
                 for (const pos of boxPositions) {
                     orbs.push({
