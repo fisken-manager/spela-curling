@@ -802,7 +802,7 @@ addPowerUpParticles(state, powerUp) {
                 this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
                 this.ctx.lineWidth = 2;
                 this.ctx.stroke();
-            } else {
+            } else if (orb.type === 'purple') {
                 const gradient = this.ctx.createRadialGradient(
                     screenX, screenY, 0,
                     screenX, screenY, radius
@@ -817,6 +817,28 @@ addPowerUpParticles(state, powerUp) {
                 this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
                 this.ctx.lineWidth = 2;
                 this.ctx.stroke();
+            } else if (orb.type === 'yellow') {
+                const gradient = this.ctx.createRadialGradient(
+                    screenX, screenY, 0,
+                    screenX, screenY, radius
+                );
+                gradient.addColorStop(0, 'rgba(255, 215, 0, 1)');
+                gradient.addColorStop(0.6, 'rgba(255, 193, 7, 0.9)');
+                gradient.addColorStop(1, 'rgba(255, 160, 0, 0.4)');
+                
+                this.ctx.fillStyle = gradient;
+                this.ctx.fill();
+                
+                this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+                this.ctx.lineWidth = 2;
+                this.ctx.stroke();
+                
+                // Draw $ symbol
+                this.ctx.fillStyle = 'rgba(139, 69, 19, 1)';
+                this.ctx.font = `bold ${Math.floor(radius * 1.2)}px Arial`;
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+                this.ctx.fillText('$', screenX, screenY);
             }
             
             this.ctx.restore();
@@ -833,8 +855,19 @@ addPowerUpParticles(state, powerUp) {
         const screenX = playArea.left + playArea.width / 2 + orb.x;
         const screenY = state.screenHeight * 0.5;
         
-        const color = orb.type === 'purple' ? '147, 122, 234' : '72, 187, 120';
-        const count = orb.type === 'purple' ? 8 : 5;
+        let color;
+        let count;
+        
+        if (orb.type === 'yellow') {
+            color = '255, 215, 0';
+            count = 10;
+        } else if (orb.type === 'purple') {
+            color = '147, 122, 234';
+            count = 8;
+        } else {
+            color = '72, 187, 120';
+            count = 5;
+        }
         
         for (let i = 0; i < count; i++) {
             const angle = Math.random() * Math.PI * 2;
@@ -897,8 +930,10 @@ addPowerUpParticles(state, powerUp) {
             this.ctx.lineWidth = 3;
             this.ctx.strokeText(anim.text, anim.x, y);
             
-            // Fill with color based on combo
-            if (anim.isCombo) {
+            // Fill with color based on type
+            if (anim.isMoney) {
+                this.ctx.fillStyle = `rgba(255, 215, 0, ${alpha})`;
+            } else if (anim.isCombo) {
                 const comboColor = this.getComboColor(anim.text);
                 this.ctx.fillStyle = `rgba(${comboColor}, ${alpha})`;
             } else {

@@ -198,8 +198,9 @@ export class GameState {
         this.gameOver = false;
         this.scoringOrbs = [];
         this.scoringOrbConfig = {
-            green: { radius: 15, points: 25, money: 1 },
-            purple: { radius: 18, points: 100, money: 5 }
+            green: { radius: 15, points: 25 },
+            purple: { radius: 18, points: 100 },
+            yellow: { radius: 12, money: 1 }
         };
         
         // Combo system
@@ -314,6 +315,28 @@ export class GameState {
                     scrollProgress: orbProgress,
                     collected: false
                 });
+            }
+            
+            // Rare yellow orbs at wall edges (20% chance per segment)
+            if (random(seed + 2000) < 0.2) {
+                const yellowSeed = seed + 3000;
+                const progressOffset = random(yellowSeed) * 0.5;
+                const orbProgress = baseProgress + progressOffset;
+                
+                if (orbProgress <= 1) {
+                    // Position at wall edge (left or right)
+                    const wallOffset = 200; // Distance from center to wall edge
+                    const onLeftWall = random(yellowSeed + 1) < 0.5;
+                    const orbX = onLeftWall ? -wallOffset : wallOffset;
+                    
+                    this.scoringOrbs.push({
+                        id: `orb-${orbId++}`,
+                        type: 'yellow',
+                        x: orbX,
+                        scrollProgress: orbProgress,
+                        collected: false
+                    });
+                }
             }
         }
     }

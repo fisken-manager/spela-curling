@@ -282,6 +282,32 @@ checkPowerUps(state) {
         orb.collected = true;
         
         const now = Date.now();
+        const config = state.scoringOrbConfig[orb.type];
+        
+        // Yellow orbs give money only
+        if (orb.type === 'yellow') {
+            state.money += config.money || 1;
+            
+            const playArea = state.getPlayArea();
+            const screenX = playArea.left + playArea.width / 2 + orb.x;
+            const screenY = state.screenHeight * 0.5;
+            
+            state.scoreAnimations.push({
+                x: screenX,
+                y: screenY,
+                text: '$1',
+                startTime: now,
+                duration: 800,
+                scale: 1.5,
+                isCombo: false,
+                isMoney: true
+            });
+            
+            state.scoringOrbCollected = orb;
+            state.triggerRingFlash(screenX, screenY, '255, 215, 0');
+            return;
+        }
+        
         const timeSinceLastOrb = now - state.lastOrbTime;
         
         // Combo system: increase multiplier if collected within 500ms
@@ -293,14 +319,10 @@ checkPowerUps(state) {
         
         state.lastOrbTime = now;
         
-        const basePoints = state.scoringOrbConfig[orb.type].points;
+        const basePoints = config.points;
         const multipliedPoints = basePoints * state.comboMultiplier;
         state.score += multipliedPoints;
         state.recentScore += multipliedPoints;
-        
-        // Add money
-        const moneyValue = state.scoringOrbConfig[orb.type].money || 0;
-        state.money += moneyValue;
         
         // Create score animation
         const playArea = state.getPlayArea();
