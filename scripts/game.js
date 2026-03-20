@@ -122,6 +122,7 @@ function gameLoop(timestamp) {
 
 function update(deltaTime) {
     updatePower(deltaTime);
+    updateCombo(deltaTime);
     
     if (state.phase === 'moving') {
         physics.update(state, deltaTime);
@@ -131,6 +132,18 @@ function update(deltaTime) {
         }
         transition.update(deltaTime, state, scrollController);
     }
+}
+
+function updateCombo(deltaTime) {
+    const now = Date.now();
+    
+    // Reset combo multiplier after timeout
+    if (state.lastOrbTime > 0 && now - state.lastOrbTime > state.comboTimeout) {
+        state.comboMultiplier = 1;
+    }
+    
+    // Decay recentScore over time (for visual effect)
+    state.recentScore = Math.max(0, state.recentScore - deltaTime * 100);
 }
 
 function updatePower(deltaTime) {

@@ -192,7 +192,7 @@ export class GameState {
         this.superBoostCollected = null;
         this.superBoostImageEffect = null;
         
-        //Scoring system
+        // Scoring system
         this.score = 0;
         this.gameOver = false;
         this.scoringOrbs = [];
@@ -200,6 +200,13 @@ export class GameState {
             green: { radius: 15, points: 25 },
             purple: { radius: 18, points: 100 }
         };
+        
+        // Combo system
+        this.comboMultiplier = 1;
+        this.lastOrbTime = 0;
+        this.comboTimeout = 500;
+        this.recentScore = 0;
+        this.scoreAnimations = [];
     }
     
     initPowerUps() {
@@ -240,13 +247,17 @@ export class GameState {
         const maxScroll = Math.max(1, this.pageHeight - this.screenHeight);
         if (maxScroll <= 0) return;
         
-        const segmentSize = 500;
+        const segmentSize = 1000;
+        const startOffset = 1000;
         const numSegments = Math.floor(maxScroll / segmentSize);
         
         let orbId = 0;
         
         for (let i = 0; i < numSegments; i++) {
-            const baseProgress = (i * segmentSize) / maxScroll;
+            const baseProgress = (i * segmentSize + startOffset) / maxScroll;
+            
+            if (baseProgress > 1) continue;
+            
             const seed = Math.floor(this.pageHeight + i * 1000);
             
             const random = (s) => {
@@ -254,22 +265,19 @@ export class GameState {
                 return x - Math.floor(x);
             };
             
-            const numGreenGroups = 2 + Math.floor(random(seed) * 2);
+            // 1 green group per segment
+            const groupSeed = seed + 1;
+            const patternIndex = Math.floor(random(groupSeed) * 5);
+            const patterns = ['arcLeft', 'arcRight', 'diamond', 'vertical', 'box'];
+            const pattern = patterns[patternIndex];
             
-            for (let g = 0; g< numGreenGroups; g++) {
-                const groupSeed = seed + g * 100 + 1;
-                const patternIndex = Math.floor(random(groupSeed) * 5);
-                const patterns = ['arcLeft', 'arcRight', 'diamond', 'vertical', 'box'];
-                const pattern = patterns[patternIndex];
-                
-                const countRange = { min: 3, max: 5 };
-                const count = countRange.min + Math.floor(random(groupSeed + 1) * (countRange.max - countRange.min + 1));
-                
-                const progressOffset = (random(groupSeed + 2) * 0.3 + g * 0.15);
-                const orbProgress = baseProgress + progressOffset;
-                
-                if (orbProgress > 1) continue;
-                
+            const countRange = { min: 3, max: 5 };
+            const count = countRange.min + Math.floor(random(groupSeed + 1) * (countRange.max - countRange.min + 1));
+            
+            const progressOffset = random(groupSeed + 2) * 0.3;
+            const orbProgress = baseProgress + progressOffset;
+            
+            if (orbProgress <= 1) {
                 const centerX = (random(groupSeed + 3) - 0.5) * 160;
                 
                 const orbs = this.generatePatternOrbs(pattern, count, centerX, orbProgress);
@@ -284,9 +292,10 @@ export class GameState {
                 }
             }
             
-            const numPurples = 1 + Math.floor(random(seed + 500) * 2);
+            // 0-1 purple per segment
+            const numPurples = Math.floor(random(seed + 500) * 2);
             
-            for (let p = 0;p < numPurples; p++) {
+            for (let p = 0; p < numPurples; p++) {
                 const purpleSeed = seed + 1000 + p * 50;
                 const progressOffset = 0.1 + random(purpleSeed) * 0.3 + p * 0.25;
                 const orbProgress = baseProgress + progressOffset;
@@ -381,6 +390,10 @@ export class GameState {
         this.sweepBoost = null;
         this.score = 0;
         this.gameOver = false;
+        this.comboMultiplier = 1;
+        this.lastOrbTime = 0;
+        this.recentScore = 0;
+        this.scoreAnimations = [];
         for (const powerUp of this.powerUps) {
             powerUp.collected = false;
         }

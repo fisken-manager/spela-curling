@@ -280,15 +280,48 @@ checkPowerUps(state) {
 
     collectScoringOrb(state, orb) {
         orb.collected = true;
-        state.score += state.scoringOrbConfig[orb.type].points;
-        state.scoringOrbCollected = orb;
         
+        const now = Date.now();
+        const timeSinceLastOrb = now - state.lastOrbTime;
+        
+        // Combo system: increase multiplier if collected within 500ms
+        if (timeSinceLastOrb < state.comboTimeout && state.lastOrbTime > 0) {
+            state.comboMultiplier = Math.min(state.comboMultiplier + 1, 100);
+        } else {
+            state.comboMultiplier = 1;
+        }
+        
+        state.lastOrbTime = now;
+        
+        const basePoints = state.scoringOrbConfig[orb.type].points;
+        const multipliedPoints = basePoints * state.comboMultiplier;
+        state.score += multipliedPoints;
+        state.recentScore += multipliedPoints;
+        
+        // Create score animation
         const playArea = state.getPlayArea();
         const screenX = playArea.left + playArea.width / 2 + orb.x;
         const screenY = state.screenHeight * 0.5;
         
+        state.scoreAnimations.push({
+            x: screenX,
+            y: screenY,
+            text: multipliedPoints > basePoints ? `+${multipliedPoints} x${state.comboMultiplier}` : `+${basePoints}`,
+            startTime: now,
+            duration: 800,
+            scale: 1 + (state.comboMultiplier - 1) * 0.1, // Bigger for higher combo
+            isCombo: multipliedPoints > basePoints
+        });
+        
+        state.scoringOrbCollected = orb;
+        
         const color = orb.type === 'purple' ? '147, 122, 234' : '72, 187, 120';
         state.triggerRingFlash(screenX, screenY, color);
+        
+        // Screen shake for high combos
+        if (state.comboMultiplier >= 3) {
+            state.triggerScreenShake(3 + state.comboMultiplier, 0.1);
+        }
     }
 
     collectPowerUp(state, powerUp) {

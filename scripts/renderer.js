@@ -343,14 +343,10 @@ drawPowerUps(state) {
         
         this.ctx.fillStyle = 'white';
         this.ctx.font = '12px monospace';
+        this.ctx.textAlign = 'left';
         this.ctx.fillText(`scroll: ${state.scrollProgress.toFixed(3)} pageH: ${state.pageHeight}`, 10, 20);
         this.ctx.fillText(`worldY: ${state.stone.worldY.toFixed(0)} maxScroll: ${maxScroll}`, 10, 35);
         this.ctx.fillText(`lives: ${state.lives}`, 10, 50);
-
-        this.ctx.fillStyle = '#48bb78';
-        this.ctx.font = 'bold 24px Arial';
-        this.ctx.textAlign = 'center';
-        this.ctx.fillText(`Score: ${Math.floor(state.score)}`, state.screenWidth / 2, 40);
 
         if (state.frictionBoost) {
             this.ctx.fillStyle = 'gold';
@@ -359,6 +355,14 @@ drawPowerUps(state) {
         if (state.sweepBoost) {
             this.ctx.fillStyle = 'lime';
             this.ctx.fillText(`SWEEP: ${state.sweepBoost.timer.toFixed(1)}s`, 10, 80);
+        }
+        
+        // Show combo if active
+        if (state.comboMultiplier > 1) {
+            this.ctx.fillStyle = '#ffd700';
+            this.ctx.font = 'bold 16px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText(`COMBO x${state.comboMultiplier}!`, state.screenWidth / 2, 70);
         }
         
         for (const powerUp of state.powerUps) {
@@ -843,6 +847,111 @@ addPowerUpParticles(state, powerUp) {
         }
     }
 
+    updateScoreAnimations(state, deltaTime) {
+        if (!state.scoreAnimations) return;
+        
+        const now = Date.now();
+        state.scoreAnimations = state.scoreAnimations.filter(anim => {
+            const elapsed = now - anim.startTime;
+            return elapsed < anim.duration;
+        });
+    }
+
+    drawScoreAnimations(state) {
+        if (!state.scoreAnimations || state.scoreAnimations.length === 0) return;
+        
+        const now = Date.now();
+        
+        for (const anim of state.scoreAnimations) {
+            const elapsed = now - anim.startTime;
+            const progress = elapsed / anim.duration;
+            
+            // Float upward
+            const y = anim.y - progress * 80;
+            
+            // Scale: grow then shrink
+            let scale;
+            if (progress < 0.2) {
+                scale = 0.5 + progress * 5; // 0.5 to 1.5
+            } else {
+                scale = 1.5 - (progress - 0.2) * 1.25; // 1.5 to 1.0
+            }
+            scale *= anim.scale;
+            
+            // Fade out
+            const alpha = 1 - progress;
+            
+            this.ctx.save();
+            this.ctx.font = `bold ${Math.floor(20 * scale)}px Arial`;
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            
+            // Outline for visibility
+            this.ctx.strokeStyle = `rgba(0, 0, 0, ${alpha * 0.8})`;
+            this.ctx.lineWidth = 3;
+            this.ctx.strokeText(anim.text, anim.x, y);
+            
+            // Fill with color based on combo
+            if (anim.isCombo) {
+                const comboColor = this.getComboColor(anim.text);
+                this.ctx.fillStyle = `rgba(${comboColor}, ${alpha})`;
+            } else {
+                this.ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+            }
+            this.ctx.fillText(anim.text, anim.x, y);
+            
+            this.ctx.restore();
+        }
+    }
+
+    getComboColor(text) {
+        // Extract multiplier from text like "+50 x2"
+        const match = text.match(/x(\d+)/);
+        if (!match) return '255, 255, 255';
+        
+        const multiplier = parseInt(match[1]);
+        if (multiplier >= 10) return '255, 50, 50'; // Red for high combos
+        if (multiplier >= 5) return '255, 200, 50'; // Gold for medium combos
+        if (multiplier >= 3) return '255, 215, 0'; // Yellow-gold
+        return '72, 187, 120'; // Green for low combos
+    }
+
+    drawScoreText(state) {
+        const baseY = 40;
+        let scale = 1;
+        let color = '#48bb78';
+        
+        // Check for recent score for visual effect
+        if (state.recentScore > 0) {
+            const intensity = Math.min(state.recentScore / 1000, 1);
+            scale = 1 + intensity * 0.3;
+            
+            if (state.recentScore >= 500) {
+                color = '#ff3232'; // Red for big scores
+            } else if (state.recentScore >= 200) {
+                color = '#ffc832'; // Gold for medium
+            } else if (state.recentScore >= 100) {
+                color = '#ffd700'; // Yellow
+            }
+        }
+        
+        this.ctx.save();
+        this.ctx.fillStyle = color;
+        this.ctx.font = `bold ${Math.floor(24 * scale)}px Arial`;
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        
+        // Draw shadow for readability
+        this.ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+        this.ctx.shadowBlur = 4;
+        this.ctx.shadowOffsetX = 2;
+        this.ctx.shadowOffsetY = 2;
+        
+        this.ctx.fillText(`Score: ${Math.floor(state.score)}`, state.screenWidth / 2, baseY);
+        
+        this.ctx.restore();
+    }
+
     updateSuperBoostImageEffect(state, deltaTime) {
         if (!state.superBoostImageEffect) return;
 
@@ -904,6 +1013,7 @@ addPowerUpParticles(state, powerUp) {
 
     render(state, deltaTime = 0.016) {
         this.updateEffects(state, deltaTime);
+        this.updateScoreAnimations(state, deltaTime);
         
         this.ctx.save();
         this.ctx.translate(this.shakeOffsetX, this.shakeOffsetY);
@@ -923,6 +1033,7 @@ addPowerUpParticles(state, powerUp) {
         this.drawSlingshotElastic(state);
         this.drawVGauge(state);
         this.drawSuperBoostImageEffect(state);
+        this.drawScoreAnimations(state);
         
         const pos = this.getStoneScreenPosition(state);
         
@@ -955,6 +1066,7 @@ addPowerUpParticles(state, powerUp) {
         this.ctx.restore();
         
         this.drawRingFlash(state);
+        this.drawScoreText(state);
     }
 
 renderDemo(state, deltaTime = 0.016) {
