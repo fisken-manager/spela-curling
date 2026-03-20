@@ -916,9 +916,14 @@ addPowerUpParticles(state, powerUp) {
         return '72, 187, 120'; // Green for low combos
     }
 
-    drawScoreText(state) {
+drawScoreText(state) {
         const baseY = 40;
         const centerX = state.screenWidth / 2;
+        
+        // Initialize lastScore if needed
+        if (state.lastScore === undefined) {
+            state.lastScore = state.score;
+        }
         
         // Track score changes for dramatic effects
         if (state.score !== state.lastScore) {
@@ -927,11 +932,9 @@ addPowerUpParticles(state, powerUp) {
             
             // Trigger dramatic effect for score jumps
             if (scoreIncrease >= 50) {
-                // Big score jump - shake and flash
                 const intensity = Math.min(5 + scoreIncrease / 20, 20);
                 state.triggerScreenShake(intensity, 0.15);
                 
-                // Add score jump animation
                 state.scoreJumpAnimation = {
                     value: Math.floor(state.score),
                     scale: 1.5 + Math.min(scoreIncrease / 100, 1),
@@ -939,7 +942,6 @@ addPowerUpParticles(state, powerUp) {
                     duration: 600
                 };
             } else if (scoreIncrease >= 25) {
-                // Medium score jump
                 state.scoreJumpAnimation = {
                     value: Math.floor(state.score),
                     scale: 1.2,
@@ -947,6 +949,55 @@ addPowerUpParticles(state, powerUp) {
                     duration: 400
                 };
             }
+        }
+        
+        let scale = 1;
+        let glowIntensity = 0;
+        
+        if (state.scoreJumpAnimation) {
+            const elapsed = Date.now() - state.scoreJumpAnimation.startTime;
+            const progress = Math.min(elapsed / state.scoreJumpAnimation.duration, 1);
+            
+            if (progress < 1) {
+                const bounce = Math.sin(progress * Math.PI);
+                scale = 1 + (state.scoreJumpAnimation.scale - 1) * bounce;
+                glowIntensity = bounce;
+            } else {
+                state.scoreJumpAnimation = null;
+            }
+        }
+        
+        let color = '#48bb78';
+        if (state.recentScore >= 500) {
+            color = '#ff3232';
+        } else if (state.recentScore >= 200) {
+            color = '#ffc832';
+        } else if (state.recentScore >= 100) {
+            color = '#ffd700';
+        }
+        
+        const fontSize = Math.floor(24 * scale);
+        
+        this.ctx.save();
+        this.ctx.fillStyle = color;
+        this.ctx.font = `bold ${fontSize}px Arial`;
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        
+        if (glowIntensity > 0) {
+            this.ctx.shadowColor = color;
+            this.ctx.shadowBlur = 20 * glowIntensity;
+        } else {
+            this.ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+            this.ctx.shadowBlur = 4;
+            this.ctx.shadowOffsetX = 2;
+            this.ctx.shadowOffsetY = 2;
+        }
+        
+        this.ctx.fillText(`Score: ${Math.floor(state.score)}`, centerX, baseY);
+        
+        this.ctx.restore();
+    }
         }
         
         // Calculate display scale based on score jump animation
@@ -977,7 +1028,7 @@ addPowerUpParticles(state, powerUp) {
             color = '#ffd700';
         }
         
-        const fontSize = Math.floor(24* scale);
+        const fontSize = Math.floor(24 * scale);
         
         this.ctx.save();
         this.ctx.fillStyle = color;
@@ -985,7 +1036,8 @@ addPowerUpParticles(state, powerUp) {
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
         
-        // Glow effect for dramatic momentif (glowIntensity > 0) {
+        // Glow effect for dramatic moment
+        if (glowIntensity > 0) {
             this.ctx.shadowColor = color;
             this.ctx.shadowBlur = 20 * glowIntensity;
         } else {

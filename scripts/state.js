@@ -396,6 +396,8 @@ export class GameState {
         this.lastOrbTime = 0;
         this.recentScore = 0;
         this.scoreAnimations = [];
+        this.lastScore = 0;
+        this.scoreJumpAnimation = null;
         for (const powerUp of this.powerUps) {
             powerUp.collected = false;
         }
