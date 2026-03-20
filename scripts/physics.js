@@ -298,6 +298,10 @@ checkPowerUps(state) {
         state.score += multipliedPoints;
         state.recentScore += multipliedPoints;
         
+        // Add money
+        const moneyValue = state.scoringOrbConfig[orb.type].money || 0;
+        state.money += moneyValue;
+        
         // Create score animation
         const playArea = state.getPlayArea();
         const screenX = playArea.left + playArea.width / 2 + orb.x;

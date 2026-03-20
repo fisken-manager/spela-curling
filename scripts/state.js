@@ -194,11 +194,12 @@ export class GameState {
         
         // Scoring system
         this.score = 0;
+        this.money = 0;
         this.gameOver = false;
         this.scoringOrbs = [];
         this.scoringOrbConfig = {
-            green: { radius: 15, points: 25 },
-            purple: { radius: 18, points: 100 }
+            green: { radius: 15, points: 25, money: 1 },
+            purple: { radius: 18, points: 100, money: 5 }
         };
         
         // Combo system
@@ -391,6 +392,7 @@ export class GameState {
         this.frictionBoost = null;
         this.sweepBoost = null;
         this.score = 0;
+        this.money = 0;
         this.gameOver = false;
         this.comboMultiplier = 1;
         this.lastOrbTime = 0;

@@ -1004,6 +1004,20 @@ drawScoreText(state) {
         this.ctx.fillText(`Score: ${Math.floor(currentScore)}`, centerX, baseY);
         
         this.ctx.restore();
+        
+        // Draw money in yellow
+        const money = state.money || 0;
+        this.ctx.save();
+        this.ctx.fillStyle = '#ffd700';
+        this.ctx.font = 'bold 20px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        this.ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+        this.ctx.shadowBlur = 4;
+        this.ctx.shadowOffsetX = 2;
+        this.ctx.shadowOffsetY = 2;
+        this.ctx.fillText(`$${money}`, centerX, baseY + 30);
+        this.ctx.restore();
     }
 
     updateSuperBoostImageEffect(state, deltaTime) {
