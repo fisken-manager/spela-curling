@@ -25,7 +25,7 @@ export class GameState {
         this.stoneVisualY = 0.85;    // current visual Y (ratio 0-1, where 0 is top)
         this.restY = 0.85;            // rest position (near bottom)
         this.centerY = 0.5;           // position where scrolling starts (center)
-        this.transitionDistance = 0.35; // distance from rest to center (0.85 -0.50)
+        this.transitionDistance = 0.35; // distance from rest to center (0.85 - 0.50)
         
         // Visual velocity (for transition animation)
         this.visualVy = 0;
@@ -33,20 +33,16 @@ export class GameState {
         // World Y offset compensation (tracks scroll position)
         this.worldYOffset = 0;
         
-        // Input state for slingshot drag
+        // Input state for flick throw
         this.input = {
             isDragging: false,
             dragStartX: 0,
             dragStartY: 0,
-            currentDragX: 0,
-            currentDragY: 0,
-        };
-        
-        // Oscillating power bar
-        this.power = {
-            value: 0,
-            direction: 1,
-            oscillationRate: 80,
+            stoneStartX: 0,
+            stoneStartY: 0,
+            flickHistory: [], // array of {x, y, time}
+            snapBackProgress: 0, // 0 to 1 for snapping back
+            isSnapping: false
         };
         
         this.aimAngle = 0;
@@ -67,6 +63,10 @@ export class GameState {
         
         // Page dimensions
         this.pageHeight = 0;      // total scrollable height
+        
+        // Loop State
+        this.loopCount = 1;
+        this.isLoopTransitioning = false;
         
 // Power-ups
         this.powerUpConfig = {
@@ -173,8 +173,10 @@ export class GameState {
             minAngularVelocity: 3,
             maxAngularVelocity: 10,
             positions: [
-                { scrollProgress: 0.20, x: 40 },
-                { scrollProgress: 0.70, x: -30 },
+                { scrollProgress: 0.15, x: 40 },
+                { scrollProgress: 0.35, x: -30 },
+                { scrollProgress: 0.55, x: 50 },
+                { scrollProgress: 0.75, x: -45 },
             ]
         };
 
@@ -200,7 +202,7 @@ export class GameState {
         this.scoringOrbConfig = {
             green: { radius: 8, points: 25 },
             purple: { radius: 9, points: 100 },
-            yellow: { radius: 6, money: 1 }
+            yellow: { radius: 12, money: 1 }
         };
         
         // Combo system
@@ -211,39 +213,221 @@ export class GameState {
         this.scoreAnimations = [];
         this.lastScore = 0;
         this.scoreJumpAnimation = null;
+
+        // Buy menu
+        this.showBuyMenu = false;
+
+        // Upgrades (all reset on new game)
+        this.upgrades = {
+            stoneSize: { level: 0, maxLevel: 5 },
+            maxVelocity: { level: 0, maxLevel: 5 },
+            frictionReduction: { level: 0, maxLevel: 5 },
+            powerdownResistance: { level: 0, maxLevel: 5 },
+            curlPower: { level: 0, maxLevel: 5 },
+            orbSize: { level: 0, maxLevel: 5 },
+        };
+
+        // Extra life pricing (escalates 10x per purchase)
+        this.lifeCost = 10;
+
+        // Permanent effects from powerdowns
+        this.curlChaosStrength = 0;
+        this.sizeShrinkPenalty = 0;
+
+        // Stone Growth powerup
+        this.growthPowerUps = [];
+        this.growthPowerUpConfig = {
+            radius: 25,
+            duration: 5,
+            growthMultiplier: 1.3,
+            positions: [
+                { scrollProgress: 0.30, x: 0 },
+                { scrollProgress: 0.55, x: -50 },
+                { scrollProgress: 0.75, x: 50 },
+            ]
+        };
+        this.growthBoost = null;
+
+        // Powerdown pickups
+        this.curlChaosPickups = [];
+        this.curlChaosConfig = {
+            radius: 25,
+            positions: [
+                { scrollProgress: 0.12, x: 30 },
+                { scrollProgress: 0.32, x: -40 },
+                { scrollProgress: 0.52, x: 45 },
+                { scrollProgress: 0.72, x: -35 },
+                { scrollProgress: 0.92, x: 25 },
+            ]
+        };
+
+        this.sizeShrinkPickups = [];
+        this.sizeShrinkConfig = {
+            radius: 25,
+            positions: [
+                { scrollProgress: 0.18, x: -45 },
+                { scrollProgress: 0.38, x: 55 },
+                { scrollProgress: 0.58, x: -30 },
+                { scrollProgress: 0.78, x: 40 },
+                { scrollProgress: 0.98, x: -20 },
+            ]
+        };
     }
     
+    generateItems(type, baseSeed, pixelSpacing, xRange) {
+        const items = [];
+        const maxScroll = Math.max(1, this.pageHeight - this.screenHeight);
+        if (maxScroll <= 0 || pixelSpacing <= 0) return items;
+        
+        let targetCount = Math.floor(maxScroll / pixelSpacing);
+        
+        if (targetCount <= 0) return items;
+        
+        const segmentSize = maxScroll / targetCount;
+        let itemId = 0;
+        
+        const random = (s) => {
+            const x = Math.sin(s) * 10000;
+            return x - Math.floor(x);
+        };
+        
+        const loopSeed = Math.floor(baseSeed + (this.loopCount || 1) * 100000);
+        
+        for (let i = 0; i < targetCount; i++) {
+            const itemSeed = loopSeed + i * 1000;
+            const baseProgress = (i * segmentSize) / maxScroll;
+            
+            // Randomize position within this segment
+            const progressOffset = random(itemSeed) * (segmentSize / maxScroll);
+            let itemProgress = baseProgress + progressOffset;
+            
+            // Keep away from absolute top/bottom
+            if (itemProgress < 0.02) itemProgress = 0.02;
+            if (itemProgress > 0.98) itemProgress = 0.98;
+            
+            const itemX = (random(itemSeed + 1) - 0.5) * xRange;
+            
+            items.push({
+                id: `${type}-${itemId++}`,
+                x: itemX,
+                scrollProgress: itemProgress,
+                collected: false
+            });
+        }
+        return items;
+    }
+
+    convertPowerupsToSweepAndSuper() {
+        const sweeps = [];
+        const supers = [];
+        this.powerUps = this.powerUps.filter((pickup, index) => {
+            const num = index + 1;
+            if (num % 15 === 0) {
+                pickup.id = pickup.id.replace('powerup-', 'super-');
+                supers.push(pickup);
+                return false;
+            }
+            if (num % 10 === 0) {
+                pickup.id = pickup.id.replace('powerup-', 'sweep-');
+                sweeps.push(pickup);
+                return false;
+            }
+            return true;
+        });
+        this.sweepPowerUps.push(...sweeps);
+        this.superBoostPowerUps.push(...supers);
+    }
+
+    positionSweepNearEdges() {
+        const random = (s) => {
+            const x = Math.sin(s) * 10000;
+            return x - Math.floor(x);
+        };
+        
+        const edgeMargin = 30;
+        const edgeWidth = 80;
+        
+        for (let i = 0; i < this.sweepPowerUps.length; i++) {
+            const pickup = this.sweepPowerUps[i];
+            const seed = parseInt(pickup.id.split('-')[1]);
+            const side = random(seed) <0.5?-1 : 1;
+            const offset = edgeMargin + random(seed + 1) * edgeWidth;
+            pickup.x = side * offset;
+        }
+    }
+
+    enforcePickupProximity() {
+        const maxAttempts = 20;
+        const minDistance = 100;
+        const verticalTolerance = 50;
+        
+        const random = (s) => {
+            const x = Math.sin(s) * 10000;
+            return x - Math.floor(x);
+        };
+        
+        const pickupTypes = [
+            { items: this.powerUps, xRange: 160 },
+            { items: this.lifePowerUps, xRange: 100 },
+            { items: this.sweepPowerUps, xRange: 120 },
+            { items: this.rotationPowerUps, xRange: 400 },
+            { items: this.superBoostPowerUps, xRange: 100 },
+            { items: this.growthPowerUps, xRange: 100 },
+            { items: this.curlChaosPickups, xRange: 90 },
+            { items: this.sizeShrinkPickups, xRange: 110 }
+        ];
+        
+        const allPlaced = [];
+        
+        for (const type of pickupTypes) {
+            for (let i = 0; i < type.items.length; i++) {
+                const item = type.items[i];
+                let attempts = 0;
+                
+                while (attempts < maxAttempts) {
+                    let tooClose = false;
+                    
+                    for (const existing of allPlaced) {
+                        const verticalDistance = Math.abs(item.scrollProgress - existing.scrollProgress) * this.pageHeight;
+                        const horizontalDistance = Math.abs(item.x - existing.x);
+                        
+                        if (verticalDistance < verticalTolerance && horizontalDistance < minDistance) {
+                            tooClose = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!tooClose) break;
+                    
+                    item.x = (random(parseInt(item.id.split('-')[1]) + attempts * 1000 + 500) - 0.5) * type.xRange;
+                    attempts++;
+                }
+                
+                allPlaced.push(item);
+            }
+        }
+    }
+
     initPowerUps() {
-        this.powerUps = this.powerUpConfig.positions.map((pos, index) => ({
-            id: `powerup-${index}`,
-            x: pos.x,
-            scrollProgress: pos.scrollProgress,
-            collected: false
-        }));
-        this.lifePowerUps = this.lifePowerUpConfig.positions.map((pos, index) => ({
-            id: `life-${index}`,
-            x: pos.x,
-            scrollProgress: pos.scrollProgress,
-            collected: false
-        }));
-        this.sweepPowerUps = this.sweepPowerUpConfig.positions.map((pos, index) => ({
-            id: `sweep-${index}`,
-            x: pos.x,
-            scrollProgress: pos.scrollProgress,
-            collected: false
-        }));
-        this.rotationPowerUps = this.rotationPowerUpConfig.positions.map((pos, index) => ({
-            id: `rotation-${index}`,
-            x: pos.x,
-            scrollProgress: pos.scrollProgress,
-            collected: false
-        }));
-        this.superBoostPowerUps = this.superBoostPowerUpConfig.positions.map((pos, index) => ({
-            id: `super-${index}`,
-            x: pos.x,
-            scrollProgress: pos.scrollProgress,
-            collected: false
-        }));
+        const tuning = this.debugGenTuning || {};
+        const powerup = tuning.powerup ?? 1400;
+        const life = tuning.life ?? 20000;
+        const rotation = tuning.rotation ?? 3000;
+        const growth = tuning.growth ?? 8000;
+        const curlChaos = tuning.curlChaos ?? 13500;
+        const sizeShrink = tuning.sizeShrink ?? 19000;
+
+        this.powerUps = this.generateItems('powerup', 100, powerup, 160);
+        this.lifePowerUps = this.generateItems('life', 200, life, 100);
+        this.sweepPowerUps = [];
+        this.rotationPowerUps = this.generateItems('rotation', 400, rotation, 400);
+        this.superBoostPowerUps = [];
+        this.growthPowerUps = this.generateItems('growth', 600, growth, 100);
+        this.curlChaosPickups = this.generateItems('curlChaos', 700, curlChaos, 90);
+        this.sizeShrinkPickups = this.generateItems('sizeShrink', 800, sizeShrink, 110);
+        this.convertPowerupsToSweepAndSuper();
+        this.positionSweepNearEdges();
+        this.enforcePickupProximity();
     }
     
     initScoringOrbs() {
@@ -262,7 +446,7 @@ export class GameState {
             
             if (baseProgress > 1) continue;
             
-            const seed = Math.floor(this.pageHeight + i * 1000);
+            const seed = Math.floor(this.pageHeight + i * 1000 + (this.loopCount || 1) * 100000);
             
             const random = (s) => {
                 const x = Math.sin(s) * 10000;
@@ -317,15 +501,15 @@ export class GameState {
                 });
             }
             
-            // Rare yellow orbs at wall edges (20% chance per segment)
-            if (random(seed + 2000) < 0.2) {
+            // Yellow orbs at wall edges (80% chance per segment)
+            if (random(seed + 2000) < 0.8) {
                 const yellowSeed = seed + 3000;
                 const progressOffset = random(yellowSeed) * 0.5;
                 const orbProgress = baseProgress + progressOffset;
                 
                 if (orbProgress <= 1) {
-                    // Position at wall edge (left or right)
-                    const wallOffset = 200; // Distance from center to wall edge
+                    // Position near wall edge (left or right)
+                    const wallOffset = 180; // Distance from center, slightly inward from wall edge
                     const onLeftWall = random(yellowSeed + 1) < 0.5;
                     const orbX = onLeftWall ? -wallOffset : wallOffset;
                     
@@ -414,6 +598,7 @@ export class GameState {
         this.lives = 1;
         this.frictionBoost = null;
         this.sweepBoost = null;
+        this.growthBoost = null;
         this.score = 0;
         this.money = 0;
         this.gameOver = false;
@@ -423,24 +608,24 @@ export class GameState {
         this.scoreAnimations = [];
         this.lastScore = 0;
         this.scoreJumpAnimation = null;
-        for (const powerUp of this.powerUps) {
-            powerUp.collected = false;
+        this.loopCount = 1;
+        this.isLoopTransitioning = false;
+
+        // Reset buy menu
+        this.showBuyMenu = false;
+
+        // Reset upgrades
+        for (const key of Object.keys(this.upgrades)) {
+            this.upgrades[key].level = 0;
         }
-        for (const lifePowerUp of this.lifePowerUps) {
-            lifePowerUp.collected = false;
-        }
-        for (const sweepPowerUp of this.sweepPowerUps) {
-            sweepPowerUp.collected = false;
-        }
-        for (const rotationPowerUp of this.rotationPowerUps) {
-            rotationPowerUp.collected = false;
-        }
-        for (const superBoostPowerUp of this.superBoostPowerUps) {
-            superBoostPowerUp.collected = false;
-        }
-        for (const orb of this.scoringOrbs) {
-            orb.collected = false;
-        }
+
+        // Reset life cost
+        this.lifeCost = 10;
+
+        // Reset powerdown effects
+        this.curlChaosStrength = 0;
+        this.sizeShrinkPenalty = 0;
+
         this.phase = 'resting';
         this.stone.x = 0;
         this.stone.worldY = 0;
@@ -449,9 +634,8 @@ export class GameState {
         this.stone.angularVelocity = 0;
         this.stone.rotation = 0;
         this.scrollProgress = 0;
-        this.power = { value: 0, direction: 1, oscillationRate: 80 };
         this.aimAngle = 0;
-        this.input = { isDragging: false, dragStartX: 0, dragStartY: 0, currentDragX: 0, currentDragY: 0 };
+        this.input = { isDragging: false, dragStartX: 0, dragStartY: 0, stoneStartX: 0, stoneStartY: 0, flickHistory: [], snapBackProgress: 0, isSnapping: false };
         this.stoneVisualY = this.restY;
         this.transitionProgress = 0;
         this.inScrollZone = false;
