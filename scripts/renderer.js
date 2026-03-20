@@ -161,7 +161,11 @@ drawRingFlash(state) {
 
     drawStone(state) {
         const pos = this.getStoneScreenPosition(state);
-        const radius = this.stoneRadius;
+        const baseRadius = 30;
+        const sizeBonus = state.upgrades.stoneSize.level * 3;
+        const shrinkPenalty = state.sizeShrinkPenalty;
+        const growthMultiplier = state.growthBoost ? state.growthPowerUpConfig.growthMultiplier : 1;
+        const radius = Math.max(1, (baseRadius + sizeBonus - shrinkPenalty) * growthMultiplier);
         const rotation = state.stone.rotation;
         
         this.ctx.save();
@@ -173,144 +177,41 @@ drawRingFlash(state) {
             this.ctx.shadowBlur = 20 + Math.sin(Date.now() / 100) * 5;
         }
         
+        if (state.growthBoost) {
+            this.ctx.shadowColor = 'rgba(72, 187, 120, 0.8)';
+            this.ctx.shadowBlur = 25 + Math.sin(Date.now() / 80) * 8;
+        }
+        
         this.ctx.beginPath();
         this.ctx.arc(0, 0, radius, 0, Math.PI * 2);
-        this.ctx.fillStyle = state.frictionBoost ? 'rgb(255, 180, 0)' : 'rgb(255, 0, 0)';
+        
+        let fillColor = 'rgb(255, 0, 0)';
+        if (state.frictionBoost) {
+            fillColor = 'rgb(255, 180, 0)';
+        } else if (state.growthBoost) {
+            fillColor = 'rgb(72, 187, 120)';
+        }
+        this.ctx.fillStyle = fillColor;
         this.ctx.fill();
         this.ctx.strokeStyle = 'rgb(119, 119, 119)';
         this.ctx.lineWidth = 4;
         this.ctx.stroke();
         
         this.ctx.beginPath();
-        this.ctx.arc(0, 0, radius - 0.5, 0, Math.PI * 2);
+        this.ctx.arc(0, 0, Math.max(0.1, radius - 0.5), 0, Math.PI * 2);
         this.ctx.strokeStyle = 'rgb(178, 0, 0)';
         this.ctx.lineWidth = 1;
         this.ctx.stroke();
         
         const handleWidth = radius * 0.8;
         const handleHeight = radius * 0.28;
-        const handleRadius = handleHeight * 0.58;
+        const handleRadius = Math.max(0.1, handleHeight * 0.58);
         this.ctx.beginPath();
         this.ctx.roundRect(-handleWidth / 2, -handleHeight / 2, handleWidth, handleHeight, handleRadius);
         this.ctx.fillStyle = 'rgb(178, 0, 0)';
         this.ctx.fill();
         
         this.ctx.restore();
-    }
-
-    drawSlingshotElastic(state) {
-        if (state.phase !== 'charging' || !state.input.isDragging) return;
-        
-        const stonePos = this.getStoneScreenPosition(state);
-        const dragX = state.input.currentDragX;
-        const dragY = state.input.currentDragY;
-        
-        const dx = dragX - stonePos.x;
-        const dy = dragY - stonePos.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        const maxDistance = 150;
-        const clampedDistance = Math.min(distance, maxDistance);
-        
-        if (distance > 0) {
-            const normalizedDx = dx / distance;
-            const normalizedDy = dy / distance;
-            const endX = stonePos.x + normalizedDx * clampedDistance;
-            const endY = stonePos.y + normalizedDy * clampedDistance;
-            
-            const tension = clampedDistance / maxDistance;
-            const lineWidth = 2 + tension * 4;
-            const alpha = 0.3 + tension * 0.5;
-            
-            this.ctx.beginPath();
-            this.ctx.moveTo(stonePos.x, stonePos.y);
-            this.ctx.lineTo(endX, endY);
-            this.ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
-            this.ctx.lineWidth = lineWidth;
-            this.ctx.lineCap = 'round';
-            this.ctx.stroke();
-            
-            this.ctx.beginPath();
-            this.ctx.arc(endX, endY, 8, 0, Math.PI * 2);
-            this.ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
-            this.ctx.fill();
-        }
-    }
-
-drawVGauge(state) {
-        if (state.phase !== 'charging' || !state.input.isDragging) return;
-        
-        const stonePos = this.getStoneScreenPosition(state);
-        const power = state.power.value;
-        const aimAngle = state.aimAngle;
-        
-        const vSize = 100;
-        const vAngleSpread = Math.PI / 6;
-        const vOffset = 50;
-        
-        const vBaseX = stonePos.x - Math.sin(aimAngle) * vOffset;
-        const vBaseY = stonePos.y + Math.cos(aimAngle) * vOffset;
-        
-        const tipX = vBaseX + Math.sin(aimAngle) * vSize;
-        const tipY = vBaseY - Math.cos(aimAngle) * vSize;
-        
-        const leftAngle = aimAngle - vAngleSpread;
-        const rightAngle = aimAngle + vAngleSpread;
-        
-        const leftX = vBaseX + Math.sin(leftAngle) * vSize * 0.6;
-        const leftY = vBaseY - Math.cos(leftAngle) * vSize * 0.6;
-        const rightX = vBaseX + Math.sin(rightAngle) * vSize * 0.6;
-        const rightY = vBaseY - Math.cos(rightAngle) * vSize * 0.6;
-        
-        const fillRatio = power / 100;
-        
-        let fillColor;
-        if (power < 33) {
-            fillColor = '#48bb78';
-        } else if (power < 67) {
-            fillColor = '#ed8936';
-        } else {
-            fillColor = '#e53e3e';
-        }
-        
-        this.ctx.save();
-        
-        this.ctx.beginPath();
-        this.ctx.moveTo(tipX, tipY);
-        this.ctx.lineTo(leftX, leftY);
-        this.ctx.lineTo(rightX, rightY);
-        this.ctx.closePath();
-        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
-        this.ctx.lineWidth = 2;
-        this.ctx.stroke();
-        
-        if (fillRatio > 0.01) {
-            const fillProgress = fillRatio;
-            
-            const fillLeftX = leftX + (tipX - leftX) * fillProgress;
-            const fillLeftY = leftY + (tipY - leftY) * fillProgress;
-            const fillRightX = rightX + (tipX - rightX) * fillProgress;
-            const fillRightY = rightY + (tipY - rightY) * fillProgress;
-            
-            this.ctx.beginPath();
-            this.ctx.moveTo(leftX, leftY);
-            this.ctx.lineTo(fillLeftX, fillLeftY);
-            this.ctx.lineTo(fillRightX, fillRightY);
-            this.ctx.lineTo(rightX, rightY);
-            this.ctx.closePath();
-            this.ctx.fillStyle = fillColor;
-            this.ctx.fill();
-            
-            if (power >= 50) {
-                this.ctx.shadowColor = fillColor;
-                this.ctx.shadowBlur = 10;
-                this.ctx.fill();
-            }
-        }
-        
-        this.ctx.restore();
-    }
-
-    drawPowerBar(state) {
     }
 
     drawAimLine(state) {
@@ -761,6 +662,216 @@ addPowerUpParticles(state, powerUp) {
         }
     }
 
+    drawGrowthPowerUps(state) {
+        if (state.phase !== 'moving' && state.phase !== 'returning') return;
+        
+        const playArea = state.getPlayArea();
+        const config = state.growthPowerUpConfig;
+        const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
+        
+        for (const growthPowerUp of state.growthPowerUps) {
+            if (growthPowerUp.collected) continue;
+            
+            const powerUpWorldY = growthPowerUp.scrollProgress * maxScroll;
+            const worldDY = powerUpWorldY - state.stone.worldY;
+            const screenY = state.screenHeight * 0.5 - worldDY;
+            const screenX = playArea.left + playArea.width / 2 + growthPowerUp.x;
+            
+            if (screenY < -config.radius || screenY > state.screenHeight + config.radius) continue;
+            
+            this.ctx.save();
+            this.ctx.beginPath();
+            this.ctx.arc(screenX, screenY, config.radius, 0, Math.PI * 2);
+            
+            const gradient = this.ctx.createRadialGradient(
+                screenX, screenY, 0,
+                screenX, screenY, config.radius
+            );
+            gradient.addColorStop(0, 'rgba(72, 187, 120, 1)');
+            gradient.addColorStop(0.7, 'rgba(56, 161, 105, 0.9)');
+            gradient.addColorStop(1, 'rgba(47, 133, 90, 0.4)');
+            
+            this.ctx.fillStyle = gradient;
+            this.ctx.fill();
+            
+            this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+            this.ctx.lineWidth = 2;
+            this.ctx.stroke();
+            
+            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            this.ctx.font = 'bold 14px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            this.ctx.fillText('+', screenX, screenY);
+            
+            this.ctx.restore();
+        }
+        
+        if (state.growthPowerUpCollected) {
+            this.addGrowthPowerUpParticles(state, state.growthPowerUpCollected);
+            state.growthPowerUpCollected = null;
+        }
+    }
+
+    addGrowthPowerUpParticles(state, growthPowerUp) {
+        const playArea = state.getPlayArea();
+        const screenX = playArea.left + playArea.width / 2 + growthPowerUp.x;
+        const screenY = state.screenHeight * 0.5;
+        
+        for (let i = 0; i < 20; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 6 + 3;
+            this.addParticle(
+                screenX,
+                screenY,
+                Math.cos(angle) * speed,
+                Math.sin(angle) * speed,
+                '72, 187, 120',
+                0.8
+            );
+        }
+    }
+
+    drawCurlChaosPickups(state) {
+        if (state.phase !== 'moving' && state.phase !== 'returning') return;
+        
+        const playArea = state.getPlayArea();
+        const config = state.curlChaosConfig;
+        const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
+        
+        for (const pickup of state.curlChaosPickups) {
+            if (pickup.collected) continue;
+            
+            const powerUpWorldY = pickup.scrollProgress * maxScroll;
+            const worldDY = powerUpWorldY - state.stone.worldY;
+            const screenY = state.screenHeight * 0.5 - worldDY;
+            const screenX = playArea.left + playArea.width / 2 + pickup.x;
+            
+            if (screenY < -config.radius || screenY > state.screenHeight + config.radius) continue;
+            
+            this.ctx.save();
+            this.ctx.beginPath();
+            this.ctx.arc(screenX, screenY, config.radius, 0, Math.PI * 2);
+            
+            const gradient = this.ctx.createRadialGradient(
+                screenX, screenY, 0,
+                screenX, screenY, config.radius
+            );
+            gradient.addColorStop(0, 'rgba(255, 50, 50, 1)');
+            gradient.addColorStop(0.7, 'rgba(200, 0, 0, 0.9)');
+            gradient.addColorStop(1, 'rgba(150, 0, 0, 0.4)');
+            
+            this.ctx.fillStyle = gradient;
+            this.ctx.fill();
+            
+            this.ctx.strokeStyle = 'rgba(255, 100, 100, 0.8)';
+            this.ctx.lineWidth = 2;
+            this.ctx.stroke();
+            
+            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            this.ctx.font = 'bold 14px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            this.ctx.fillText('~', screenX, screenY);
+            
+            this.ctx.restore();
+        }
+        
+        if (state.curlChaosCollected) {
+            this.addCurlChaosParticles(state, state.curlChaosCollected);
+            state.curlChaosCollected = null;
+        }
+    }
+
+    addCurlChaosParticles(state, pickup) {
+        const playArea = state.getPlayArea();
+        const screenX = playArea.left + playArea.width / 2 + pickup.x;
+        const screenY = state.screenHeight * 0.5;
+        
+        for (let i = 0; i < 15; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 5 + 2;
+            this.addParticle(
+                screenX,
+                screenY,
+                Math.cos(angle) * speed,
+                Math.sin(angle) * speed,
+                '255, 50, 50',
+                0.6
+            );
+        }
+    }
+
+    drawSizeShrinkPickups(state) {
+        if (state.phase !== 'moving' && state.phase !== 'returning') return;
+        
+        const playArea = state.getPlayArea();
+        const config = state.sizeShrinkConfig;
+        const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
+        
+        for (const pickup of state.sizeShrinkPickups) {
+            if (pickup.collected) continue;
+            
+            const powerUpWorldY = pickup.scrollProgress * maxScroll;
+            const worldDY = powerUpWorldY - state.stone.worldY;
+            const screenY = state.screenHeight * 0.5 - worldDY;
+            const screenX = playArea.left + playArea.width / 2 + pickup.x;
+            
+            if (screenY < -config.radius || screenY > state.screenHeight + config.radius) continue;
+            
+            this.ctx.save();
+            this.ctx.beginPath();
+            this.ctx.arc(screenX, screenY, config.radius, 0, Math.PI * 2);
+            
+            const gradient = this.ctx.createRadialGradient(
+                screenX, screenY, 0,
+                screenX, screenY, config.radius
+            );
+            gradient.addColorStop(0, 'rgba(200, 50, 255, 1)');
+            gradient.addColorStop(0.7, 'rgba(150, 0, 200, 0.9)');
+            gradient.addColorStop(1, 'rgba(100, 0, 150, 0.4)');
+            
+            this.ctx.fillStyle = gradient;
+            this.ctx.fill();
+            
+            this.ctx.strokeStyle = 'rgba(255, 100, 255, 0.8)';
+            this.ctx.lineWidth = 2;
+            this.ctx.stroke();
+            
+            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            this.ctx.font = 'bold 14px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            this.ctx.fillText('-', screenX, screenY);
+            
+            this.ctx.restore();
+        }
+        
+        if (state.sizeShrinkCollected) {
+            this.addSizeShrinkParticles(state, state.sizeShrinkCollected);
+            state.sizeShrinkCollected = null;
+        }
+    }
+
+    addSizeShrinkParticles(state, pickup) {
+        const playArea = state.getPlayArea();
+        const screenX = playArea.left + playArea.width / 2 + pickup.x;
+        const screenY = state.screenHeight * 0.5;
+        
+        for (let i = 0; i < 15; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 5 + 2;
+            this.addParticle(
+                screenX,
+                screenY,
+                Math.cos(angle) * speed,
+                Math.sin(angle) * speed,
+                '200, 50, 255',
+                0.6
+            );
+        }
+    }
+
     drawScoringOrbs(state) {
         if (state.phase !== 'moving' && state.phase !== 'returning') return;
         if (!state.scoringOrbs || state.scoringOrbs.length === 0) return;
@@ -931,7 +1042,9 @@ addPowerUpParticles(state, powerUp) {
             this.ctx.strokeText(anim.text, anim.x, y);
             
             // Fill with color based on type
-            if (anim.isMoney) {
+            if (anim.isPowerUp && anim.color) {
+                this.ctx.fillStyle = `rgba(${anim.color}, ${alpha})`;
+            } else if (anim.isMoney) {
                 this.ctx.fillStyle = `rgba(255, 215, 0, ${alpha})`;
             } else if (anim.isCombo) {
                 const comboColor = this.getComboColor(anim.text);
@@ -1040,8 +1153,23 @@ drawScoreText(state) {
         
         this.ctx.restore();
         
-        // Draw money in yellow at the right edge
         const playArea = state.getPlayArea();
+        
+        // Draw lives in red at the left edge
+        const lives = state.lives || 0;
+        this.ctx.save();
+        this.ctx.fillStyle = '#ff6b6b';
+        this.ctx.font = 'bold 20px Arial';
+        this.ctx.textAlign = 'left';
+        this.ctx.textBaseline = 'middle';
+        this.ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+        this.ctx.shadowBlur = 4;
+        this.ctx.shadowOffsetX = 2;
+        this.ctx.shadowOffsetY = 2;
+        this.ctx.fillText(`♥${lives}`, playArea.left + 10, baseY);
+        this.ctx.restore();
+        
+        // Draw money in yellow at the right edge
         const money = state.money || 0;
         this.ctx.save();
         this.ctx.fillStyle = '#ffd700';
@@ -1131,11 +1259,12 @@ drawScoreText(state) {
         this.drawSweepPowerUps(state);
         this.drawRotationPowerUps(state);
         this.drawSuperBoostPowerUps(state);
+        this.drawGrowthPowerUps(state);
+        this.drawCurlChaosPickups(state);
+        this.drawSizeShrinkPickups(state);
         this.drawScoringOrbs(state);
         this.drawStone(state);
         this.drawSopaText(state);
-        this.drawSlingshotElastic(state);
-        this.drawVGauge(state);
         this.drawSuperBoostImageEffect(state);
         this.drawScoreAnimations(state);
         
@@ -1148,8 +1277,13 @@ drawScoreText(state) {
             
             if (this.prevStoneX !== null) {
                 const playArea = state.getPlayArea();
-                const leftBound = state.stone.radius - playArea.width / 2;
-                const rightBound = playArea.width / 2 - state.stone.radius;
+                const baseRadius = 30;
+                const sizeBonus = state.upgrades.stoneSize.level * 3;
+                const shrinkPenalty = state.sizeShrinkPenalty;
+                const growthMultiplier = state.growthBoost ? state.growthPowerUpConfig.growthMultiplier : 1;
+                const effectiveRadius = Math.max(1, (baseRadius + sizeBonus - shrinkPenalty) * growthMultiplier);
+                const leftBound = effectiveRadius - playArea.width / 2;
+                const rightBound = playArea.width / 2 - effectiveRadius;
                 const atLeftWall = state.stone.x <= leftBound + 5;
                 const atRightWall = state.stone.x >= rightBound - 5;
                 const justHitWall = (atLeftWall || atRightWall) && 

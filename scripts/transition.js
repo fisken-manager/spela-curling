@@ -63,6 +63,7 @@ export class TransitionController {
                 state.phase = 'returning';
                 state.stoneVisualY = state.restY;
             } else {
+                state.showBuyMenu = true;
                 state.phase = 'resting';
                 state.stoneVisualY = state.restY;
             }

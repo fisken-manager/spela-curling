@@ -10,7 +10,8 @@
 <body>
     <canvas id="game-canvas"></canvas>
     <div id="physics-controls">
-        <h3>Physics Tuning</h3>
+        <h3>Physics Tuning <span id="toggle-controls" class="toggle-arrow">▼</span></h3>
+        <div id="controls-content">
         <label>
             <span>Friction: <span id="friction-val">0.01</span></span>
             <input type="range" id="friction" min="0.001" max="0.5" step="0.001" value="0.01">
@@ -31,6 +32,48 @@
             <span>Rotation Range: <span id="rotRange-val">10</span></span>
             <input type="range" id="rotRange" min="0" max="30" step="1" value="10">
         </label>
+        <div class="debug-section">
+            <h4>Debug</h4>
+            <button id="add-money-btn">$ +100</button>
+            <button id="add-life-btn">+1 Life</button>
+        </div>
+        <div class="debug-section">
+            <h4>Item Spawns (1 every X pixels)</h4>
+            <label>
+                <span>Speed Boost: <span id="dbg-powerup-val">1000</span>px</span>
+                <input type="range" id="dbg-powerup" min="200" max="5000" step="100" value="1000">
+            </label>
+            <label>
+                <span>Extra Life: <span id="dbg-life-val">20000</span>px</span>
+                <input type="range" id="dbg-life" min="1000" max="30000" step="1000" value="20000">
+            </label>
+            <label>
+                <span>Sweep: <span id="dbg-sweep-val">6500</span>px</span>
+                <input type="range" id="dbg-sweep" min="500" max="10000" step="500" value="6500">
+            </label>
+            <label>
+                <span>Rotation: <span id="dbg-rotation-val">3000</span>px</span>
+                <input type="range" id="dbg-rotation" min="500" max="10000" step="500" value="3000">
+            </label>
+            <label>
+                <span>Super Boost: <span id="dbg-super-val">12000</span>px</span>
+                <input type="range" id="dbg-super" min="1000" max="20000" step="500" value="12000">
+            </label>
+            <label>
+                <span>Growth: <span id="dbg-growth-val">8000</span>px</span>
+                <input type="range" id="dbg-growth" min="500" max="15000" step="500" value="8000">
+            </label>
+            <label>
+                <span>Curl Chaos (Down): <span id="dbg-curlChaos-val">13500</span>px</span>
+                <input type="range" id="dbg-curlChaos" min="1000" max="20000" step="500" value="13500">
+            </label>
+            <label>
+                <span>Shrink (Down): <span id="dbg-sizeShrink-val">19000</span>px</span>
+                <input type="range" id="dbg-sizeShrink" min="1000" max="20000" step="500" value="19000">
+            </label>
+            <button id="re-init-powerups">Re-generate</button>
+        </div>
+        </div>
     </div>
     <div id="content">
         <section class="content-section">
@@ -106,11 +149,18 @@
     </div>
     <div id="game-over" class="hidden">
         <div class="game-over-content">
-            <div class="game-over-title">Game Over</div>
+            <div class="game-over-title">Slut</div>
             <div class="final-score">0</div>
-            <button id="restart-btn">Play Again</button>
+            <div class="game-over-money">$0</div>
+            <button id="buy-life-btn" class="buy-life-btn hidden">Köp Liv ($10)</button>
+            <button id="restart-btn">Spela Igen</button>
         </div>
     </div>
+    
+    <div id="loop-transition">
+        <div id="loop-text">Loop #1</div>
+    </div>
+
     <script type="module" src="scripts/game.js"></script>
 </body>
 </html>

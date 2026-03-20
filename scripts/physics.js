@@ -1,39 +1,76 @@
 export class Physics {
     constructor() {
         this.physicsTick = 0.001;
-        this.maxVelocity = 25;
+        this.baseMaxVelocity = 25;
         this.wallBounceEnergy = 0.8;
         this.sweepBoost = 1.5;
         this.stopThreshold = 0.1;
         
         this.baseFriction = 0.01;
-        this.curlStrength = 0.05;
-        this.angularDecayFactor = 0.5;
+        this.baseCurlStrength = 0.2;
+        this.angularDecayFactor = 0.15;
         
         this.minAngularVelocity = -10;
         this.maxAngularVelocity = 10;
     }
 
-    getMu(velocity) {
-        if (this.state && this.state.frictionBoost) {
-            return this.baseFriction * this.state.frictionBoost.frictionMultiplier;
-        }
-        return this.baseFriction;
+    getMaxVelocity(state) {
+        const bonus = state.upgrades.maxVelocity.level * 5;
+        return this.baseMaxVelocity + bonus;
+    }
+
+    getEffectiveFriction(state) {
+        const reduction = state.upgrades.frictionReduction.level * 0.05;
+        return this.baseFriction * (1 - reduction);
+    }
+
+    getEffectiveCurl(state) {
+        let curl = this.baseCurlStrength;
+        const curlReduction = state.upgrades.curlPower.level * 0.1;
+        curl *= (1 - curlReduction);
+        const curlChaos = state.curlChaosStrength;
+        const resistance = state.upgrades.powerdownResistance.level * 0.05;
+        const effectiveChaos = curlChaos * (1 - resistance);
+        curl += effectiveChaos;
+        return Math.max(0, curl);
+    }
+
+    getEffectiveRadius(state) {
+        const baseRadius = 30;
+        const sizeBonus = state.upgrades.stoneSize.level * 3;
+        const shrinkPenalty = state.sizeShrinkPenalty;
+        const growthMultiplier = state.growthBoost ? state.growthPowerUpConfig.growthMultiplier : 1;
+        return Math.max(1, (baseRadius + sizeBonus - shrinkPenalty) * growthMultiplier);
+    }
+
+    getEffectiveOrbRadius(state, orbType) {
+        const config = state.scoringOrbConfig[orbType];
+        const bonus = state.upgrades.orbSize.level * 0.05;
+        return config.radius * (1 + bonus);
     }
 
     update(state, deltaTime) {
         this.state = state;
-        
-        if (state.phase !== 'moving') return;
 
+        if (state.phase !== 'moving') return;
         this.updateFrictionBoost(state, deltaTime);
         this.updateSweepBoost(state, deltaTime);
+        this.updateGrowthBoost(state, deltaTime);
 
         const steps = Math.ceil(deltaTime / this.physicsTick);
         const dt = deltaTime / steps;
 
         for (let i = 0; i < steps; i++) {
             this.physicsStep(state, dt);
+        }
+    }
+
+    updateGrowthBoost(state, deltaTime) {
+        if (!state.growthBoost) return;
+        
+        state.growthBoost.timer -= deltaTime;
+        if (state.growthBoost.timer <= 0) {
+            state.growthBoost = null;
         }
     }
 
@@ -72,7 +109,7 @@ export class Physics {
             return;
         }
 
-        let mu = this.baseFriction;
+        let mu = this.getEffectiveFriction(state);
         if (state.frictionBoost) {
             mu *= state.frictionBoost.frictionMultiplier;
         }
@@ -85,7 +122,8 @@ export class Physics {
         const decelY = (stone.vy / speedNorm) * frictionDecel;
         
         const forwardVelocity = stone.vy;
-        const curlAcceleration = this.curlStrength * stone.angularVelocity * Math.abs(forwardVelocity) / speedNorm;
+        const curlStrength = this.getEffectiveCurl(state);
+        const curlAcceleration = curlStrength * stone.angularVelocity * Math.abs(forwardVelocity) / speedNorm;
         
         stone.vx += curlAcceleration * dt - decelX * dt;
         stone.vy -= decelY * dt;
@@ -97,15 +135,16 @@ export class Physics {
         stone.vx *= damping;
         stone.vy *= damping;
         
+        const effectiveRadius = this.getEffectiveRadius(state);
         stone.x += stone.vx * dt * 60;
         stone.rotation += stone.angularVelocity * dt;
         
-        this.handleBounds(state);
+        this.handleBounds(state, effectiveRadius);
         this.updateWorldPosition(state, dt);
-        this.checkPowerUps(state);
+        this.checkPowerUps(state, effectiveRadius);
     }
 
-checkPowerUps(state) {
+checkPowerUps(state, effectiveRadius) {
         const { stone } = state;
         const config = state.powerUpConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
@@ -117,21 +156,24 @@ checkPowerUps(state) {
             const dy = Math.abs(stone.worldY - powerUpWorldY);
             const dx = Math.abs(stone.x - powerUp.x);
             
-            const collisionDistance = config.radius + stone.radius;
+            const collisionDistance = config.radius + effectiveRadius;
             
             if (dy < collisionDistance && dx < collisionDistance) {
-                this.collectPowerUp(state, powerUp);
+                this.collectPowerUp(state, powerUp, effectiveRadius);
             }
         }
         
-        this.checkLifePowerUps(state);
-        this.checkSweepPowerUps(state);
-        this.checkRotationPowerUps(state);
-        this.checkSuperBoostPowerUps(state);
-        this.checkScoringOrbs(state);
+        this.checkLifePowerUps(state, effectiveRadius);
+        this.checkSweepPowerUps(state, effectiveRadius);
+        this.checkRotationPowerUps(state, effectiveRadius);
+        this.checkSuperBoostPowerUps(state, effectiveRadius);
+        this.checkScoringOrbs(state, effectiveRadius);
+        this.checkGrowthPowerUps(state, effectiveRadius);
+        this.checkCurlChaosPickups(state, effectiveRadius);
+        this.checkSizeShrinkPickups(state, effectiveRadius);
     }
 
-    checkLifePowerUps(state) {
+    checkLifePowerUps(state, effectiveRadius) {
         const { stone } = state;
         const config = state.lifePowerUpConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
@@ -143,12 +185,14 @@ checkPowerUps(state) {
             const dy = Math.abs(stone.worldY - powerUpWorldY);
             const dx = Math.abs(stone.x - lifePowerUp.x);
             
-            const collisionDistance = config.radius + stone.radius;
+            const collisionDistance = config.radius + effectiveRadius;
             
             if (dy < collisionDistance && dx < collisionDistance) {
                 lifePowerUp.collected = true;
                 state.lives++;
                 state.lifePowerUpCollected = lifePowerUp;
+                
+                this.addPowerUpText(state, lifePowerUp.x, '+1 LIV!', '255, 50, 50');
                 
                 const playArea = state.getPlayArea();
                 const screenX = playArea.left + playArea.width / 2 + lifePowerUp.x;
@@ -158,7 +202,7 @@ checkPowerUps(state) {
         }
     }
 
-    checkSweepPowerUps(state) {
+    checkSweepPowerUps(state, effectiveRadius) {
         const { stone } = state;
         const config = state.sweepPowerUpConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
@@ -170,7 +214,7 @@ checkPowerUps(state) {
             const dy = Math.abs(stone.worldY - powerUpWorldY);
             const dx = Math.abs(stone.x - sweepPowerUp.x);
             
-            const collisionDistance = config.radius + stone.radius;
+            const collisionDistance = config.radius + effectiveRadius;
             
             if (dy < collisionDistance && dx < collisionDistance) {
                 sweepPowerUp.collected = true;
@@ -179,11 +223,12 @@ checkPowerUps(state) {
                 };
                 state.sweepPowerUpCollected = sweepPowerUp;
                 state.triggerScreenShake(8, 0.15);
+                this.addPowerUpText(state, sweepPowerUp.x, 'SOPA!', '50, 255, 50');
             }
         }
     }
 
-    checkRotationPowerUps(state) {
+    checkRotationPowerUps(state, effectiveRadius) {
         const { stone } = state;
         const config = state.rotationPowerUpConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
@@ -195,7 +240,7 @@ checkPowerUps(state) {
             const dy = Math.abs(stone.worldY - powerUpWorldY);
             const dx = Math.abs(stone.x - rotationPowerUp.x);
             
-            const collisionDistance = config.radius + stone.radius;
+            const collisionDistance = config.radius + effectiveRadius;
             
             if (dy < collisionDistance && dx < collisionDistance) {
                 rotationPowerUp.collected = true;
@@ -206,11 +251,12 @@ checkPowerUps(state) {
                 stone.angularVelocity += direction * magnitude;
                 
                 state.rotationPowerUpCollected = rotationPowerUp;
+                this.addPowerUpText(state, rotationPowerUp.x, 'SNURR!', '200, 50, 255');
             }
         }
     }
 
-    checkSuperBoostPowerUps(state) {
+    checkSuperBoostPowerUps(state, effectiveRadius) {
         const { stone } = state;
         const config = state.superBoostPowerUpConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
@@ -222,20 +268,21 @@ checkPowerUps(state) {
             const dy = Math.abs(stone.worldY - powerUpWorldY);
             const dx = Math.abs(stone.x - superBoostPowerUp.x);
 
-            const collisionDistance = config.radius + stone.radius;
+            const collisionDistance = config.radius + effectiveRadius;
 
             if (dy < collisionDistance && dx < collisionDistance) {
                 superBoostPowerUp.collected = true;
                 
                 const speed = Math.sqrt(stone.vx ** 2 + stone.vy ** 2);
+                const maxVel = this.getMaxVelocity(state);
                 if (speed > 0.001) {
                     const boost = config.speedBoost;
                     stone.vx += (stone.vx / speed) * boost;
                     stone.vy += (stone.vy / speed) * boost;
 
                     const newSpeed = Math.sqrt(stone.vx ** 2 + stone.vy ** 2);
-                    if (newSpeed > this.maxVelocity) {
-                        const scale = this.maxVelocity / newSpeed;
+                    if (newSpeed > maxVel) {
+                        const scale = maxVel / newSpeed;
                         stone.vx *= scale;
                         stone.vy *= scale;
                     }
@@ -254,13 +301,103 @@ checkPowerUps(state) {
                     duration: 1.33,
                     peaked: false
                 };
+                
+                this.addPowerUpText(state, superBoostPowerUp.x, 'SUPER!', '255, 140, 0');
             }
         }
     }
 
-    checkScoringOrbs(state) {
+    checkGrowthPowerUps(state, effectiveRadius) {
         const { stone } = state;
-        const config = state.scoringOrbConfig;
+        const config = state.growthPowerUpConfig;
+        const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
+        
+        for (const growthPowerUp of state.growthPowerUps) {
+            if (growthPowerUp.collected) continue;
+            
+            const powerUpWorldY = growthPowerUp.scrollProgress * maxScroll;
+            const dy = Math.abs(stone.worldY - powerUpWorldY);
+            const dx = Math.abs(stone.x - growthPowerUp.x);
+            
+            const collisionDistance = config.radius + effectiveRadius;
+            
+            if (dy < collisionDistance && dx < collisionDistance) {
+                growthPowerUp.collected = true;
+                state.growthBoost = {
+                    timer: config.duration,
+                    multiplier: config.growthMultiplier
+                };
+                state.growthPowerUpCollected = growthPowerUp;
+                this.addPowerUpText(state, growthPowerUp.x, 'STOR!', '72, 187, 120');
+                state.triggerRingFlash(
+                    state.getPlayArea().left + state.getPlayArea().width / 2 + growthPowerUp.x,
+                    state.screenHeight * 0.5,
+                    '72, 187, 120'
+                );
+            }
+        }
+    }
+
+    checkCurlChaosPickups(state, effectiveRadius) {
+        const { stone } = state;
+        const config = state.curlChaosConfig;
+        const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
+        
+        for (const pickup of state.curlChaosPickups) {
+            if (pickup.collected) continue;
+            
+            const pickupWorldY = pickup.scrollProgress * maxScroll;
+            const dy = Math.abs(stone.worldY - pickupWorldY);
+            const dx = Math.abs(stone.x - pickup.x);
+            
+            const collisionDistance = config.radius + effectiveRadius;
+            
+            if (dy < collisionDistance && dx < collisionDistance) {
+                pickup.collected = true;
+                const resistance = state.upgrades.powerdownResistance.level * 0.05;
+                state.curlChaosStrength += 0.1 * (1 - resistance);
+                state.curlChaosCollected = pickup;
+                this.addPowerUpText(state, pickup.x, '+CURL!', '255, 50, 50');
+                state.triggerRingFlash(
+                    state.getPlayArea().left + state.getPlayArea().width / 2 + pickup.x,
+                    state.screenHeight * 0.5,
+                    '255, 50, 50'
+                );
+            }
+        }
+    }
+
+    checkSizeShrinkPickups(state, effectiveRadius) {
+        const { stone } = state;
+        const config = state.sizeShrinkConfig;
+        const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
+        
+        for (const pickup of state.sizeShrinkPickups) {
+            if (pickup.collected) continue;
+            
+            const pickupWorldY = pickup.scrollProgress * maxScroll;
+            const dy = Math.abs(stone.worldY - pickupWorldY);
+            const dx = Math.abs(stone.x - pickup.x);
+            
+            const collisionDistance = config.radius + effectiveRadius;
+            
+            if (dy < collisionDistance && dx < collisionDistance) {
+                pickup.collected = true;
+                const resistance = state.upgrades.powerdownResistance.level * 0.05;
+                state.sizeShrinkPenalty += 3 * (1 - resistance);
+                state.sizeShrinkCollected = pickup;
+                this.addPowerUpText(state, pickup.x, '-STORLEK!', '200, 50, 255');
+                state.triggerRingFlash(
+                    state.getPlayArea().left + state.getPlayArea().width / 2 + pickup.x,
+                    state.screenHeight * 0.5,
+                    '200, 50, 255'
+                );
+            }
+        }
+    }
+
+    checkScoringOrbs(state, effectiveRadius) {
+        const { stone } = state;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
         
         for (const orb of state.scoringOrbs) {
@@ -270,7 +407,8 @@ checkPowerUps(state) {
             const dy = Math.abs(stone.worldY - orbWorldY);
             const dx = Math.abs(stone.x - orb.x);
             
-            const collisionDistance = config[orb.type].radius + stone.radius;
+            const orbRadius = this.getEffectiveOrbRadius(state, orb.type);
+            const collisionDistance = orbRadius + effectiveRadius;
             
             if (dy < collisionDistance && dx < collisionDistance) {
                 this.collectScoringOrb(state, orb);
@@ -345,21 +483,22 @@ checkPowerUps(state) {
         state.triggerRingFlash(screenX, screenY, color);
     }
 
-    collectPowerUp(state, powerUp) {
+    collectPowerUp(state, powerUp, effectiveRadius) {
         const { stone } = state;
         const config = state.powerUpConfig;
         
         powerUp.collected = true;
         
         const speed = Math.sqrt(stone.vx ** 2 + stone.vy ** 2);
+        const maxVel = this.getMaxVelocity(state);
         if (speed > 0.001) {
             const boost = config.speedBoost;
             stone.vx += (stone.vx / speed) * boost;
             stone.vy += (stone.vy / speed) * boost;
             
             const newSpeed = Math.sqrt(stone.vx ** 2 + stone.vy ** 2);
-            if (newSpeed > this.maxVelocity) {
-                const scale = this.maxVelocity / newSpeed;
+            if (newSpeed > maxVel) {
+                const scale = maxVel / newSpeed;
                 stone.vx *= scale;
                 stone.vy *= scale;
             }
@@ -371,13 +510,33 @@ checkPowerUps(state) {
         };
         
         state.powerUpCollected = powerUp;
+        
+        this.addPowerUpText(state, powerUp.x, 'HASTIGHET!', '255, 215, 0');
     }
 
-    handleBounds(state) {
+    addPowerUpText(state, x, text, color) {
+        const playArea = state.getPlayArea();
+        const screenX = playArea.left + playArea.width / 2 + x;
+        const screenY = state.screenHeight * 0.5;
+        
+        state.scoreAnimations.push({
+            x: screenX,
+            y: screenY,
+            text: text,
+            startTime: Date.now(),
+            duration: 800,
+            scale: 1.2,
+            isCombo: false,
+            isPowerUp: true,
+            color: color
+        });
+    }
+
+    handleBounds(state, effectiveRadius) {
         const { stone } = state;
         const playArea = state.getPlayArea();
-        const leftBound = stone.radius - playArea.width / 2;
-        const rightBound = playArea.width / 2 - stone.radius;
+        const leftBound = effectiveRadius - playArea.width / 2;
+        const rightBound = playArea.width / 2 - effectiveRadius;
         
         if (stone.x < leftBound) {
             stone.x = leftBound;
@@ -417,39 +576,55 @@ checkPowerUps(state) {
             state.scrollProgress = Math.max(0, Math.min(1, state.scrollProgress));
             
             if (state.scrollProgress >= 1) {
-                state.scrollProgress = 0;
-                stone.worldY = 0;
-                for (const powerUp of state.powerUps) {
-                    powerUp.collected = false;
-                }
-                for (const lifePowerUp of state.lifePowerUps) {
-                    lifePowerUp.collected = false;
-                }
-                for (const sweepPowerUp of state.sweepPowerUps) {
-                    sweepPowerUp.collected = false;
-                }
-                for (const rotationPowerUp of state.rotationPowerUps) {
-                    rotationPowerUp.collected = false;
-                }
-                for (const superBoostPowerUp of state.superBoostPowerUps) {
-                    superBoostPowerUp.collected = false;
-                }
-                for (const orb of state.scoringOrbs) {
-                    orb.collected = false;
+                if (!state.isLoopTransitioning) {
+                    state.isLoopTransitioning = true;
+                    state.loopCount = (state.loopCount || 1) + 1;
+                    
+                    const performReset = () => {
+                        state.scrollProgress = 0;
+                        stone.worldY = 0;
+                        state.initPowerUps();
+                        state.initScoringOrbs();
+                    };
+
+                    const loopOverlay = document.getElementById('loop-transition');
+                    const loopText = document.getElementById('loop-text');
+                    
+                    if (loopOverlay && loopText) {
+                        loopText.textContent = `Loop #${state.loopCount}`;
+                        loopOverlay.classList.add('active');
+                        
+                        setTimeout(() => {
+                            performReset();
+                            loopText.classList.add('active');
+                        }, 250);
+                        
+                        setTimeout(() => {
+                            loopText.classList.remove('active');
+                        }, 1000);
+                        
+                        setTimeout(() => {
+                            loopOverlay.classList.remove('active');
+                            state.isLoopTransitioning = false;
+                        }, 1250);
+                    } else {
+                        performReset();
+                        state.isLoopTransitioning = false;
+                    }
                 }
             }
         }
     }
 
-    launch(state) {
+    launch(state, flickPower = 50) {
         const { stone } = state;
         
         if (state.lives <= 0) return;
         
         state.lives--;
         
-        const powerValue = state.power.value;
-        const speed = (powerValue / 100) * this.maxVelocity;
+        const maxVel = this.getMaxVelocity(state);
+        const speed = (flickPower / 100) * maxVel;
         
         stone.vx = Math.sin(state.aimAngle) * speed;
         stone.vy = Math.cos(state.aimAngle) * speed;
@@ -459,11 +634,18 @@ checkPowerUps(state) {
         stone.rotation = 0;
         
         state.phase = 'moving';
-        state.power = { value: 0, direction: 1, oscillationRate: 80 };
-        state.input = { isDragging: false, dragStartX: 0, dragStartY: 0, currentDragX: 0, currentDragY: 0 };
-        state.transitionProgress = 0;
+        state.input = { isDragging: false, dragStartX: 0, dragStartY: 0, stoneStartX: 0, stoneStartY: 0, flickHistory: [], snapBackProgress: 0, isSnapping: false };
         state.inScrollZone = false;
-        state.stoneVisualY = state.restY;
+        state.transitionProgress = (state.restY - state.stoneVisualY) / state.transitionDistance;
+    }
+
+    resetStone(state) {
+        state.phase = 'resting';
+        state.input.isSnapping = true;
+        state.input.snapBackProgress = 0;
+        state.input.stoneStartX = state.stone.x;
+        state.input.stoneStartY = state.stoneVisualY;
+        state.input.flickHistory = [];
     }
 
     applySweepBoost(state, intensity) {
@@ -471,6 +653,7 @@ checkPowerUps(state) {
         
         const { stone } = state;
         const currentSpeed = Math.sqrt(stone.vx * stone.vx + stone.vy * stone.vy);
+        const maxVel = this.getMaxVelocity(state);
         
         if (currentSpeed > this.stopThreshold) {
             const boost = this.sweepBoost * intensity;
@@ -479,14 +662,15 @@ checkPowerUps(state) {
             stone.angularVelocity *= 0.98;
             
             const newSpeed = Math.sqrt(stone.vx * stone.vx + stone.vy * stone.vy);
-            if (newSpeed > this.maxVelocity) {
-                stone.vx = (stone.vx / newSpeed) * this.maxVelocity;
-                stone.vy = (stone.vy / newSpeed) * this.maxVelocity;
+            if (newSpeed > maxVel) {
+                stone.vx = (stone.vx / newSpeed) * maxVel;
+                stone.vy = (stone.vy / newSpeed) * maxVel;
             }
         }
     }
 
-    getMaxVelocity() {
-        return this.maxVelocity;
+    getMaxVelocity(state) {
+        const bonus = state.upgrades.maxVelocity.level * 5;
+        return this.baseMaxVelocity + bonus;
     }
 }

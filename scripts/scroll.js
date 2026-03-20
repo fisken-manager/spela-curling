@@ -4,6 +4,7 @@ export class ScrollController {
         this.audio = audioController;
         this.contentElement = document.getElementById('content');
         this.lastProgress = 0;
+        this.initialScrollOffset = 0.02; // Start scrolled up so stone is near top hog line
         this.calculatePageHeight();
         
         window.addEventListener('resize', () => {
@@ -22,19 +23,13 @@ export class ScrollController {
         
         if (scrollableDistance <= 0) return;
         
-        const stoneWorldY = state.stone.y;
-        state.scrollProgress = stoneWorldY / scrollableDistance;
-        state.scrollProgress = Math.max(0, state.scrollProgress);
-        
-        if (state.scrollProgress >= 1) {
-            state.scrollProgress = 0;
-            state.stone.y = 0;
-        }
-        
+        // Apply scroll transform based on progress
         // Start at bottom: progress 0 = translateY(-scrollableDistance) shows bottom
-// Scroll up: progress 1 = translateY(0) shows top
-const scrollOffset = state.scrollProgress * scrollableDistance;
-this.contentElement.style.transform = `translateY(${-scrollableDistance + scrollOffset}px)`;
+        // Scroll up: progress 1 = translateY(0) shows top
+        // Add initial offset so stone starts near top hog line
+        const effectiveProgress = Math.min(1, state.scrollProgress + this.initialScrollOffset);
+        const scrollOffset = effectiveProgress * scrollableDistance;
+        this.contentElement.style.transform = `translateY(${-scrollableDistance + scrollOffset}px)`;
         
         this.syncAudio(state);
         
@@ -44,15 +39,17 @@ this.contentElement.style.transform = `translateY(${-scrollableDistance + scroll
     syncAudio(state) {
         if (!this.audio || !this.audio.audioBuffer) return;
         
-        const velocity = state.phase === 'moving' 
+        // Calculate velocity for playback rate
+        const isMoving = state.phase === 'moving' || state.phase === 'returning';
+        const velocity = isMoving 
             ? Math.sqrt(state.stone.vx ** 2 + state.stone.vy ** 2)
             : 0;
         
         // Calculate playback rate: 0.25x when slow, up to 2x when fast
         const maxVelocity = 25;
-        const rate = Math.max(0.25, Math.min(2, velocity / maxVelocity + 0.25));
+        const rate = Math.max(0.25, Math.min(2, velocity / maxVelocity+ 0.25));
         
-        if (state.phase === 'moving') {
+        if (isMoving) {
             // Resume audio context on user interaction
             this.audio.resumeContext();
             

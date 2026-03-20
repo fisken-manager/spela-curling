@@ -5,6 +5,7 @@ import { InputHandler } from './input.js';
 import { Renderer } from './renderer.js';
 import { ScrollController } from './scroll.js';
 import { TransitionController } from './transition.js';
+import { BuyMenu } from './buyMenu.js';
 
 const audio = new AudioController();
 const state = new GameState();
@@ -13,12 +14,19 @@ const transition = new TransitionController();
 let input = null;
 let renderer = null;
 let scrollController = null;
+let buyMenu = null;
 let lastTime = 0;
 
 function setupControls() {
     const controlsPanel = document.getElementById('physics-controls');
     controlsPanel.addEventListener('mousedown', (e) => e.stopPropagation());
     controlsPanel.addEventListener('touchstart', (e) => e.stopPropagation());
+
+    const header = controlsPanel.querySelector('h3');
+    header.addEventListener('pointerup', (e) => {
+        e.stopPropagation();
+        controlsPanel.classList.toggle('collapsed');
+    });
 
     const frictionSlider = document.getElementById('friction');
     const frictionVal = document.getElementById('friction-val');
@@ -37,7 +45,7 @@ function setupControls() {
     });
 
     curlSlider.addEventListener('input', (e) => {
-        physics.curlStrength = parseFloat(e.target.value);
+        physics.baseCurlStrength = parseFloat(e.target.value);
         curlVal.textContent = e.target.value;
     });
 
@@ -47,7 +55,7 @@ function setupControls() {
     });
 
     maxVelSlider.addEventListener('input', (e) => {
-        physics.maxVelocity = parseFloat(e.target.value);
+        physics.baseMaxVelocity = parseFloat(e.target.value);
         maxVelVal.textContent = e.target.value;
     });
 
@@ -57,12 +65,51 @@ function setupControls() {
         physics.maxAngularVelocity = val;
         rotRangeVal.textContent = val;
     });
+
+    const addMoneyBtn = document.getElementById('add-money-btn');
+    addMoneyBtn.addEventListener('click', () => {
+        state.money += 100;
+    });
+
+    const addLifeBtn = document.getElementById('add-life-btn');
+    addLifeBtn.addEventListener('click', () => {
+        state.lives += 1;
+    });
+
+    const reInitPowerupsBtn = document.getElementById('re-init-powerups');
+    if (reInitPowerupsBtn) {
+        const itemTypes = ['powerup', 'life', 'sweep', 'rotation', 'super', 'growth', 'curlChaos', 'sizeShrink'];
+        
+        reInitPowerupsBtn.addEventListener('click', () => {
+            state.debugGenTuning = {};
+            itemTypes.forEach(id => {
+                const el = document.getElementById('dbg-' + id);
+                if (el) {
+                    state.debugGenTuning[id] = parseInt(el.value, 10);
+                }
+            });
+            state.initPowerUps();
+            state.initScoringOrbs();
+        });
+        
+        itemTypes.forEach(id => {
+            const input = document.getElementById('dbg-' + id);
+            const valEl = document.getElementById('dbg-' + id + '-val');
+            if (input && valEl) {
+                input.addEventListener('input', (e) => {
+                    valEl.textContent = e.target.value;
+                });
+            }
+        });
+    }
 }
 
 function setupGameOverUI() {
     const restartBtn = document.getElementById('restart-btn');
+    const buyLifeBtn = document.getElementById('buy-life-btn');
     const gameOverOverlay = document.getElementById('game-over');
     const finalScoreEl = document.querySelector('.final-score');
+    const moneyEl = document.querySelector('.game-over-money');
     
     restartBtn.addEventListener('click', () => {
         state.resetGame();
@@ -71,17 +118,36 @@ function setupGameOverUI() {
         gameOverOverlay.classList.add('hidden');
     });
     
+    buyLifeBtn.addEventListener('click', () => {
+        if (state.money >= state.lifeCost) {
+            state.money -= state.lifeCost;
+            state.lives += 1;
+            state.lifeCost *= 10;
+            state.gameOver = false;
+            gameOverOverlay.classList.add('hidden');
+            state.showBuyMenu = true;
+        }
+    });
+    
     const originalRender = renderer.render.bind(renderer);
     renderer.render = (state, deltaTime) => {
         originalRender(state, deltaTime);
-        checkGameOver(state, gameOverOverlay, finalScoreEl);
+        checkGameOver(state, gameOverOverlay, finalScoreEl, moneyEl, buyLifeBtn);
     };
 }
 
-function checkGameOver(state, overlay, scoreEl) {
+function checkGameOver(state, overlay, scoreEl, moneyEl, buyLifeBtn) {
     if (state.gameOver) {
         overlay.classList.remove('hidden');
         scoreEl.textContent = Math.floor(state.score);
+        moneyEl.textContent = `$${state.money}`;
+        
+        if (state.money >= state.lifeCost) {
+            buyLifeBtn.classList.remove('hidden');
+            buyLifeBtn.textContent = `Köp Liv ($${state.lifeCost})`;
+        } else {
+            buyLifeBtn.classList.add('hidden');
+        }
     }
 }
 
@@ -94,7 +160,9 @@ async function init() {
     canvas.height = state.screenHeight;
     
     renderer = new Renderer(canvas);
+    buyMenu = new BuyMenu(state);
     input = new InputHandler(canvas, state, physics, audio);
+    input.setBuyMenu(buyMenu);
     scrollController = new ScrollController(state, audio);
     setupControls();
     setupGameOverUI();
@@ -112,16 +180,21 @@ function gameLoop(timestamp) {
     const deltaTime = Math.min((timestamp - lastTime) / 1000, 0.1);
     lastTime = timestamp;
     
-    update(deltaTime);
-    renderer.updateParticles(deltaTime);
-    renderer.render(state, deltaTime);
-    scrollController.update(state);
+    if (state.showBuyMenu) {
+        const ctx = renderer.ctx;
+        buyMenu.render(ctx, state.screenWidth, state.screenHeight);
+    } else {
+        update(deltaTime);
+        renderer.updateParticles(deltaTime);
+        renderer.render(state, deltaTime);
+        scrollController.update(state);
+    }
     
     requestAnimationFrame(gameLoop);
 }
 
 function update(deltaTime) {
-    updatePower(deltaTime);
+    updateSnapBack(deltaTime);
     updateCombo(deltaTime);
     
     if (state.phase === 'moving') {
@@ -157,16 +230,19 @@ function updateCombo(deltaTime) {
         state.recentScore = Math.max(0, state.recentScore - deltaTime * 100);
     }
 
-function updatePower(deltaTime) {
-    if (state.phase === 'charging' && state.input.isDragging) {
-        state.power.value += state.power.direction * state.power.oscillationRate * deltaTime;
-        
-        if (state.power.value >= 100) {
-            state.power.value = 100;
-            state.power.direction = -1;
-        } else if (state.power.value <= 0) {
-            state.power.value = 0;
-            state.power.direction = 1;
+function updateSnapBack(deltaTime) {
+    if (state.phase === 'resting' && state.input.isSnapping) {
+        state.input.snapBackProgress += deltaTime * 5; // 0.2s duration
+        if (state.input.snapBackProgress >= 1) {
+            state.input.snapBackProgress = 1;
+            state.input.isSnapping = false;
+            state.stone.x = 0;
+            state.stoneVisualY = state.restY;
+        } else {
+            const t = state.input.snapBackProgress;
+            const ease = 1 - Math.pow(1 - t, 3); // easeOutCubic
+            state.stone.x = state.input.stoneStartX * (1 - ease);
+            state.stoneVisualY = state.input.stoneStartY + (state.restY - state.input.stoneStartY) * ease;
         }
     }
 }
