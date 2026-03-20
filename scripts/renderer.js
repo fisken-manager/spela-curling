@@ -763,9 +763,12 @@ addPowerUpParticles(state, powerUp) {
 
     drawScoringOrbs(state) {
         if (state.phase !== 'moving' && state.phase !== 'returning') return;
+        if (!state.scoringOrbs || state.scoringOrbs.length === 0) return;
         
         const playArea = state.getPlayArea();
         const config = state.scoringOrbConfig;
+        if (!config) return;
+        
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
         
         for (const orb of state.scoringOrbs) {
@@ -848,7 +851,10 @@ addPowerUpParticles(state, powerUp) {
     }
 
     updateScoreAnimations(state, deltaTime) {
-        if (!state.scoreAnimations) return;
+        if (!state.scoreAnimations) {
+            state.scoreAnimations = [];
+            return;
+        }
         
         const now = Date.now();
         state.scoreAnimations = state.scoreAnimations.filter(anim => {
