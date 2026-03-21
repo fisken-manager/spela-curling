@@ -25,48 +25,48 @@ export class CardMenu {
                 id: 'maxVelocity',
                 name: 'Maxhastighet',
                 tiers: [
-                    { level: 1, cost: 1, effect: '+15% hastighet', image: 'waifu-speed.jpg' },
-                    { level: 2, cost: 5, effect: '+30% hastighet', image: 'waifu-speed.jpg' },
-                    { level: 3, cost: 20, effect: '+45% hastighet', image: 'waifu-speed.jpg' },
-                    { level: 4, cost: 40, effect: '+60% hastighet', image: 'waifu-speed.jpg' },
-                    { level: 5, cost: 65, effect: '+75% hastighet', image: 'waifu-speed.jpg' },
+                    { level: 1, cost: 1, effect: '+15% hastighet', image: 'maxVelocity-tier1.jpg' },
+                    { level: 2, cost: 5, effect: '+30% hastighet', image: 'maxVelocity-tier2.jpg' },
+                    { level: 3, cost: 20, effect: '+45% hastighet', image: 'maxVelocity-tier3.jpg' },
+                    { level: 4, cost: 40, effect: '+60% hastighet', image: 'maxVelocity-tier4.jpg' },
+                    { level: 5, cost: 65, effect: '+75% hastighet', image: 'maxVelocity-tier5.jpg' },
                 ]
             },
             {
                 id: 'frictionReduction',
                 name: 'Minska Friktion',
                 tiers: [
-                    { level: 1, cost: 1, effect: '-15% friktion', image: 'waifu-friction.jpg' },
-                    { level: 2, cost: 5, effect: '-30% friktion', image: 'waifu-friction.jpg' },
-                    { level: 3, cost: 20, effect: '-45% friktion', image: 'waifu-friction.jpg' },
-                    { level: 4, cost: 40, effect: '-60% friktion', image: 'waifu-friction.jpg' },
-                    { level: 5, cost: 65, effect: '-75% friktion', image: 'waifu-friction.jpg' },
+                    { level: 1, cost: 1, effect: '-15% friktion', image: 'frictionReduction-tier1.jpg' },
+                    { level: 2, cost: 5, effect: '-30% friktion', image: 'frictionReduction-tier2.jpg' },
+                    { level: 3, cost: 20, effect: '-45% friktion', image: 'frictionReduction-tier3.jpg' },
+                    { level: 4, cost: 40, effect: '-60% friktion', image: 'frictionReduction-tier4.jpg' },
+                    { level: 5, cost: 65, effect: '-75% friktion', image: 'frictionReduction-tier5.jpg' },
                 ]
             },
             {
                 id: 'stoneSize',
                 name: 'Stenstorlek',
                 tiers: [
-                    { level: 1, cost: 1, effect: '+25% storlek', image: 'waifu-size.jpg' },
-                    { level: 2, cost: 5, effect: '+50% storlek', image: 'waifu-size.jpg' },
-                    { level: 3, cost: 20, effect: '+75% storlek', image: 'waifu-size.jpg' },
-                    { level: 4, cost: 40, effect: '+100% storlek', image: 'waifu-size.jpg' },
-                    { level: 5, cost: 65, effect: '+125% storlek', image: 'waifu-size.jpg' },
+                    { level: 1, cost: 1, effect: '+25% storlek', image: 'stoneSize-tier1.jpg' },
+                    { level: 2, cost: 5, effect: '+50% storlek', image: 'stoneSize-tier2.jpg' },
+                    { level: 3, cost: 20, effect: '+75% storlek', image: 'stoneSize-tier3.jpg' },
+                    { level: 4, cost: 40, effect: '+100% storlek', image: 'stoneSize-tier4.jpg' },
+                    { level: 5, cost: 65, effect: '+125% storlek', image: 'stoneSize-tier5.jpg' },
                 ]
             },
             {
                 id: 'randomCurl',
                 name: 'Random Curl',
                 tiers: [
-                    { level: 1, cost: 10, effect: 'Random snurr/10s', image: 'waifu-curl.jpg' },
-                    { level: 2, cost: 20, effect: 'Random snurr/5s', image: 'waifu-curl.jpg' },
+                    { level: 1, cost: 10, effect: 'Random snurr/10s', image: 'randomCurl-tier1.jpg' },
+                    { level: 2, cost: 20, effect: 'Random snurr/5s', image: 'randomCurl-tier2.jpg' },
                 ]
             },
             {
                 id: 'noNegativePickups',
                 name: 'Inga Negativa',
                 tiers: [
-                    { level: 1, cost: 10, effect: 'Ta bort negativa pickups', image: 'waifu-shield.jpg' },
+                    { level: 1, cost: 10, effect: 'Ta bort negativa pickups', image: 'noNegativePickups-tier1.jpg' },
                 ]
             }
         ];
