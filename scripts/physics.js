@@ -26,27 +26,35 @@ export class Physics {
 
     getEffectiveCurl(state) {
         let curl = this.baseCurlStrength;
-        const curlReduction = state.upgrades.curlPower.level * 0.1;
-        curl *= (1 - curlReduction);
-        const curlChaos = state.curlChaosStrength;
-        const resistance = state.upgrades.powerdownResistance.level * 0.05;
-        const effectiveChaos = curlChaos * (1 - resistance);
-        curl += effectiveChaos;
+        
+        // Random curl upgrade - adds random spin every 10 seconds
+        if (state.upgrades.randomCurl.level > 0) {
+            const interval = 10; // seconds
+            const strength = state.upgrades.randomCurl.level * 2;
+            
+            state.randomCurlTimer += deltaTime || 0;
+            
+            if (state.randomCurlTimer >= interval) {
+                state.randomCurlTimer = 0;
+                // Apply random spin between -5 and 5
+                const randomSpin = (Math.random() - 0.5) * 10 * strength;
+                state.stone.angularVelocity += randomSpin;
+            }
+        }
+        
         return Math.max(0, curl);
     }
 
     getEffectiveRadius(state) {
         const baseRadius = 30;
-        const sizeBonus = state.upgrades.stoneSize.level * 3;
-        const shrinkPenalty = state.sizeShrinkPenalty;
+        const sizeBonus = state.upgrades.stoneSize.level * 8; // Increased bonus
         const growthMultiplier = state.growthBoost ? state.growthPowerUpConfig.growthMultiplier : 1;
-        return Math.max(1, (baseRadius + sizeBonus - shrinkPenalty) * growthMultiplier);
+        return Math.max(1, (baseRadius + sizeBonus) * growthMultiplier);
     }
 
     getEffectiveOrbRadius(state, orbType) {
         const config = state.scoringOrbConfig[orbType];
-        const bonus = state.upgrades.orbSize.level * 0.05;
-        return config.radius * (1 + bonus);
+        return config.radius;
     }
 
     update(state, deltaTime) {
@@ -354,8 +362,7 @@ checkPowerUps(state, effectiveRadius) {
             
             if (dy < collisionDistance && dx < collisionDistance) {
                 pickup.collected = true;
-                const resistance = state.upgrades.powerdownResistance.level * 0.05;
-                state.curlChaosStrength += 0.1 * (1 - resistance);
+                state.curlChaosStrength += 0.1;
                 state.curlChaosCollected = pickup;
                 this.addPowerUpText(state, pickup.x, '+CURL!', '255, 50, 50');
                 state.triggerRingFlash(
@@ -383,8 +390,7 @@ checkPowerUps(state, effectiveRadius) {
             
             if (dy < collisionDistance && dx < collisionDistance) {
                 pickup.collected = true;
-                const resistance = state.upgrades.powerdownResistance.level * 0.05;
-                state.sizeShrinkPenalty += 3 * (1 - resistance);
+                state.sizeShrinkPenalty += 3;
                 state.sizeShrinkCollected = pickup;
                 this.addPowerUpText(state, pickup.x, '-STORLEK!', '200, 50, 255');
                 state.triggerRingFlash(

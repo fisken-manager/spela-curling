@@ -161,11 +161,9 @@ drawRingFlash(state) {
 
     drawStone(state) {
         const pos = this.getStoneScreenPosition(state);
-        const baseRadius = 30;
-        const sizeBonus = state.upgrades.stoneSize.level * 3;
-        const shrinkPenalty = state.sizeShrinkPenalty;
+        const sizeBonus = state.upgrades.stoneSize.level * 8; // Match physics.js
         const growthMultiplier = state.growthBoost ? state.growthPowerUpConfig.growthMultiplier : 1;
-        const radius = Math.max(1, (baseRadius + sizeBonus - shrinkPenalty) * growthMultiplier);
+        const radius = Math.max(1, (30 + sizeBonus) * growthMultiplier);
         const rotation = state.stone.rotation;
         
         this.ctx.save();
@@ -1276,11 +1274,9 @@ drawScoreText(state) {
             
             if (this.prevStoneX !== null) {
                 const playArea = state.getPlayArea();
-                const baseRadius = 30;
-                const sizeBonus = state.upgrades.stoneSize.level * 3;
-                const shrinkPenalty = state.sizeShrinkPenalty;
+                const sizeBonus = state.upgrades.stoneSize.level * 8;
                 const growthMultiplier = state.growthBoost ? state.growthPowerUpConfig.growthMultiplier : 1;
-                const effectiveRadius = Math.max(1, (baseRadius + sizeBonus - shrinkPenalty) * growthMultiplier);
+                const effectiveRadius = Math.max(1, (30 + sizeBonus) * growthMultiplier);
                 const leftBound = effectiveRadius - playArea.width / 2;
                 const rightBound = playArea.width / 2 - effectiveRadius;
                 const atLeftWall = state.stone.x <= leftBound + 5;

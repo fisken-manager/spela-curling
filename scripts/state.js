@@ -218,20 +218,15 @@ export class GameState {
 
         // Upgrades (all reset on new game)
         this.upgrades = {
-            stoneSize: { level: 0, maxLevel: 5 },
-            maxVelocity: { level: 0, maxLevel: 5 },
-            frictionReduction: { level: 0, maxLevel: 5 },
-            powerdownResistance: { level: 0, maxLevel: 5 },
-            curlPower: { level: 0, maxLevel: 5 },
-            orbSize: { level: 0, maxLevel: 5 },
+            maxVelocity: { level: 0 },
+            frictionReduction: { level: 0 },
+            stoneSize: { level: 0 },
+            randomCurl: { level: 0 },
+            noNegativePickups: { level: 0 },
         };
 
-        // Extra life pricing (escalates 10x per purchase)
-        this.lifeCost = 10;
-
-        // Permanent effects from powerdowns
-        this.curlChaosStrength = 0;
-        this.sizeShrinkPenalty = 0;
+        // Random curl timer
+        this.randomCurlTimer = 0;
 
         // Stone Growth powerup
         this.growthPowerUps = [];
@@ -375,8 +370,11 @@ export class GameState {
             { items: this.rotationPowerUps, xRange: 400 },
             { items: this.superBoostPowerUps, xRange: 100 },
             { items: this.growthPowerUps, xRange: 100 },
-            { items: this.curlChaosPickups, xRange: 90 },
-            { items: this.sizeShrinkPickups, xRange: 110 }
+            // Only include negative pickups if noNegativePickups is NOT purchased
+            ...(this.upgrades.noNegativePickups.level > 0 ? [] : [
+                { items: this.curlChaosPickups, xRange: 90 },
+                { items: this.sizeShrinkPickups, xRange: 110 }
+            ])
         ];
         
         const allPlaced = [];
