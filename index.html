@@ -12,7 +12,7 @@
     <canvas id="game-canvas"></canvas>
     
     <div id="physics-controls">
-        <h3>Physics <span id="toggle-controls" class="toggle-arrow">▼</span></h3>
+        <h3>Physics <span id="toggle-controls" class="toggle-arrow">▼</span> <span id="debug-toggle" style="float:right;cursor:pointer;color:#0f0;">⚡</span></h3>
         <div id="controls-content">
         <label><span>Friction: <span id="friction-val">0.01</span></span><input type="range" id="friction" min="0.001" max="0.5" step="0.001" value="0.01"></label>
         <label><span>Curl: <span id="curl-val">0.05</span></span><input type="range" id="curl" min="0" max="1" step="0.01" value="0.05"></label>
@@ -203,6 +203,37 @@
 
         <section class="spacer"></section>
 
+        <!-- LAGKLÄDER -->
+        <section class="image-full">
+            <img src="assets/lagklader_design.jpg" alt="">
+            <div class="caption">
+                <h3>Rustningen</h3>
+                <p>Blått och vitt. Amatörföreningens färger. En uniform som står i kontrast till själen.</p>
+            </div>
+        </section>
+
+        <section class="spacer"></section>
+
+        <section class="image-full">
+            <img src="assets/lagklader_fullbody.jpg" alt="">
+            <div class="caption">
+                <h3>Manager</h3>
+                <p>Hon vakar. Hon ser. Hon soper.</p>
+            </div>
+        </section>
+
+        <section class="spacer"></section>
+
+        <section class="image-full">
+            <img src="assets/lagklader_helmet.jpg" alt="">
+            <div class="caption">
+                <h3>Hjälmen</h3>
+                <p>Skydd mot stenarna. Skydd mot verkligheten.</p>
+            </div>
+        </section>
+
+        <section class="spacer"></section>
+
         <section class="proverb">
             <p>"Ät inte gul snö om du inte har bråttom."</p>
         </section>
@@ -307,6 +338,49 @@
     <div id="loop-transition">
         <div id="loop-text">Loop #1</div>
     </div>
+
+    <div id="debug-overlay" style="position:fixed;top:0;left:0;width:100%;height:100px;background:rgba(0,0,0,0.9);color:#0f0;font-family:monospace;font-size:10px;z-index:9999;overflow:auto;padding:5px;display:none;"></div>
+
+    <script>
+        // Debug overlay for mobile
+        const debugOverlay = document.getElementById('debug-overlay');
+        const logs = [];
+        function showDebug(msg) {
+            logs.push(msg);
+            if (logs.length > 20) logs.shift();
+            debugOverlay.style.display = 'block';
+            debugOverlay.textContent = logs.join('\n');
+            debugOverlay.scrollTop = debugOverlay.scrollHeight;
+        }
+        window.onerror = function(msg, url, line) {
+            showDebug('ERR: ' + msg + ' @' + line);
+            return false;
+        };
+        window.addEventListener('unhandledrejection', function(e) {
+            showDebug('PROMISE: ' + (e.reason && e.reason.message ? e.reason.message : e.reason));
+        });
+        const origLog = console.log;
+        const origErr = console.error;
+        console.log = function(...args) {
+            showDebug('LOG: ' + args.join(' '));
+            origLog.apply(console, args);
+        };
+        console.error = function(...args) {
+            showDebug('ERR: ' + args.join(' '));
+            origErr.apply(console, args);
+        };
+        
+        // Debug toggle button
+        document.addEventListener('DOMContentLoaded', function() {
+            const debugToggle = document.getElementById('debug-toggle');
+            if (debugToggle) {
+                debugToggle.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    debugOverlay.style.display = debugOverlay.style.display === 'none' ? 'block' : 'none';
+                });
+            }
+        });
+    </script>
 
     <script type="module" src="scripts/game.js"></script>
 </body>
