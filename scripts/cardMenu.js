@@ -184,12 +184,20 @@ export class CardMenu {
         }
 
         const cornerRadius = Math.max(4, width * 0.08);
-        const shadowOffset = 2;
 
-        ctx.beginPath();
-        ctx.roundRect(x + shadowOffset, y + shadowOffset, width, height, cornerRadius);
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-        ctx.fill();
+        // Floating shadow - multiple layers for depth
+        const shadowLayers = isSelected ? 4 : 2;
+        const shadowBlur = isSelected ? 12 : 6;
+        const shadowOffsetY = isSelected ? 8 : 4;
+        
+        for (let i = shadowLayers; i > 0; i--) {
+            const opacity = 0.15 + (i * 0.08);
+            const spread = i * 1.5;
+            ctx.beginPath();
+            ctx.roundRect(x + spread, y + shadowOffsetY + spread, width, height, cornerRadius);
+            ctx.fillStyle = `rgba(0, 0, 0, ${opacity})`;
+            ctx.fill();
+        }
 
         const bgGradient = ctx.createLinearGradient(x, y, x + width, y + height);
         bgGradient.addColorStop(0, '#2a2a3a');
