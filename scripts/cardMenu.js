@@ -117,7 +117,36 @@ export class CardMenu {
     }
 
     handleClick(x, y) {
+        if (this.buyButtonBounds) {
+            const bb = this.buyButtonBounds;
+            if (x >= bb.x && x <= bb.x + bb.width &&
+                y >= bb.y && y <= bb.y + bb.height) {
+                if (this.selectedCardId && this.canAfford(this.selectedCardId)) {
+                    this.purchase(this.selectedCardId);
+                    return { action: 'purchased' };
+                }
+            }
+        }
+
+        for (const bounds of this.cardBounds) {
+            if (x >= bounds.x && x <= bounds.x + bounds.width &&
+                y >= bounds.y && y <= bounds.y + bounds.height) {
+                this.selectedCardId = bounds.cardId;
+                return null;
+            }
+        }
+
+        this.selectedCardId = null;
         return null;
+    }
+
+    update(deltaTime) {
+        if (this.animationState.purchaseAnimation) {
+            this.animationState.purchaseAnimation.progress += deltaTime * 3;
+            if (this.animationState.purchaseAnimation.progress >= 1) {
+                this.animationState.purchaseAnimation = null;
+            }
+        }
     }
 
     drawCard(ctx, x, y, width, height, card, tier, isOwned = false, isSelected = false) {
