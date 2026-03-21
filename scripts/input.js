@@ -4,7 +4,7 @@ export class InputHandler {
         this.state = state;
         this.physics = physics;
         this.audio = audio;
-        this.buyMenu = null;
+        this.cardMenu = null;
         
         this.sweepPositions = [];
         this.sweepThreshold = 5;
@@ -12,8 +12,8 @@ export class InputHandler {
         this.bindEvents();
     }
 
-    setBuyMenu(buyMenu) {
-        this.buyMenu = buyMenu;
+    setCardMenu(cardMenu) {
+        this.cardMenu = cardMenu;
     }
 
 bindEvents() {
@@ -58,15 +58,10 @@ bindEvents() {
         const pointerX = e.clientX;
         const pointerY = e.clientY;
 
-        if (this.state.showBuyMenu && this.buyMenu) {
-            const result = this.buyMenu.handleClick(pointerX, pointerY);
-            if (result === 'continue') {
-                this.state.showBuyMenu = false;
-                // Restore canvas z-index when closing menu
-                const canvas = document.getElementById('game-canvas');
-                if (canvas) canvas.style.zIndex = '10';
-            } else if (result && result.action === 'purchase' && result.upgradeId) {
-                this.buyMenu.purchase(result.upgradeId);
+        if (this.state.showBuyMenu && this.cardMenu) {
+            const result = this.cardMenu.handleClick(pointerX, pointerY);
+            if (result && result.action === 'purchase' && result.upgradeId) {
+                this.cardMenu.purchase(result.upgradeId);
             }
             return;
         }

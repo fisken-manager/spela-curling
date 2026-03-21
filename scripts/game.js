@@ -5,7 +5,7 @@ import { InputHandler } from './input.js';
 import { Renderer } from './renderer.js';
 import { ScrollController } from './scroll.js';
 import { TransitionController } from './transition.js';
-import { BuyMenu } from './buyMenu.js';
+import { CardMenu } from './cardMenu.js';
 
 const audio = new AudioController();
 const state = new GameState();
@@ -14,7 +14,7 @@ const transition = new TransitionController();
 let input = null;
 let renderer = null;
 let scrollController = null;
-let buyMenu = null;
+let cardMenu = null;
 let lastTime = 0;
 
 function setupControls() {
@@ -130,9 +130,8 @@ function setupGameOverUI() {
 }
 
 function checkGameOver(state, overlay, scoreEl, moneyEl) {
-    // Toggle canvas z-index - lower when in menu so user can scroll
     const canvas = document.getElementById('game-canvas');
-    if (state.showBuyMenu || state.gameOver) {
+    if (state.gameOver) {
         canvas.style.zIndex = '0';
     } else {
         canvas.style.zIndex = '10';
@@ -144,8 +143,7 @@ function checkGameOver(state, overlay, scoreEl, moneyEl) {
         moneyEl.textContent = `$${state.money}`;
     }
 
-    // Preload waifu upgrade images
-    buyMenu.preloadImages();
+    
 }
 
 async function init() {
@@ -161,15 +159,15 @@ async function init() {
     canvas.height = state.screenHeight;
     
     renderer = new Renderer(canvas);
-    buyMenu = new BuyMenu(state);
+    cardMenu = new CardMenu(state);
     input = new InputHandler(canvas, state, physics, audio);
-    input.setBuyMenu(buyMenu);
+    input.setCardMenu(cardMenu);
     scrollController = new ScrollController(state, audio);
     setupControls();
     setupGameOverUI();
 
-    // Preload waifu upgrade images
-    await buyMenu.preloadImages();
+    // Preload card images before game starts
+    await cardMenu.preloadImages();
 
     state.initPowerUps();
     state.initScoringOrbs();
@@ -197,7 +195,7 @@ function gameLoop(timestamp) {
     
     if (state.showBuyMenu) {
         const ctx = renderer.ctx;
-        buyMenu.render(ctx, state.screenWidth, state.screenHeight);
+        cardMenu.render(ctx, state.screenWidth, state.screenHeight);
     } else {
         update(deltaTime);
         renderer.updateParticles(deltaTime);
