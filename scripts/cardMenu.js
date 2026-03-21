@@ -341,7 +341,7 @@ export class CardMenu {
             return;
         }
 
-        const cardHeight = height - 100;
+        const cardHeight = height - 180;
         const cardWidth = Math.min(140, (screenWidth - padding * 2) / available.length + 40);
         const overlap = cardWidth * 0.3;
         const totalWidth = available.length > 1 
@@ -391,24 +391,6 @@ export class CardMenu {
                 cardId: card.id,
                 canBuy
             });
-
-            const currentLevel = this.state.upgrades[card.id]?.level || 0;
-            const tier = card.tiers[currentLevel];
-            if (tier) {
-                const romanNumerals = ['I', 'II', 'III', 'IV', 'V'];
-                const tierNumeral = romanNumerals[tier.level - 1] || 'I';
-
-                const textY = drawY + drawHeight + 10;
-                ctx.font = 'bold 16px "Work Sans", sans-serif';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'top';
-                ctx.fillStyle = '#ffd700';
-                ctx.fillText(`${card.name} ${tierNumeral}`, drawX + drawWidth / 2, textY);
-
-                ctx.font = '14px "Work Sans", sans-serif';
-                ctx.fillStyle = '#94a3b8';
-                ctx.fillText(tier.effect, drawX + drawWidth / 2, textY + 22);
-            }
         }
     }
 
@@ -442,7 +424,20 @@ export class CardMenu {
 
         const canBuy = this.canAfford(this.selectedCardId);
 
-        const buyY = y + 20;
+        const romanNumerals = ['I', 'II', 'III', 'IV', 'V'];
+        const tierNumeral = romanNumerals[tier.level - 1] || 'I';
+
+        ctx.font = 'bold 18px "Work Sans", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#ffd700';
+        ctx.fillText(`${selectedCard.name} ${tierNumeral}`, centerX, y + 30);
+
+        ctx.font = '14px "Work Sans", sans-serif';
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText(`${tier.effect}  •  $${tier.cost}`, centerX, y + 55);
+
+        const buyY = y + 80;
         this.buyButtonBounds = {
             x: centerX - 100,
             y: buyY,
@@ -451,16 +446,6 @@ export class CardMenu {
         };
 
         this.drawBuyButton(ctx, centerX - 100, buyY, 200, 50, canBuy);
-
-        ctx.font = 'bold 18px "Work Sans", sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'top';
-        ctx.fillStyle = canBuy ? '#ffd700' : '#718096';
-        ctx.fillText(`${selectedCard.name}`, centerX, buyY + 60);
-
-        ctx.font = '14px "Work Sans", sans-serif';
-        ctx.fillStyle = '#94a3b8';
-        ctx.fillText(`${tier.effect}  •  $${tier.cost}`, centerX, buyY + 82);
 
         const continueY = y + height - 50;
         this.continueButtonBounds = {
