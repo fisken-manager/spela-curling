@@ -74,6 +74,7 @@ export class CardMenu {
                 name: 'Mynt Acceleration',
                 tiers: [
                     { level: 1, cost: 10, effect: 'Mynt ger hastighetsboost', image: 'coinSpeedBoost-tier1.jpg' },
+                    { level: 2, cost: 25, effect: '3x mynt, inga hastighetspickup', image: 'coinSpeedBoost-tier2.jpg' },
                 ]
             }
         ];
@@ -123,6 +124,35 @@ export class CardMenu {
 
         this.state.money -= cost;
         this.state.upgrades[cardId] = { level: currentLevel + 1 };
+
+        // Special handling for coinSpeedBoost tier 2
+        if (cardId === 'coinSpeedBoost' && currentLevel + 1 === 2) {
+            // Remove speed boost pickups
+            this.state.powerUps = [];
+            
+            // Add extra yellow orbs (2 more per existing yellow orb)
+            const existingYellows = this.state.scoringOrbs.filter(o => o.type === 'yellow' && !o.collected);
+            const maxScroll = Math.max(1, this.state.pageHeight - this.state.screenHeight);
+            let orbId = this.state.scoringOrbs.length;
+            
+            // Add 2 more yellow orbs for each existing one at same position
+            for (const orb of existingYellows) {
+                this.state.scoringOrbs.push({
+                    id: `orb-${orbId++}`,
+                    type: 'yellow',
+                    x: orb.x - 30,
+                    scrollProgress: orb.scrollProgress,
+                    collected: false
+                });
+                this.state.scoringOrbs.push({
+                    id: `orb-${orbId++}`,
+                    type: 'yellow',
+                    x: orb.x + 30,
+                    scrollProgress: orb.scrollProgress,
+                    collected: false
+                });
+            }
+        }
 
         this.animationState.enteringCards.push({
             cardId,
