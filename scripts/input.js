@@ -27,7 +27,7 @@ bindEvents() {
         const playArea = this.state.getPlayArea();
         return {
             x: playArea.left + playArea.width / 2 + this.state.stone.x,
-            y: this.state.screenHeight * this.state.stoneVisualY
+            y: this.state.stoneYPx
         };
     }
 
@@ -72,9 +72,9 @@ bindEvents() {
             this.state.phase = 'charging';
             this.state.input.isDragging = true;
             this.state.input.dragStartX = pointerX;
-            this.state.input.dragStartY = pointerY;
+            this.state.input.dragStartYPx = pointerY;
             this.state.input.stoneStartX = this.state.stone.x;
-            this.state.input.stoneStartY = this.state.stoneVisualY;
+            this.state.input.stoneStartYPx = this.state.stoneYPx;
             this.state.input.flickHistory = [{ x: pointerX, y: pointerY, time: Date.now() }];
             this.state.input.isSnapping = false;
             
@@ -98,7 +98,7 @@ bindEvents() {
         
         if (this.state.phase === 'charging' && this.state.input.isDragging) {
             const dx = pointerX - this.state.input.dragStartX;
-            const dy = pointerY - this.state.input.dragStartY;
+            const dy = pointerY - this.state.input.dragStartYPx;
             const dist = Math.sqrt(dx * dx + dy * dy);
             
             // Constrain drag with a soft limit for springiness
@@ -119,7 +119,7 @@ bindEvents() {
             }
             
             this.state.stone.x = this.state.input.stoneStartX + clampedDx;
-            this.state.stoneVisualY = this.state.input.stoneStartY + (clampedDy / this.state.screenHeight);
+            this.state.stoneYPx = this.state.input.stoneStartYPx + clampedDy;
             
             this.state.input.flickHistory.push({ x: pointerX, y: pointerY, time: Date.now() });
             

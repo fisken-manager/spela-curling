@@ -251,18 +251,23 @@ function updateCombo(deltaTime) {
 
 function updateSnapBack(deltaTime) {
     if (state.phase === 'resting' && state.input.isSnapping) {
+        const restYPx = state.screenHeight - state.restOffsetPx;
+        
         state.input.snapBackProgress += deltaTime * 5; // 0.2s duration
         if (state.input.snapBackProgress >= 1) {
             state.input.snapBackProgress = 1;
             state.input.isSnapping = false;
             state.stone.x = 0;
-            state.stoneVisualY = state.restY;
+            state.stoneYPx = restYPx;
         } else {
             const t = state.input.snapBackProgress;
             const ease = 1 - Math.pow(1 - t, 3); // easeOutCubic
             state.stone.x = state.input.stoneStartX * (1 - ease);
-            state.stoneVisualY = state.input.stoneStartY + (state.restY - state.input.stoneStartY) * ease;
+            state.stoneYPx = state.input.stoneStartYPx + (restYPx - state.input.stoneStartYPx) * ease;
         }
+        
+        // Update stoneVisualY for compatibility
+        state.stoneVisualY = state.stoneYPx / state.screenHeight;
     }
 }
 

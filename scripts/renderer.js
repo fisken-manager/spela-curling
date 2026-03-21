@@ -1190,8 +1190,8 @@ drawScoreText(state) {
         const progress = Math.min(effect.timer / effect.duration, 1);
         const bounce = Math.sin(progress * Math.PI);
         const startY = state.screenHeight;
-        const targetY = effect.targetY;
-        effect.y = startY - (startY - targetY) * bounce;
+        const targetYPx = effect.targetYPx;
+        effect.y = startY - (startY - targetYPx) * bounce;
 
         if (!effect.peaked && progress >= 0.5) {
             effect.peaked = true;

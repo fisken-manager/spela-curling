@@ -18,9 +18,9 @@ export class TransitionController {
         
         this.isActive = true;
         this.elapsed = 0;
-        this.startVisualY = state.stoneVisualY;
+        this.startYPx = state.stoneYPx;
         this.startWorldY = state.stone.worldY;
-        this.targetVisualY = state.restY;
+        this.targetYPx = state.screenHeight - state.restOffsetPx;
         this.wasInScrollZone = state.inScrollZone;
     }
 
@@ -37,11 +37,14 @@ export class TransitionController {
         const t = Math.min(1, this.elapsed / this.duration);
         const eased = this.easeOutCubic(t);
         
-        state.stoneVisualY = this.startVisualY + (this.targetVisualY - this.startVisualY) * eased;
+        state.stoneYPx = this.startYPx + (this.targetYPx - this.startYPx) * eased;
+        
+        // Update stoneVisualY for legacy compatibility
+        state.stoneVisualY = state.stoneYPx / state.screenHeight;
         
         if (this.wasInScrollZone) {
-            const visualDelta = (this.targetVisualY - this.startVisualY) * eased;
-            state.stone.worldY = this.startWorldY + visualDelta * state.screenHeight;
+            const pixelDelta = (this.targetYPx - this.startYPx) * eased;
+            state.stone.worldY = this.startWorldY + pixelDelta;
             state.stone.worldY = Math.max(0, state.stone.worldY);
             
             const maxScroll = state.pageHeight - state.screenHeight;
@@ -61,11 +64,11 @@ export class TransitionController {
             if (state.lives <= 0) {
                 state.gameOver = true;
                 state.phase = 'returning';
-                state.stoneVisualY = state.restY;
+                state.stoneYPx = state.screenHeight - state.restOffsetPx;
             } else {
                 state.showBuyMenu = true;
                 state.phase = 'resting';
-                state.stoneVisualY = state.restY;
+                state.stoneYPx = state.screenHeight - state.restOffsetPx;
             }
         }
     }

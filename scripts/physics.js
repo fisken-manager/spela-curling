@@ -304,7 +304,7 @@ checkPowerUps(state, effectiveRadius) {
                 state.superBoostCollected = superBoostPowerUp;
                 state.superBoostImageEffect = {
                     y: state.screenHeight,
-                    targetY: state.screenHeight * state.stoneVisualY + 60,
+                    targetYPx: state.stoneYPx - 60,
                     timer: 0,
                     duration: 1.33,
                     peaked: false
@@ -646,9 +646,12 @@ checkPowerUps(state, effectiveRadius) {
         stone.rotation = 0;
         
         state.phase = 'moving';
-        state.input = { isDragging: false, dragStartX: 0, dragStartY: 0, stoneStartX: 0, stoneStartY: 0, flickHistory: [], snapBackProgress: 0, isSnapping: false };
+        state.input = { isDragging: false, dragStartX: 0, dragStartYPx: 0, stoneStartX: 0, stoneStartYPx: 0, flickHistory: [], snapBackProgress: 0, isSnapping: false };
         state.inScrollZone = false;
-        state.transitionProgress = (state.restY - state.stoneVisualY) / state.transitionDistance;
+        
+        const totalTransitionPx = (state.screenHeight - state.restOffsetPx) - (state.screenHeight / 2);
+        const currentProgressPx = (state.screenHeight - state.restOffsetPx) - state.stoneYPx;
+        state.transitionProgress = Math.min(1, currentProgressPx / totalTransitionPx);
     }
 
     resetStone(state) {
@@ -656,7 +659,7 @@ checkPowerUps(state, effectiveRadius) {
         state.input.isSnapping = true;
         state.input.snapBackProgress = 0;
         state.input.stoneStartX = state.stone.x;
-        state.input.stoneStartY = state.stoneVisualY;
+        state.input.stoneStartYPx = state.stoneYPx;
         state.input.flickHistory = [];
     }
 
