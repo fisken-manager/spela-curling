@@ -10,6 +10,12 @@ html, body {
     height: 100%;
 }
 
+body {
+    background: #0a0a0a;
+    color: #f5f5f5;
+    font-family: 'Work Sans', sans-serif;
+}
+
 #game-canvas {
     position: fixed;
     top: 0;
@@ -31,463 +37,232 @@ html, body {
     will-change: transform;
 }
 
-/* ===== HERO SECTION ===== */
-.hero-section {
+/* ===== SPACER ===== */
+.spacer {
+    height: 80vh;
+    min-height: 500px;
+}
+
+/* ===== HERO ===== */
+.hero {
     min-height: 100vh;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
     text-align: center;
-    padding: 60px 20px;
-    background: linear-gradient(180deg, #0a0a0a 0%, #1a202c 50%, #2d3748 100%);
-    position: relative;
+    padding: 40px 20px;
+    background: linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%);
 }
 
-.hero-section::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: 
-        radial-gradient(ellipse at 20% 80%, rgba(255, 0, 110, 0.1) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 20%, rgba(57, 255, 20, 0.05) 0%, transparent 40%);
-    pointer-events: none;
-}
-
-.hero-content {
-    position: relative;
-    z-index: 1;
-}
-
-.glitch-title {
-    font-family: 'Nosifer', cursive;
-    font-size: clamp(2rem, 10vw, 4rem);
-    color: #ff006e;
-    text-shadow: 
-        2px 2px 0 #fbff00,
-        4px 4px 0 #39ff14,
-        0 0 30px rgba(255, 0, 110, 0.5);
-    margin-bottom: 1rem;
-    animation: glitch 3s infinite;
-}
-
-@keyframes glitch {
-    0%, 100% { transform: translate(0); }
-    20% { transform: translate(-1px, 1px); }
-    40% { transform: translate(1px, -1px); }
-    60% { transform: translate(-1px, -1px); }
-    80% { transform: translate(1px, 1px); }
-}
-
-.hero-subtitle {
-    font-family: 'UnifrakturMaguntia', cursive;
-    font-size: clamp(1.2rem, 4vw, 2rem);
-    color: #f5f5dc;
-    letter-spacing: 0.3em;
+.hero-inner h1 {
+    font-size: clamp(4rem, 15vw, 6rem);
+    font-weight: 800;
+    line-height: 0.9;
+    letter-spacing: -0.05em;
     margin-bottom: 2rem;
+    color: #fff;
 }
 
-.hero-quote {
-    background: rgba(0, 0, 0, 0.5);
-    border-left: 4px solid #ff006e;
-    padding: 1.5rem;
-    margin: 2rem 0;
-    max-width: 400px;
-}
-
-.hero-quote p {
-    font-family: 'Permanent Marker', cursive;
-    font-size: 1.1rem;
-    color: #fbff00;
-    line-height: 1.4;
-}
-
-.quote-author {
-    display: block;
-    font-family: 'Space Mono', monospace;
-    font-size: 0.7rem;
-    color: #b87333;
-    margin-top: 0.5rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-}
-
-.hero-instruction {
-    font-family: 'Space Mono', monospace;
-    font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.5);
-    margin-top: 3rem;
-    text-transform: uppercase;
-    letter-spacing: 0.2em;
-}
-
-/* ===== SECTION HEADER ===== */
-.section-header {
-    text-align: center;
-    padding: 60px 20px 40px;
-    background: linear-gradient(180deg, #0a0a0a 0%, #1a202c 100%);
-}
-
-.section-label {
-    font-family: 'Space Mono', monospace;
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5em;
-    color: #b87333;
-    display: block;
-    margin-bottom: 1rem;
-}
-
-.section-header h2 {
-    font-family: 'Creepster', cursive;
-    font-size: clamp(2rem, 8vw, 3.5rem);
-    color: #8b0000;
-    text-shadow: 2px 2px 0 #ff006e;
-    margin-bottom: 1rem;
-}
-
-.section-desc {
-    font-family: 'Work Sans', sans-serif;
-    font-size: 1rem;
-    color: rgba(255, 255, 255, 0.8);
-    max-width: 400px;
+.hero-sub {
+    font-size: clamp(1rem, 3vw, 1.3rem);
+    font-weight: 300;
+    color: rgba(255,255,255,0.5);
+    max-width: 300px;
     margin: 0 auto;
     line-height: 1.6;
 }
 
-/* ===== VICTIMS SECTION ===== */
-.victims-section {
-    background: linear-gradient(180deg, #1a202c 0%, #0a0a0a 100%);
-    padding-bottom: 40px;
-}
-
-.victims-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    padding: 0 20px;
-}
-
-.victim-card {
-    display: grid;
-    grid-template-columns: 100px 1fr;
-    gap: 15px;
-    background: rgba(0, 0, 0, 0.6);
-    border: 2px solid #ff006e;
-    padding: 15px;
+/* ===== VICTIM FULL ===== */
+.victim-full {
     position: relative;
-    overflow: hidden;
-}
-
-.victim-card:nth-child(2) { border-color: #39ff14; }
-.victim-card:nth-child(3) { border-color: #fbff00; }
-.victim-card:nth-child(4) { border-color: #8b0000; }
-.victim-card:nth-child(5) { border-color: #00d4ff; }
-
-.victim-number {
-    position: absolute;
-    top: 5px;
-    left: 5px;
-    font-family: 'Rubik Mono One', sans-serif;
-    font-size: 2rem;
-    color: rgba(255, 255, 255, 0.1);
-    z-index: 1;
-}
-
-.victim-img {
-    width: 100px;
-    height: 100px;
-    object-fit: cover;
-    filter: grayscale(0.3) contrast(1.2);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.victim-info h3 {
-    font-family: 'Keania One', cursive;
-    font-size: 1.3rem;
-    color: #f5f5dc;
-    text-transform: uppercase;
-    margin-bottom: 0.5rem;
-}
-
-.victim-quote {
-    font-family: 'Special Elite', monospace;
-    font-size: 0.85rem;
-    color: #ff006e;
-    font-style: italic;
-    margin-bottom: 0.5rem;
-    line-height: 1.4;
-}
-
-.victim-desc {
-    font-family: 'Work Sans', sans-serif;
-    font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.6);
-    line-height: 1.4;
-}
-
-.dala-quote-box {
-    margin: 40px 20px;
-    padding: 20px;
-    background: rgba(251, 255, 0, 0.05);
-    border-left: 4px solid #fbff00;
-}
-
-.dala-quote-box p {
-    font-family: 'Permanent Marker', cursive;
-    font-size: 1.2rem;
-    color: #fbff00;
-    text-align: center;
-}
-
-/* ===== PROVERBS SECTION ===== */
-.proverbs-section {
-    background: linear-gradient(180deg, #0a0a0a 0%, #4a0080 50%, #0a0a0a 100%);
-    padding: 40px 20px;
-}
-
-.proverbs-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 15px;
-}
-
-.proverb-card {
-    background: rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 20px;
-    text-align: center;
-}
-
-.proverb-card:nth-child(odd) {
-    border-left: 3px solid #ff006e;
-}
-
-.proverb-card:nth-child(even) {
-    border-right: 3px solid #39ff14;
-}
-
-.proverb-text {
-    font-family: 'Metal Mania', cursive;
-    font-size: 1.1rem;
-    color: #f5f5dc;
-    margin-bottom: 0.5rem;
-    line-height: 1.4;
-}
-
-.proverb-origin {
-    font-family: 'Space Mono', monospace;
-    font-size: 0.65rem;
-    color: #b87333;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-}
-
-/* ===== ENKAN SECTION ===== */
-.enkan-section {
-    background: linear-gradient(180deg, #1a202c 0%, #0a0a0a 100%);
-    padding-bottom: 40px;
-}
-
-.enkan-gallery {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    padding: 0 10px;
-}
-
-.enkan-item {
-    position: relative;
-    overflow: hidden;
-    background: #0a0a0a;
-    border: 2px solid #39ff14;
-}
-
-.enkan-item.large {
-    grid-column: span 2;
-}
-
-.enkan-item.wide {
-    grid-column: span 2;
-}
-
-.enkan-item img {
     width: 100%;
-    height: 150px;
-    object-fit: cover;
-    filter: contrast(1.1);
 }
 
-.enkan-item.large img,
-.enkan-item.wide img {
-    height: 200px;
+.victim-full img {
+    width: 100%;
+    height: auto;
+    display: block;
 }
 
-.enkan-caption {
+.victim-text {
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
-    background: rgba(0, 0, 0, 0.9);
-    padding: 10px;
+    padding: 40px 30px;
+    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%);
 }
 
-.enkan-caption h3 {
-    font-family: 'Bangers', cursive;
-    font-size: 1rem;
-    color: #f5f5dc;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.enkan-caption p {
+.victim-text .num {
     font-family: 'Space Mono', monospace;
-    font-size: 0.65rem;
-    color: #b87333;
-    margin-top: 3px;
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.4);
+    display: block;
+    margin-bottom: 10px;
 }
 
-/* ===== MANIFESTO SECTION ===== */
-.manifesto-section {
+.victim-text h2 {
+    font-size: clamp(2.5rem, 8vw, 4rem);
+    font-weight: 800;
+    line-height: 0.95;
+    margin-bottom: 15px;
+    color: #fff;
+}
+
+.victim-text p {
+    font-size: 1.1rem;
+    font-weight: 300;
+    color: rgba(255,255,255,0.7);
+    font-style: italic;
+}
+
+/* ===== IMAGE FULL ===== */
+.image-full {
+    position: relative;
+    width: 100%;
+}
+
+.image-full img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.caption {
+    padding: 30px;
+    background: #111;
+}
+
+.caption h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #fff;
+}
+
+.caption p {
+    font-size: 1rem;
+    font-weight: 300;
+    color: rgba(255,255,255,0.5);
+}
+
+/* ===== PROVERB ===== */
+.proverb {
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 40px;
+    background: #f5f5f5;
+}
+
+.proverb.dark {
+    background: #0a0a0a;
+}
+
+.proverb.dark p {
+    color: #fff;
+}
+
+.proverb p {
+    font-size: clamp(1.8rem, 6vw, 2.8rem);
+    font-weight: 300;
+    text-align: center;
+    line-height: 1.3;
+    color: #0a0a0a;
+    max-width: 400px;
+}
+
+/* ===== TEXT BLOCK ===== */
+.text-block {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 40px;
+    background: #1a1a1a;
+}
+
+.text-block p {
+    font-size: clamp(1.3rem, 4vw, 1.8rem);
+    font-weight: 300;
+    line-height: 1.7;
+    color: rgba(255,255,255,0.8);
+    max-width: 380px;
+}
+
+/* ===== MANIFEST ===== */
+.manifest {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    justify-content: center;
+    padding: 80px 40px;
+    background: #0a0a0a;
+}
+
+.manifest h2 {
+    font-size: clamp(2rem, 6vw, 3rem);
+    font-weight: 800;
+    margin-bottom: 60px;
+    color: #fff;
+}
+
+.manifest p {
+    font-size: clamp(1.2rem, 4vw, 1.6rem);
+    font-weight: 300;
+    line-height: 1.8;
+    color: rgba(255,255,255,0.7);
+    margin-bottom: 40px;
+    max-width: 380px;
+}
+
+/* ===== LYRICS ===== */
+.lyrics {
+    min-height: 100vh;
+    display: flex;
     align-items: center;
     justify-content: center;
-    padding: 60px 20px;
-    background: linear-gradient(180deg, #0a0a0a 0%, #8b0000 50%, #0a0a0a 100%);
-    position: relative;
+    padding: 80px 30px;
+    background: linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%);
 }
 
-.manifesto-section::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: 
-        linear-gradient(90deg, rgba(255, 0, 110, 0.05) 1px, transparent 1px),
-        linear-gradient(rgba(255, 0, 110, 0.05) 1px, transparent 1px);
-    background-size: 30px 30px;
-    pointer-events: none;
-}
-
-.manifesto-content {
-    position: relative;
-    z-index: 1;
-    max-width: 400px;
-}
-
-.manifesto-content h2 {
-    font-family: 'Nosifer', cursive;
-    font-size: clamp(1.5rem, 6vw, 2.5rem);
-    color: #ff006e;
-    text-align: center;
-    margin-bottom: 2rem;
-    line-height: 1.2;
-    animation: glitch 3s infinite;
-}
-
-.manifesto-body {
-    background: rgba(0, 0, 0, 0.7);
-    border: 1px solid #ff006e;
-    padding: 25px;
-    transform: rotate(1deg);
-}
-
-.manifesto-body p {
-    font-family: 'Work Sans', sans-serif;
-    font-size: 0.95rem;
-    color: #f5f5dc;
-    line-height: 1.8;
-    margin-bottom: 1rem;
-    text-indent: 1rem;
-}
-
-.manifesto-quote {
-    margin: 20px 0;
-    padding: 15px;
-    background: rgba(139, 0, 0, 0.3);
-    border-left: 3px solid #8b0000;
-}
-
-.manifesto-quote p {
-    font-family: 'Permanent Marker', cursive;
-    font-size: 1rem;
-    color: #fbff00;
-    text-indent: 0;
-    margin: 0;
-}
-
-.manifesto-signature {
-    font-family: 'Permanent Marker', cursive;
-    font-size: 1.2rem;
-    color: #fbff00;
-    text-align: right;
-    margin-top: 1.5rem;
-    transform: rotate(-2deg);
-}
-
-.manifesto-signature span {
-    display: block;
-    font-size: 0.8rem;
-    color: #ff006e;
-    margin-top: 0.3rem;
-}
-
-/* ===== LYRICS SECTION ===== */
-.lyrics-section {
-    background: linear-gradient(180deg, #0a0a0a 0%, #1a202c 100%);
-    padding: 60px 20px;
+.lyrics-inner {
     text-align: center;
 }
 
-.lyrics-header {
-    margin-bottom: 3rem;
+.lyrics h2 {
+    font-size: clamp(2rem, 6vw, 3rem);
+    font-weight: 800;
+    margin-bottom: 80px;
+    color: #fff;
 }
 
-.lyrics-header h2 {
-    font-family: 'Metal Mania', cursive;
-    font-size: clamp(2rem, 8vw, 3rem);
-    color: #39ff14;
-    text-shadow: 0 0 20px rgba(57, 255, 20, 0.3);
+.stanza {
+    margin-bottom: 80px;
 }
 
-.lyrics-content {
-    max-width: 400px;
-    margin: 0 auto;
-}
-
-.lyrics-stanza {
-    margin-bottom: 3rem;
-}
-
-.lyrics-stanza p {
-    font-family: 'Special Elite', monospace;
-    font-size: 1.3rem;
-    color: #f5f5dc;
+.stanza p {
+    font-size: clamp(1.5rem, 5vw, 2.2rem);
+    font-weight: 300;
     line-height: 2;
-    margin-bottom: 0.5rem;
+    color: rgba(255,255,255,0.9);
 }
 
-.lyrics-chorus {
-    font-family: 'Bangers', cursive;
-    font-size: 1.8rem;
-    color: #ff006e;
-    letter-spacing: 0.1em;
-    margin-top: 1rem;
+.stanza.chorus {
+    margin: 100px 0;
 }
 
-.lyrics-quote {
-    margin-top: 3rem;
-    padding: 20px;
-    background: rgba(0, 212, 255, 0.05);
-    border: 1px solid rgba(0, 212, 255, 0.3);
+.stanza.chorus p {
+    font-weight: 400;
+    color: #fff;
 }
 
-.lyrics-quote p {
-    font-family: 'Lacquer', sans-serif;
-    font-size: 1rem;
-    color: #00d4ff;
-    font-style: italic;
+.stanza .big {
+    font-size: clamp(2rem, 6vw, 3rem);
+    font-weight: 600;
+    margin-top: 30px;
+    color: #fff;
 }
 
 /* ===== CURLING SHEET ===== */
@@ -621,77 +396,28 @@ html, body {
     bottom: 2.2%;
 }
 
-/* ===== ENDING SECTION ===== */
-.ending-section {
+/* ===== ENDING ===== */
+.ending {
     min-height: 80vh;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 60px 20px;
-    background: linear-gradient(180deg, #0a0a0a 0%, #000000 100%);
     text-align: center;
+    padding: 60px 40px;
+    background: #0a0a0a;
 }
 
-.ending-content h2 {
-    font-family: 'Nosifer', cursive;
-    font-size: clamp(1.5rem, 6vw, 2.5rem);
-    color: #8b0000;
-    margin-bottom: 1rem;
+.ending p {
+    font-size: clamp(1.5rem, 5vw, 2.5rem);
+    font-weight: 300;
+    color: rgba(255,255,255,0.8);
+    margin-bottom: 20px;
 }
 
-.ending-content p {
-    font-family: 'Work Sans', sans-serif;
+.ending .small {
     font-size: 1rem;
-    color: rgba(255, 255, 255, 0.6);
-    margin-bottom: 2rem;
-}
-
-.final-quote {
-    background: rgba(255, 0, 110, 0.1);
-    border: 1px solid rgba(255, 0, 110, 0.3);
-    padding: 20px;
-    margin: 20px 0;
-}
-
-.final-quote p {
-    font-family: 'Permanent Marker', cursive;
-    font-size: 1.1rem;
-    color: #ff006e;
-    margin: 0;
-}
-
-.loop-text {
-    font-family: 'Space Mono', monospace;
-    font-size: 0.8rem;
-    color: #39ff14;
-    margin-top: 3rem;
-}
-
-/* ===== MARQUEE ===== */
-.marquee-container {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: #ff006e;
-    color: #0a0a0a;
-    font-family: 'Space Mono', monospace;
-    font-size: 0.7rem;
-    padding: 8px 0;
-    overflow: hidden;
-    z-index: 100;
-}
-
-.marquee-content {
-    display: inline-block;
-    white-space: nowrap;
-    animation: marquee 20s linear infinite;
-}
-
-@keyframes marquee {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
+    color: rgba(255,255,255,0.4);
 }
 
 /* ===== PHYSICS CONTROLS ===== */
@@ -703,8 +429,8 @@ html, body {
     padding: 15px;
     border-radius: 8px;
     z-index: 100;
-    font-size: 12px;
-    min-width: 180px;
+    font-size: 11px;
+    min-width: 150px;
     pointer-events: auto;
     touch-action: auto;
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -713,14 +439,10 @@ html, body {
 
 #physics-controls h3 {
     margin-bottom: 10px;
-    font-size: 12px;
+    font-size: 11px;
     cursor: pointer;
     user-select: none;
-    color: #ff006e;
-}
-
-#physics-controls h3:hover {
-    color: #fbff00;
+    color: #fff;
 }
 
 .toggle-arrow {
@@ -746,7 +468,7 @@ html, body {
     display: flex;
     justify-content: space-between;
     margin-bottom: 2px;
-    color: rgba(255, 255, 255, 0.7);
+    color: rgba(255, 255, 255, 0.6);
 }
 
 #physics-controls input[type="range"] {
@@ -754,24 +476,18 @@ html, body {
     cursor: pointer;
 }
 
-#physics-controls .debug-section {
-    margin-top: 15px;
+.debug-section {
+    margin-top: 10px;
     padding-top: 10px;
     border-top: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-#physics-controls .debug-section h4 {
-    margin-bottom: 8px;
-    font-size: 11px;
-    color: #b87333;
-}
-
-#physics-controls .debug-section button {
-    padding: 5px 10px;
+.debug-section button {
+    padding: 4px 8px;
     margin-right: 5px;
     margin-bottom: 5px;
     font-size: 10px;
-    background: #4a5568;
+    background: #333;
     color: #fff;
     border: none;
     border-radius: 4px;
@@ -779,8 +495,8 @@ html, body {
     font-family: 'Space Mono', monospace;
 }
 
-#physics-controls .debug-section button:hover {
-    background: #ff006e;
+.debug-section button:hover {
+    background: #555;
 }
 
 /* ===== GAME OVER ===== */
@@ -790,7 +506,7 @@ html, body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.9);
+    background: rgba(0, 0, 0, 0.95);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -809,66 +525,54 @@ html, body {
 }
 
 .game-over-title {
-    font-family: 'Nosifer', cursive;
-    font-size: 2.5rem;
-    color: #8b0000;
+    font-size: 2rem;
+    font-weight: 300;
+    color: rgba(255,255,255,0.5);
     text-transform: uppercase;
     letter-spacing: 0.3em;
 }
 
 .final-score {
-    font-size: 6rem;
-    font-weight: bold;
-    color: #39ff14;
-    text-shadow: 0 0 30px rgba(57, 255, 20, 0.5);
-    font-family: 'Rubik Mono One', sans-serif;
+    font-size: 5rem;
+    font-weight: 800;
+    color: #fff;
 }
 
 .game-over-money {
     font-family: 'Space Mono', monospace;
-    font-size: 1.5rem;
-    color: #fbff00;
+    font-size: 1.2rem;
+    color: rgba(255,255,255,0.6);
     margin-bottom: 10px;
 }
 
 #restart-btn {
     padding: 15px 40px;
-    font-size: 1.2rem;
-    background: #ff006e;
-    color: #fff;
+    font-size: 1rem;
+    background: #fff;
+    color: #0a0a0a;
     border: none;
-    border-radius: 8px;
+    border-radius: 0;
     cursor: pointer;
-    font-family: 'Bangers', cursive;
-    letter-spacing: 0.1em;
-    transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+    font-weight: 600;
+    transition: transform 0.2s;
 }
 
 #restart-btn:hover {
-    background: #fbff00;
-    color: #0a0a0a;
     transform: scale(1.05);
-    box-shadow: 0 4px 20px rgba(251, 255, 0, 0.4);
 }
 
 .buy-life-btn {
     padding: 12px 30px;
-    font-size: 1.2rem;
-    background: #fbff00;
+    font-size: 1rem;
+    background: #fff;
     color: #0a0a0a;
     border: none;
-    border-radius: 8px;
     cursor: pointer;
-    font-family: 'Bangers', cursive;
-    font-weight: bold;
-    transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
-    margin-bottom: 10px;
+    font-weight: 600;
 }
 
 .buy-life-btn:hover {
-    background: #fff;
-    transform: scale(1.05);
-    box-shadow: 0 4px 20px rgba(251, 255, 0, 0.5);
+    background: #ddd;
 }
 
 .buy-life-btn.hidden {
@@ -897,13 +601,11 @@ html, body {
 }
 
 #loop-text {
-    color: #ff006e;
-    font-size: 4rem;
-    font-weight: bold;
-    font-family: 'Nosifer', cursive;
+    color: #fff;
+    font-size: 3rem;
+    font-weight: 800;
     opacity: 0;
     transition: opacity 0.25s ease-in-out;
-    text-shadow: 0 0 30px rgba(255, 0, 110, 0.5);
 }
 
 #loop-text.active {
