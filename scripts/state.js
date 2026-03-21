@@ -468,30 +468,21 @@ export class GameState {
                 });
             }
             
-            // Yellow orbs at wall edges (spawn on both walls)
+            // Yellow orbs at wall edges (80% chance per segment)
             if (random(seed + 2000) < 0.8) {
                 const yellowSeed = seed + 3000;
                 const progressOffset = random(yellowSeed) * 0.5;
                 const orbProgress = baseProgress + progressOffset;
                 
                 if (orbProgress <= 1) {
-                    // Position near both wall edges
                     const wallOffset = 180;
+                    const onLeftWall = random(yellowSeed + 1) < 0.5;
+                    const orbX = onLeftWall ? -wallOffset : wallOffset;
                     
-                    // Left wall yellow orb
                     this.scoringOrbs.push({
                         id: `orb-${orbId++}`,
                         type: 'yellow',
-                        x: -wallOffset,
-                        scrollProgress: orbProgress,
-                        collected: false
-                    });
-                    
-                    // Right wall yellow orb
-                    this.scoringOrbs.push({
-                        id: `orb-${orbId++}`,
-                        type: 'yellow',
-                        x: wallOffset,
+                        x: orbX,
                         scrollProgress: orbProgress,
                         collected: false
                     });

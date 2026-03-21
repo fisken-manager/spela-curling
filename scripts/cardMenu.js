@@ -130,33 +130,41 @@ export class CardMenu {
             // Remove speed boost pickups
             this.state.powerUps = [];
             
-            // Add additional yellow orbs throughout the level (not at same positions)
+            // Remove existing yellow orbs
+            this.state.scoringOrbs = this.state.scoringOrbs.filter(o => o.type !== 'yellow');
+            
+            // Respawn yellow orbs with 3x frequency (smaller segments = more spawn points)
             const maxScroll = Math.max(1, this.state.pageHeight - this.state.screenHeight);
             const segmentSize = 333; // 3x more frequent than original 1000
-            const startOffset = 600;
+            const startOffset = 800;
             let orbId = this.state.scoringOrbs.length;
             
             const numSegments = Math.floor((maxScroll - startOffset) / segmentSize);
             
             for (let i = 0; i < numSegments; i++) {
-                const progressOffset = (i * segmentSize + startOffset) / maxScroll;
+                const baseProgress = (startOffset + i * segmentSize) / maxScroll;
+                if (baseProgress > 1) continue;
                 
-                if (progressOffset <= 1) {
-                    // Add one on each wall at new positions
-                    this.state.scoringOrbs.push({
-                        id: `orb-${orbId++}`,
-                        type: 'yellow',
-                        x: -180,
-                        scrollProgress: progressOffset,
-                        collected: false
-                    });
-                    this.state.scoringOrbs.push({
-                        id: `orb-${orbId++}`,
-                        type: 'yellow',
-                        x: 180,
-                        scrollProgress: progressOffset,
-                        collected: false
-                    });
+                const seed = Math.floor(this.state.pageHeight + i * 333 + (this.state.loopCount || 1) * 100000);
+                const random = (s) => { const x = Math.sin(s) * 10000; return x - Math.floor(x); };
+                
+                if (random(seed + 2000) < 0.8) {
+                    const yellowSeed = seed + 3000;
+                    const progressOffset = random(yellowSeed) * 0.5;
+                    const orbProgress = baseProgress + progressOffset;
+                    
+                    if (orbProgress <= 1) {
+                        const wallOffset = 180;
+                        const onLeftWall = random(yellowSeed + 1) < 0.5;
+                        
+                        this.state.scoringOrbs.push({
+                            id: `orb-${orbId++}`,
+                            type: 'yellow',
+                            x: onLeftWall ? -wallOffset : wallOffset,
+                            scrollProgress: orbProgress,
+                            collected: false
+                        });
+                    }
                 }
             }
         }
