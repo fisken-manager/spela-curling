@@ -4,6 +4,9 @@ export class CardMenu {
         this.cards = this.initializeCards();
         this.images = {};
         this.selectedCardId = null;
+        this.clickAreas = [];
+        this.cardBounds = [];
+        this.buyButtonBounds = null;
         this.animationState = {
             enteringCards: [],
             exitingCards: [],
@@ -244,6 +247,202 @@ export class CardMenu {
     }
 
     render(ctx, screenWidth, screenHeight) {
+        this.clickAreas = [];
+        this.buyButtonBounds = null;
+
+        ctx.fillStyle = '#1a1a2e';
+        ctx.fillRect(0, 0, screenWidth, screenHeight);
+
+        this.renderNoiseOverlay(ctx, screenWidth, screenHeight);
+
+        const padding = 16;
+        const purchasableHeight = screenHeight * 0.55;
+        const buyZoneHeight = screenHeight * 0.15;
+        const collectionHeight = screenHeight * 0.30;
+
+        const available = this.getAvailableUpgrades();
+        const owned = this.getOwnedUpgrades();
+
+        this.renderPurchasableZone(ctx, screenWidth, purchasableHeight, available, padding);
+
+        const buyZoneY = purchasableHeight;
+        this.renderBuyZone(ctx, screenWidth, buyZoneY, buyZoneHeight);
+
+        const collectionY = purchasableHeight + buyZoneHeight;
+        this.renderCollectionZone(ctx, screenWidth, collectionY, collectionHeight, owned, padding);
+    }
+
+    renderNoiseOverlay(ctx, width, height) {
+        const imageData = ctx.createImageData(width, height);
+        const data = imageData.data;
+        for (let i = 0; i < data.length; i += 4) {
+            const noise = Math.random() * 15;
+            data[i] = noise;
+            data[i + 1] = noise;
+            data[i + 2] = noise;
+            data[i + 3] = 8;
+        }
+        ctx.putImageData(imageData, 0, 0);
+    }
+
+    renderPurchasableZone(ctx, screenWidth, height, available, padding) {
+        const titleY = padding + 10;
+        ctx.font = 'bold 24px "Space Mono", monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillStyle = '#ffd700';
+        ctx.fillText('UPPGRADERINGAR', screenWidth / 2, titleY);
+
+        ctx.font = 'bold 20px "Space Mono", monospace';
+        ctx.fillStyle = '#ffd700';
+        ctx.fillText(`$${Math.floor(this.state.money)}`, screenWidth / 2, titleY + 35);
+
+        if (available.length === 0) {
+            ctx.font = '18px "Work Sans", sans-serif';
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText('Alla uppgraderingar köpta!', screenWidth / 2, height / 2 + 50);
+            return;
+        }
+
+        const cardHeight = height - 100;
+        const cardWidth = Math.min(140, (screenWidth - padding * 2) / available.length + 40);
+        const overlap = cardWidth * 0.3;
+        const totalWidth = available.length > 1 
+            ? cardWidth + (available.length - 1) * (cardWidth - overlap)
+            : cardWidth;
+        const startX = (screenWidth - totalWidth) / 2;
+        const baseY = padding + 70;
+
+        this.cardBounds = [];
+
+        for (let i = 0; i < available.length; i++) {
+            const card = available[i];
+            const isSelected = this.selectedCardId === card.id;
+            const canBuy = this.canAfford(card.id);
+            const x = startX + i * (cardWidth - overlap);
+            let y = baseY;
+            let scale = 1;
+
+            if (isSelected) {
+                y -= 20;
+                scale = 1.05;
+            }
+
+            const drawX = isSelected ? x - (cardWidth * scale - cardWidth) / 2 : x;
+            const drawY = y;
+            const drawWidth = cardWidth * scale;
+            const drawHeight = cardHeight * scale;
+
+            const bounds = this.drawCard(ctx, drawX, drawY, drawWidth, drawHeight, card, card.currentTier, false, isSelected);
+
+            this.cardBounds.push({
+                ...bounds,
+                cardId: card.id,
+                canBuy
+            });
+        }
+    }
+
+    renderBuyZone(ctx, screenWidth, y, height) {
+        const centerX = screenWidth / 2;
+
+        if (!this.selectedCardId) {
+            ctx.font = '16px "Work Sans", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText('Välj ett kort för att köpa', centerX, y + height / 2);
+            return;
+        }
+
+        const selectedCard = this.cards.find(c => c.id === this.selectedCardId);
+        if (!selectedCard) return;
+
+        const currentLevel = this.state.upgrades[this.selectedCardId]?.level || 0;
+        const tier = selectedCard.tiers[currentLevel];
+        if (!tier) return;
+
+        const canBuy = this.canAfford(this.selectedCardId);
+
+        const buttonWidth = 200;
+        const buttonHeight = 50;
+        const buttonX = centerX - buttonWidth / 2;
+        const buttonY = y + (height - buttonHeight) / 2;
+
+        this.buyButtonBounds = {
+            x: buttonX,
+            y: buttonY,
+            width: buttonWidth,
+            height: buttonHeight
+        };
+
+        const gradient = ctx.createLinearGradient(buttonX, buttonY, buttonX + buttonWidth, buttonY + buttonHeight);
+        if (canBuy) {
+            gradient.addColorStop(0, 'rgba(72, 187, 120, 0.3)');
+            gradient.addColorStop(1, 'rgba(56, 161, 105, 0.2)');
+        } else {
+            gradient.addColorStop(0, 'rgba(100, 100, 100, 0.2)');
+            gradient.addColorStop(1, 'rgba(60, 60, 60, 0.15)');
+        }
+
+        ctx.beginPath();
+        ctx.roundRect(buttonX, buttonY, buttonWidth, buttonHeight, 10);
+        ctx.fillStyle = gradient;
+        ctx.fill();
+
+        ctx.strokeStyle = canBuy ? 'rgba(72, 187, 120, 0.7)' : 'rgba(100, 100, 100, 0.4)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.font = 'bold 18px "Work Sans", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = canBuy ? '#48bb78' : '#718096';
+        ctx.fillText(`KÖPA ${selectedCard.name} - $${tier.cost}`, centerX, buttonY + buttonHeight / 2);
+    }
+
+    renderCollectionZone(ctx, screenWidth, y, height, owned, padding) {
+        const panelY = y + 8;
+        const panelHeight = height - 16;
+
+        const gradient = ctx.createLinearGradient(0, panelY, 0, panelY + panelHeight);
+        gradient.addColorStop(0, 'rgba(20, 40, 30, 0.9)');
+        gradient.addColorStop(1, 'rgba(10, 25, 18, 0.95)');
+
+        ctx.beginPath();
+        ctx.roundRect(padding, panelY, screenWidth - padding * 2, panelHeight, 12);
+        ctx.fillStyle = gradient;
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(72, 187, 120, 0.3)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.font = 'bold 16px "Work Sans", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillStyle = '#48bb78';
+        ctx.fillText('DINA KORT', screenWidth / 2, panelY + 12);
+
+        if (owned.length === 0) {
+            ctx.font = '14px "Work Sans", sans-serif';
+            ctx.fillStyle = '#718096';
+            ctx.fillText('Inga kort ägda än', screenWidth / 2, panelY + panelHeight / 2);
+            return;
+        }
+
+        const cardWidth = 100;
+        const cardHeight = panelHeight - 50;
+        const cardY = panelY + 35;
+        const totalWidth = owned.length * cardWidth + (owned.length - 1) * 10;
+        const startX = (screenWidth - totalWidth) / 2;
+
+        for (let i = 0; i < owned.length; i++) {
+            const card = owned[i];
+            const x = startX + i * (cardWidth + 10);
+
+            this.drawCard(ctx, x, cardY, cardWidth, cardHeight, card, card.tier, true, false);
+        }
     }
 
     async preloadImages() {
