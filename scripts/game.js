@@ -195,6 +195,7 @@ function gameLoop(timestamp) {
     
     if (state.showBuyMenu) {
         const ctx = renderer.ctx;
+        cardMenu.update(deltaTime);
         cardMenu.render(ctx, state.screenWidth, state.screenHeight);
     } else {
         update(deltaTime);

@@ -59,12 +59,7 @@ bindEvents() {
         const pointerY = e.clientY;
 
         if (this.state.showBuyMenu && this.cardMenu) {
-            const result = this.cardMenu.handleClick(pointerX, pointerY);
-            if (result && result.action === 'continue') {
-                this.state.showBuyMenu = false;
-            } else if (result && result.action === 'purchase' && result.upgradeId) {
-                this.cardMenu.purchase(result.upgradeId);
-            }
+            this.cardMenu.handleClick(pointerX, pointerY);
             return;
         }
         
