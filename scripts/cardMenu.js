@@ -322,10 +322,6 @@ export class CardMenu {
         this.renderCollectionZone(ctx, screenWidth, collectionY, collectionHeight, owned, padding);
     }
 
-    }
-
-export class CardMenu {
-
     renderPurchasableZone(ctx, screenWidth, height, available, padding) {
         const titleY = padding + 10;
         ctx.font = 'bold 24px "Space Mono", monospace';
