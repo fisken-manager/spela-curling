@@ -114,9 +114,16 @@ export class CardMenu {
         const currentLevel = this.state.upgrades[cardId]?.level || 0;
         const card = this.cards.find(c => c.id === cardId);
         const cost = card.tiers[currentLevel].cost;
-        
+
         this.state.money -= cost;
         this.state.upgrades[cardId] = { level: currentLevel + 1 };
+
+        this.animationState.enteringCards.push({
+            cardId,
+            tierLevel: currentLevel + 1,
+            progress: 0
+        });
+
         return true;
     }
 
@@ -159,6 +166,11 @@ export class CardMenu {
                 this.animationState.purchaseAnimation = null;
             }
         }
+
+        this.animationState.enteringCards = this.animationState.enteringCards.filter(anim => {
+            anim.progress += deltaTime * 2;
+            return anim.progress < 1;
+        });
     }
 
     drawCard(ctx, x, y, width, height, card, tier, isOwned = false, isSelected = false) {
@@ -285,6 +297,25 @@ export class CardMenu {
         ctx.fillText(`$${tier.cost}`, badgeX + badgeWidth / 2, badgeY + badgeHeight / 2);
 
         return { x, y, width, height };
+    }
+
+    drawCardWithAnimation(ctx, x, y, width, height, card, tier, isOwned, isSelected, animation) {
+        if (animation && animation.progress < 1) {
+            const t = animation.progress;
+            const spring = 1 + Math.sin(t * Math.PI * 0.5) * 0.2;
+            const scale = spring * t;
+            const alpha = t;
+
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            ctx.translate(x + width / 2, y + height / 2);
+            ctx.scale(scale, scale);
+            this.drawCard(ctx, -width / 2, -height / 2, width, height, card, tier, isOwned, isSelected);
+            ctx.restore();
+            return { x: x, y: y, width, height };
+        } else {
+            return this.drawCard(ctx, x, y, width, height, card, tier, isOwned, isSelected);
+        }
     }
 
     render(ctx, screenWidth, screenHeight) {
@@ -498,7 +529,11 @@ export class CardMenu {
             const card = owned[i];
             const x = startX + i * (cardWidth + 10);
 
-            this.drawCard(ctx, x, cardY, cardWidth, cardHeight, card, card.tier, true, false);
+            const anim = this.animationState.enteringCards.find(
+                a => a.cardId === card.id && a.tierLevel === card.tierLevel
+            );
+
+            this.drawCardWithAnimation(ctx, x, cardY, cardWidth, cardHeight, card, card.tier, true, false, anim);
         }
     }
 
