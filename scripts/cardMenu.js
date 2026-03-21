@@ -206,15 +206,16 @@ export class CardMenu {
         const cornerRadius = Math.max(4, width * 0.08);
 
         // Floating shadow - multiple layers for depth
-        const shadowLayers = isSelected ? 4 : 3;
-        const shadowOffsetY = isSelected ? 8 : 4;
+        const shadowLayers = isSelected ? 5 : 4;
+        const shadowOffsetY = isSelected ? 12 : 8;
+        const shadowSpread = isSelected ? 3 : 2;
         
         for (let i = shadowLayers; i > 0; i--) {
-            const opacity = 0.12 + (i * 0.06);
-            const spread = i * 1.5;
+            const opacity = 0.08 + (i * 0.04);
+            const spread = i * shadowSpread;
             ctx.beginPath();
             ctx.roundRect(x + spread, y + shadowOffsetY + spread, width, height, cornerRadius);
-            ctx.fillStyle = `rgba(30, 30, 30, ${opacity})`;
+            ctx.fillStyle = `rgba(40, 40, 40, ${opacity})`;
             ctx.fill();
         }
 
@@ -278,17 +279,15 @@ export class CardMenu {
             const tierNumeral = romanNumerals[tier.level - 1] || 'I';
             const maxTier = card.tiers.length;
             
-            if (maxTier > 1) {
-                const fontSize = isSelected ? Math.max(14, width * 0.12) : Math.max(10, width * 0.2);
-                const offsetY = isSelected ? 16 : 0;
-                const badgeX = x + width / 2;
-                const badgeY = y + imageY + imageHeight + offsetY;
+            if (maxTier > 1 && isSelected) {
+                const fontSize = Math.max(16, width * 0.08);
+                const badgeY = y + height + 8;
 
                 ctx.font = `bold ${fontSize}px "Space Mono", monospace`;
                 ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillStyle = '#000000';
-                ctx.fillText(tierNumeral, badgeX, badgeY);
+                ctx.textBaseline = 'top';
+                ctx.fillStyle = '#ffd700';
+                ctx.fillText(tierNumeral, x + width / 2, badgeY);
             }
         }
 
