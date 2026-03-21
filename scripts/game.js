@@ -177,7 +177,10 @@ async function init() {
     scrollController = new ScrollController(state, audio);
     setupControls();
     setupGameOverUI();
-    
+
+    // Preload waifu upgrade images
+    await buyMenu.preloadImages();
+
     state.initPowerUps();
     state.initScoringOrbs();
     

@@ -2,66 +2,14 @@ export class BuyMenu {
     constructor(state) {
         this.state = state;
         this.upgrades = [
-            { 
-                id: 'maxVelocity', 
-                name: 'Maxhastighet', 
-                icon: '⚡', 
-                effect: '+15% per nivå',
-                pricing: [1, 5, 20, 40, 65],
-                image: 'speed'
-            },
-            { 
-                id: 'frictionReduction', 
-                name: 'Minska Friktion', 
-                icon: '❄', 
-                effect: '-15% per nivå',
-                pricing: [1, 5, 20, 40, 65],
-                image: 'friction'
-            },
-            { 
-                id: 'stoneSize', 
-                name: 'Stenstorlek', 
-                icon: '🥌', 
-                effect: '+25% per nivå',
-                pricing: [1, 5, 20, 40, 65],
-                image: 'size'
-            },
-            { 
-                id: 'randomCurl', 
-                name: 'Random Curl', 
-                icon: '↺', 
-                effect: 'Random snurr/10s',
-                pricing: [10, 20],
-                image: 'curl'
-            },
-            { 
-                id: 'noNegativePickups', 
-                name: 'Inga Negativa', 
-                icon: '✨', 
-                effect: 'Ta bort pickups',
-                pricing: [10],
-                image: 'shield'
-            },
+            { id: 'maxVelocity', name: 'Maxhastighet', icon: '⚡', effect: '+15% per nivå', pricing: [1, 5, 20, 40, 65], image: 'waifu-speed.png' },
+            { id: 'frictionReduction', name: 'Minska Friktion', icon: '❄', effect: '-15% per nivå', pricing: [1, 5, 20, 40, 65], image: 'waifu-friction.png' },
+            { id: 'stoneSize', name: 'Stenstorlek', icon: '🥌', effect: '+25% per nivå', pricing: [1, 5, 20, 40, 65], image: 'waifu-size.png' },
+            { id: 'randomCurl', name: 'Random Curl', icon: '↺', effect: 'Random snurr/10s', pricing: [10, 20], image: 'waifu-curl.png' },
+            { id: 'noNegativePickups', name: 'Inga Negativa', icon: '✨', effect: 'Ta bort pickups', pricing: [10], image: 'waifu-shield.png' },
         ];
         this.clickAreas = [];
-        this.waifuImages = {};
-    }
-
-    async loadWaifuImage(type) {
-        if (this.waifuImages[type]) return this.waifuImages[type];
-
-        try {
-            const response = await fetch(`assets/waifu-${type}.png`);
-            if (response.ok) {
-                const blob = await response.blob();
-                const bitmap = await createImageBitmap(blob);
-                this.waifuImages[type] = bitmap;
-                return bitmap;
-            }
-        } catch (e) {
-            console.error('Failed to load waifu image:', type, e);
-        }
-        return null;
+        this.images = {};
     }
 
     getUpgradeCost(upgradeId) {
@@ -95,53 +43,68 @@ export class BuyMenu {
         return true;
     }
 
+    async preloadImages() {
+        const uniqueImages = [...new Set(this.upgrades.map(u => u.image))];
+        for (const type of uniqueImages) {
+            try {
+                const response = await fetch(`assets/${type}`);
+                if (response.ok) {
+                    const blob = await response.blob();
+                    this.images[type] = await createImageBitmap(blob);
+                }
+            } catch (e) {
+                console.warn(`Failed to load image: ${type}`, e);
+            }
+        }
+    }
+
     render(ctx, screenWidth, screenHeight) {
         this.clickAreas = [];
 
-        // Dark background with overlay
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.92)';
+        // Dark background
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.94)';
         ctx.fillRect(0, 0, screenWidth, screenHeight);
 
         const centerX = screenWidth / 2;
         const centerY = screenHeight / 2;
         
-        // Menu dimensions
-        const panelWidth = Math.min(420, screenWidth - 20);
+        // Panel dimensions
+        const panelWidth = Math.min(400, screenWidth - 20);
         const panelHeight = Math.min(580, screenHeight - 20);
         const panelX = centerX - panelWidth / 2;
         const panelY = centerY - panelHeight / 2;
 
-        // Panel background with dark blue gradient
+        // Panel background
         const panelGradient = ctx.createLinearGradient(panelX, panelY, panelX + panelWidth, panelY + panelHeight);
-        panelGradient.addColorStop(0, 'rgba(15, 25, 40, 0.98)');
-        panelGradient.addColorStop(1, 'rgba(10, 20, 35, 0.98)');
+        panelGradient.addColorStop(0, 'rgba(15, 30, 50, 0.96)');
+        panelGradient.addColorStop(1, 'rgba(10, 25, 40, 0.96)');
         ctx.fillStyle = panelGradient;
         ctx.beginPath();
-        ctx.roundRect(panelX, panelY, panelWidth, panelHeight, 16);
+        ctx.roundRect(panelX, panelY, panelWidth, panelHeight, 14);
         ctx.fill();
 
-        // Subtle border
-        ctx.strokeStyle = 'rgba(100, 120, 150, 0.3)';
+        // Border
+        ctx.strokeStyle = 'rgba(255, 215, 0, 0.4)';
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        // Title with waifu-style gold
+        // Title
         ctx.fillStyle = '#ffd700';
         ctx.font = 'bold 28px "Space Mono", monospace';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
         ctx.fillText('UPPGRADERINGAR', centerX, panelY + 25);
 
-        // Money display
+        // Money
         ctx.fillStyle = '#ffd700';
         ctx.font = 'bold 20px "Space Mono", monospace';
         ctx.fillText(`$${Math.floor(this.state.money)}`, centerX, panelY + 60);
 
-        // Upgrade items - LARGER BUTTONS
-        const itemStartY = panelY + 100;
-        const itemHeight = 90;
+        // Upgrade items
+        const itemStartY = panelY + 95;
+        const itemHeight = 85;
         const itemPadding = 10;
-        const itemWidth = panelWidth - 24;
+        const itemWidth = panelWidth - 20;
 
         for (let i = 0; i < this.upgrades.length; i++) {
             const upgrade = this.upgrades[i];
@@ -151,7 +114,7 @@ export class BuyMenu {
             const cost = this.getUpgradeCost(upgrade.id);
 
             const itemY = itemStartY + i * (itemHeight + itemPadding);
-            const itemX = panelX + 12;
+            const itemX = panelX + 10;
 
             this.clickAreas.push({
                 x: itemX,
@@ -163,72 +126,78 @@ export class BuyMenu {
                 isMaxed: isMaxed
             });
 
-            // Button background - dark theme
+            // Button background
             if (canBuy && !isMaxed) {
                 const btnGradient = ctx.createLinearGradient(itemX, itemY, itemX + itemWidth, itemY + itemHeight);
-                btnGradient.addColorStop(0, 'rgba(72, 120, 160, 0.3)');
-                btnGradient.addColorStop(1, 'rgba(50, 80, 120, 0.1)');
+                btnGradient.addColorStop(0, 'rgba(72, 120, 160, 0.25)');
+                btnGradient.addColorStop(1, 'rgba(72, 120, 160, 0.08)');
                 ctx.fillStyle = btnGradient;
             } else {
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
             }
             ctx.beginPath();
-            ctx.roundRect(itemX, itemY, itemWidth, itemHeight, 12);
+            ctx.roundRect(itemX, itemY, itemWidth, itemHeight, 10);
             ctx.fill();
 
-            // Border - gold for buyable, dimmed for maxed/unaffordable
+            // Border
             if (canBuy && !isMaxed) {
-                ctx.strokeStyle = 'rgba(255, 215, 0, 0.6)';
+                ctx.strokeStyle = 'rgba(72, 120, 160, 0.5)';
                 ctx.lineWidth = 2;
                 ctx.stroke();
+            } else if (isMaxed) {
+                ctx.strokeStyle = 'rgba(72, 187, 120, 0.3)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
             } else {
-                ctx.strokeStyle = 'rgba(100, 120, 150, 0.2)';
+                ctx.strokeStyle = 'rgba(150, 150, 150, 0.15)';
                 ctx.lineWidth = 1;
                 ctx.stroke();
             }
 
-            // Icon OR Waifu image
-            const waifuImage = this.waifuImages[upgrade.image];
-            const iconSize = 70; // Larger image
-            const iconX = itemX + 10;
+            // Icon or image
+            const iconSize = 65;
+            const iconX = itemX + 20;
             const iconY = itemY + (itemHeight - iconSize) / 2;
 
-            if (waifuImage) {
-                ctx.drawImage(waifuImage, iconX, iconY, iconSize, iconSize);
+            const hasImage = this.images[upgrade.image];
+            if (hasImage) {
+                ctx.drawImage(this.images[upgrade.image], iconX - iconSize/2, iconY, iconSize, iconSize);
             } else {
-                ctx.font = '32px Arial';
+                ctx.font = '36px Arial';
                 ctx.textAlign = 'left';
                 ctx.textBaseline = 'top';
                 ctx.fillStyle = canBuy && !isMaxed ? '#48bb78' : '#718096';
-                ctx.fillText(upgrade.icon, iconX + 10, itemY + 18);
+                ctx.fillText(upgrade.icon, iconX, iconY + 8);
             }
 
-            // Name
-            ctx.font = 'bold 18px "Work Sans", sans-serif';
-            ctx.fillStyle = canBuy && !isMaxed ? '#e2e8f0' : '#94a3b8';
+            // Name (to the right of icon)
+            const nameX = iconX + iconSize + 10;
+            ctx.font = 'bold 17px "Work Sans", sans-serif';
             ctx.textAlign = 'left';
-            ctx.fillText(upgrade.name, itemX + 90, itemY + 20);
+            ctx.textBaseline = 'top';
+            ctx.fillStyle = canBuy && !isMaxed ? '#e2e8f0' : '#94a3b8';
+            ctx.fillText(upgrade.name, nameX, iconY + 12);
 
             // Effect
             ctx.font = '13px "Work Sans", sans-serif';
-            ctx.fillStyle = '#718096';
-            ctx.fillText(upgrade.effect, itemX + 90, itemY + 45);
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText(upgrade.effect, nameX, iconY + 35);
 
-            // Level dots (5 max for speed/friction/size, 2 max for curl, 1 for shield)
+            // Level dots
             const maxLevels = upgrade.pricing.length;
             ctx.textAlign = 'right';
             if (isMaxed) {
                 ctx.fillStyle = '#48bb78';
-                ctx.font = 'bold 14px "Space Mono", monospace';
+                ctx.font = 'bold 13px "Space Mono", monospace';
                 ctx.fillText('MAX', itemX + itemWidth - 15, itemY + itemHeight / 2);
             } else {
-                ctx.font = '14px Arial';
+                ctx.font = '13px Arial';
                 for (let l = 0; l < maxLevels; l++) {
-                    const dotX = itemX + itemWidth - 40 + l * 16;
+                    const dotX = itemX + itemWidth - 45 + l * 14;
                     const dotY = itemY + itemHeight / 2;
                     ctx.beginPath();
-                    ctx.arc(dotX, dotY, 5, 0, Math.PI * 2);
-                    ctx.fillStyle = l < level ? '#48bb78' : 'rgba(255, 255, 255, 0.15)';
+                    ctx.arc(dotX, dotY, 4, 0, Math.PI * 2);
+                    ctx.fillStyle = l < level ? '#48bb78' : 'rgba(255, 255, 255, 0.2)';
                     ctx.fill();
                 }
             }
@@ -237,14 +206,14 @@ export class BuyMenu {
             if (!isMaxed) {
                 ctx.font = 'bold 16px "Space Mono", monospace';
                 ctx.fillStyle = canBuy ? '#ffd700' : '#5c6770';
-                ctx.fillText(`$${cost}`, itemX + itemWidth - 15, itemY + itemHeight / 2 + 15);
+                ctx.fillText(`$${cost}`, itemX + itemWidth - 15, itemY + itemHeight / 2 + 10);
             }
         }
 
-        // Continue button - BELOW upgrades
-        const continueY = panelY + panelHeight - 60;
-        const continueWidth = 200;
-        const continueHeight = 45;
+        // Continue button
+        const continueY = panelY + panelHeight - 55;
+        const continueWidth = 160;
+        const continueHeight = 42;
         const continueX = centerX - continueWidth / 2;
 
         this.clickAreas.push({
@@ -260,25 +229,18 @@ export class BuyMenu {
         continueGradient.addColorStop(1, '#2d3748');
         ctx.fillStyle = continueGradient;
         ctx.beginPath();
-        ctx.roundRect(continueX, continueY, continueWidth, continueHeight, 10);
+        ctx.roundRect(continueX, continueY, continueWidth, continueHeight, 8);
         ctx.fill();
 
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
         ctx.lineWidth = 1;
         ctx.stroke();
 
         ctx.fillStyle = '#e2e8f0';
-        ctx.font = 'bold 18px "Work Sans", sans-serif';
+        ctx.font = 'bold 16px "Work Sans", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('FORTSÄTT', centerX, continueY + continueHeight / 2);
-    }
-
-    async preloadWaifuImages() {
-        const uniqueImages = [...new Set(this.upgrades.map(u => u.image))];
-        for (const type of uniqueImages) {
-            await this.loadWaifuImage(type);
-        }
     }
 
     handleClick(x, y) {
