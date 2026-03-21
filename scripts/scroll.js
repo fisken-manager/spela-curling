@@ -4,29 +4,31 @@ export class ScrollController {
         this.audio = audioController;
         this.contentElement = document.getElementById('content');
         this.lastProgress = 0;
-        this.initialScrollOffset = 0.02; // Start scrolled up so stone is near top hog line
-        this.calculatePageHeight();
+        this.initialScrollOffset = 0.02;
         
-        window.addEventListener('resize', () => {
+        if (this.contentElement) {
             this.calculatePageHeight();
-        });
+            window.addEventListener('resize', () => {
+                this.calculatePageHeight();
+            });
+        }
     }
 
     calculatePageHeight() {
-        this.state.pageHeight = this.contentElement.scrollHeight;
+        if (this.contentElement) {
+            this.state.pageHeight = this.contentElement.scrollHeight;
+        }
         this.state.updateScreenDimensions();
     }
 
     update(state) {
+        if (!this.contentElement) return;
+        
         const viewportHeight = state.screenHeight;
         const scrollableDistance = state.pageHeight - viewportHeight;
         
         if (scrollableDistance <= 0) return;
         
-        // Apply scroll transform based on progress
-        // Start at bottom: progress 0 = translateY(-scrollableDistance) shows bottom
-        // Scroll up: progress 1 = translateY(0) shows top
-        // Add initial offset so stone starts near top hog line
         const effectiveProgress = Math.min(1, state.scrollProgress + this.initialScrollOffset);
         const scrollOffset = effectiveProgress * scrollableDistance;
         this.contentElement.style.transform = `translateY(${-scrollableDistance + scrollOffset}px)`;

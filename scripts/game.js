@@ -19,11 +19,13 @@ let lastTime = 0;
 
 function setupControls() {
     const controlsPanel = document.getElementById('physics-controls');
+    if (!controlsPanel) return;
+    
     controlsPanel.addEventListener('mousedown', (e) => e.stopPropagation());
     controlsPanel.addEventListener('touchstart', (e) => e.stopPropagation());
 
     const header = controlsPanel.querySelector('h3');
-    header.addEventListener('pointerup', (e) => {
+    if (header) header.addEventListener('pointerup', (e) => {
         e.stopPropagation();
         controlsPanel.classList.toggle('collapsed');
     });
@@ -111,29 +113,31 @@ function setupGameOverUI() {
     const finalScoreEl = document.querySelector('.final-score');
     const moneyEl = document.querySelector('.game-over-money');
     
-    restartBtn.addEventListener('click', () => {
+    if (restartBtn && gameOverOverlay) restartBtn.addEventListener('click', () => {
         state.resetGame();
         state.initPowerUps();
         state.initScoringOrbs();
         gameOverOverlay.classList.add('hidden');
     });
     
-    buyLifeBtn.addEventListener('click', () => {
+    if (buyLifeBtn) buyLifeBtn.addEventListener('click', () => {
         if (state.money >= state.lifeCost) {
             state.money -= state.lifeCost;
             state.lives += 1;
             state.lifeCost *= 10;
             state.gameOver = false;
-            gameOverOverlay.classList.add('hidden');
+            if (gameOverOverlay) gameOverOverlay.classList.add('hidden');
             state.showBuyMenu = true;
         }
     });
     
-    const originalRender = renderer.render.bind(renderer);
-    renderer.render = (state, deltaTime) => {
-        originalRender(state, deltaTime);
-        checkGameOver(state, gameOverOverlay, finalScoreEl, moneyEl, buyLifeBtn);
-    };
+    if (renderer && gameOverOverlay && finalScoreEl && moneyEl && buyLifeBtn) {
+        const originalRender = renderer.render.bind(renderer);
+        renderer.render = (state, deltaTime) => {
+            originalRender(state, deltaTime);
+            checkGameOver(state, gameOverOverlay, finalScoreEl, moneyEl, buyLifeBtn);
+        };
+    }
 }
 
 function checkGameOver(state, overlay, scoreEl, moneyEl, buyLifeBtn) {
@@ -156,6 +160,10 @@ async function init() {
     state.updateScreenDimensions();
     
     const canvas = document.getElementById('game-canvas');
+    if (!canvas) {
+        console.error('Canvas not found');
+        return;
+    }
     canvas.width = state.screenWidth;
     canvas.height = state.screenHeight;
     
@@ -185,6 +193,11 @@ async function init() {
 function gameLoop(timestamp) {
     const deltaTime = Math.min((timestamp - lastTime) / 1000, 0.1);
     lastTime = timestamp;
+    
+    if (!renderer || !scrollController) {
+        requestAnimationFrame(gameLoop);
+        return;
+    }
     
     if (state.showBuyMenu) {
         const ctx = renderer.ctx;
