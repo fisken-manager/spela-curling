@@ -69,6 +69,10 @@ export class TransitionController {
                 state.showBuyMenu = true;
                 state.phase = 'resting';
                 state.stoneYPx = state.screenHeight - state.restOffsetPx;
+                
+                // Lower canvas z-index when showing menu so user can scroll
+                const canvas = document.getElementById('game-canvas');
+                if (canvas) canvas.style.zIndex = '0';
             }
         }
     }

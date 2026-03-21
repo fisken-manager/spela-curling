@@ -62,6 +62,9 @@ bindEvents() {
             const result = this.buyMenu.handleClick(pointerX, pointerY);
             if (result === 'continue') {
                 this.state.showBuyMenu = false;
+                // Restore canvas z-index when closing menu
+                const canvas = document.getElementById('game-canvas');
+                if (canvas) canvas.style.zIndex = '10';
             } else if (result && result.action === 'purchase' && result.upgradeId) {
                 this.buyMenu.purchase(result.upgradeId);
             }

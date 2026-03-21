@@ -130,6 +130,14 @@ function setupGameOverUI() {
 }
 
 function checkGameOver(state, overlay, scoreEl, moneyEl) {
+    // Toggle canvas z-index - lower when in menu so user can scroll
+    const canvas = document.getElementById('game-canvas');
+    if (state.showBuyMenu || state.gameOver) {
+        canvas.style.zIndex = '0';
+    } else {
+        canvas.style.zIndex = '10';
+    }
+
     if (state.gameOver) {
         overlay.classList.remove('hidden');
         scoreEl.textContent = Math.floor(state.score);
