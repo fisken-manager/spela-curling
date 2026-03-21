@@ -120,42 +120,24 @@ function setupGameOverUI() {
         gameOverOverlay.classList.add('hidden');
     });
     
-    if (buyLifeBtn) buyLifeBtn.addEventListener('click', () => {
-        if (state.money >= state.lifeCost) {
-            state.money -= state.lifeCost;
-            state.lives += 1;
-            state.lifeCost *= 10;
-            state.gameOver = false;
-            if (gameOverOverlay) gameOverOverlay.classList.add('hidden');
-            state.showBuyMenu = true;
-        }
-    });
-    
-    if (renderer && gameOverOverlay && finalScoreEl && moneyEl && buyLifeBtn) {
+    if (renderer && gameOverOverlay && finalScoreEl && moneyEl) {
         const originalRender = renderer.render.bind(renderer);
         renderer.render = (state, deltaTime) => {
             originalRender(state, deltaTime);
-            checkGameOver(state, gameOverOverlay, finalScoreEl, moneyEl, buyLifeBtn);
+            checkGameOver(state, gameOverOverlay, finalScoreEl, moneyEl);
         };
     }
 }
 
-function checkGameOver(state, overlay, scoreEl, moneyEl, buyLifeBtn) {
+function checkGameOver(state, overlay, scoreEl, moneyEl) {
     if (state.gameOver) {
         overlay.classList.remove('hidden');
         scoreEl.textContent = Math.floor(state.score);
         moneyEl.textContent = `$${state.money}`;
-        
-        if (state.money >= state.lifeCost) {
-            buyLifeBtn.classList.remove('hidden');
-            buyLifeBtn.textContent = `Köp Liv ($${state.lifeCost})`;
-        } else {
-            buyLifeBtn.classList.add('hidden');
-        }
-
-        // Preload waifu images when buy menu opens
-        buyMenu.preloadWaifuImages();
     }
+
+    // Preload waifu upgrade images
+    buyMenu.preloadImages();
 }
 
 async function init() {
