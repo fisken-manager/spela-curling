@@ -65,6 +65,7 @@ export class TransitionController {
                 state.gameOver = true;
                 state.phase = 'returning';
                 state.stoneYPx = state.screenHeight - state.restOffsetPx;
+                // Don't show buy menu on game over
             } else {
                 state.showBuyMenu = true;
                 state.phase = 'resting';
