@@ -90,11 +90,11 @@ export class CardMenu {
         const owned = [];
         for (const card of this.cards) {
             const currentLevel = this.state.upgrades[card.id]?.level || 0;
-            for (let i = 0; i < currentLevel; i++) {
+            if (currentLevel > 0) {
                 owned.push({
                     ...card,
-                    tier: card.tiers[i],
-                    tierLevel: i + 1
+                    tier: card.tiers[currentLevel - 1],
+                    tierLevel: currentLevel
                 });
             }
         }
@@ -256,40 +256,24 @@ export class CardMenu {
         }
         ctx.restore();
 
-        if (isOwned) {
-            const checkSize = Math.max(12, width * 0.15);
-            const checkX = x + width - checkSize - 4;
-            const checkY = y + 4;
+        ctx.restore();
 
-            ctx.beginPath();
-            ctx.arc(checkX + checkSize / 2, checkY + checkSize / 2, checkSize / 2, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(72, 187, 120, 0.9)';
-            ctx.fill();
+        // Tier mark for cards with multiple tiers
+        const romanNumerals = ['I', 'II', 'III', 'IV', 'V'];
+        const tierNumeral = romanNumerals[tier.level - 1] || 'I';
+        const maxTier = card.tiers.length;
+        
+        if (maxTier > 1) {
+            const fontSize = Math.max(8, width * 0.12);
+            const inset = Math.max(3, width * 0.06);
+            const badgeX = x + width - inset - fontSize * 0.8;
+            const badgeY = y + inset + fontSize * 0.5;
 
-            ctx.strokeStyle = '#fff';
-            ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            ctx.moveTo(checkX + checkSize * 0.25, checkY + checkSize * 0.5);
-            ctx.lineTo(checkX + checkSize * 0.45, checkY + checkSize * 0.7);
-            ctx.lineTo(checkX + checkSize * 0.75, checkY + checkSize * 0.3);
-            ctx.stroke();
-        } else {
-            const romanNumerals = ['I', 'II', 'III', 'IV', 'V'];
-            const tierNumeral = romanNumerals[tier.level - 1] || 'I';
-            const maxTier = card.tiers.length;
-            
-            if (maxTier > 1) {
-                const fontSize = Math.max(8, width * 0.12);
-                const inset = Math.max(3, width * 0.06);
-                const badgeX = x + width - inset - fontSize * 0.8;
-                const badgeY = y + inset + fontSize * 0.5;
-
-                ctx.font = `bold ${fontSize}px "Space Mono", monospace`;
-                ctx.textAlign = 'right';
-                ctx.textBaseline = 'middle';
-                ctx.fillStyle = '#000000';
-                ctx.fillText(tierNumeral, badgeX, badgeY);
-            }
+            ctx.font = `bold ${fontSize}px "Space Mono", monospace`;
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#000000';
+            ctx.fillText(tierNumeral, badgeX, badgeY);
         }
 
         ctx.restore();
@@ -346,7 +330,7 @@ export class CardMenu {
             this.renderSelectedCard(ctx, screenWidth, screenHeight, selectedCard, largeCardWidth, largeCardHeight);
             
             // Draw continue button BEFORE owned cards
-            const continueY = screenHeight - 130;
+            const continueY = screenHeight - 180;
             this.continueButtonBounds = {
                 x: screenWidth / 2 - 80,
                 y: continueY,
@@ -358,7 +342,7 @@ export class CardMenu {
             this.renderArchCards(ctx, screenWidth, padding, available, null);
 
             // Draw continue button BEFORE owned cards
-            const continueY = screenHeight - 130;
+            const continueY = screenHeight - 180;
             this.continueButtonBounds = {
                 x: screenWidth / 2 - 100,
                 y: continueY,
