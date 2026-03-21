@@ -189,28 +189,30 @@ export class BuyMenu {
 
             // Icon OR Waifu image
             const waifuImage = this.waifuImages[upgrade.image];
+            const iconSize = 70; // Larger image
+            const iconX = itemX + 10;
+            const iconY = itemY + (itemHeight - iconSize) / 2;
+
             if (waifuImage) {
-                const iconSize = 45;
-                const iconX = itemX + itemWidth / 2 - iconSize / 2;
-                const iconY = itemY + (itemHeight - iconSize) / 2;
                 ctx.drawImage(waifuImage, iconX, iconY, iconSize, iconSize);
             } else {
                 ctx.font = '32px Arial';
                 ctx.textAlign = 'left';
                 ctx.textBaseline = 'top';
                 ctx.fillStyle = canBuy && !isMaxed ? '#48bb78' : '#718096';
-                ctx.fillText(upgrade.icon, itemX + 20, itemY + 18);
+                ctx.fillText(upgrade.icon, iconX + 10, itemY + 18);
             }
 
             // Name
             ctx.font = 'bold 18px "Work Sans", sans-serif';
             ctx.fillStyle = canBuy && !isMaxed ? '#e2e8f0' : '#94a3b8';
-            ctx.fillText(upgrade.name, itemX + 75, itemY + 20);
+            ctx.textAlign = 'left';
+            ctx.fillText(upgrade.name, itemX + 90, itemY + 20);
 
             // Effect
             ctx.font = '13px "Work Sans", sans-serif';
             ctx.fillStyle = '#718096';
-            ctx.fillText(upgrade.effect, itemX + 75, itemY + 45);
+            ctx.fillText(upgrade.effect, itemX + 90, itemY + 45);
 
             // Level dots (5 max for speed/friction/size, 2 max for curl, 1 for shield)
             const maxLevels = upgrade.pricing.length;
