@@ -22,13 +22,11 @@ export class GameState {
         };
         
         // Visual positioning
-        this.stoneVisualY = 0.945;    // current visual Y (ratio 0-1, where 0 is top)
-        this.restY = 0.945;            // rest position (just below hog line)
-        this.centerY = 0.5;           // position where scrolling starts (center)
-        this.transitionDistance = 0.35; // distance from rest to center (0.85 - 0.50)
-        
-        // Visual velocity (for transition animation)
-        this.visualVy = 0;
+        this.stoneVisualY = 0.85;    // fallback
+        this.restY = 0.85;            // fallback
+        this.restOffsetPx = 120;      // Fixed offset from bottom in pixels
+        this.centerY = 0.5;           
+        this.transitionDistance = 0.35; 
         
         // World Y offset compensation (tracks scroll position)
         this.worldYOffset = 0;
@@ -40,19 +38,19 @@ export class GameState {
             dragStartY: 0,
             stoneStartX: 0,
             stoneStartY: 0,
-            flickHistory: [], // array of {x, y, time}
-            snapBackProgress: 0, // 0 to 1 for snapping back
+            flickHistory: [], 
+            snapBackProgress: 0, 
             isSnapping: false
         };
         
         this.aimAngle = 0;
         
         // Progress
-        this.scrollProgress = 0;  // 0-1
+        this.scrollProgress = 0;  
         
         // Transition progress (0-1: 0=at rest, 1=reached center)
         this.transitionProgress = 0;
-        this.inScrollZone = false;  // true when stone has reached center
+        this.inScrollZone = false;  
         
         // Screen dimensions
         this.screenWidth = window.innerWidth;
@@ -60,6 +58,9 @@ export class GameState {
         
         // Play area (constrained width, centered)
         this.playAreaMaxWidth = 480;
+
+        // Initialize pixel-based positions
+        this.updateScreenDimensions();
         
         // Page dimensions
         this.pageHeight = 0;      // total scrollable height
@@ -279,11 +280,14 @@ export class GameState {
         const maxScroll = Math.max(1, this.pageHeight - this.screenHeight);
         if (maxScroll <= 0 || pixelSpacing <= 0) return items;
         
-        let targetCount = Math.floor(maxScroll / pixelSpacing);
+        // Start placing items after the first 1200px to avoid crowding the start
+        const startOffsetPx = 1200;
+        const availableScroll = Math.max(0, maxScroll - startOffsetPx);
+        let targetCount = Math.floor(availableScroll / pixelSpacing);
         
         if (targetCount <= 0) return items;
         
-        const segmentSize = maxScroll / targetCount;
+        const segmentSize = availableScroll / targetCount;
         let itemId = 0;
         
         const random = (s) => {
@@ -295,7 +299,7 @@ export class GameState {
         
         for (let i = 0; i < targetCount; i++) {
             const itemSeed = loopSeed + i * 1000;
-            const baseProgress = (i * segmentSize) / maxScroll;
+            const baseProgress = (startOffsetPx + i * segmentSize) / maxScroll;
             
             // Randomize position within this segment
             const progressOffset = random(itemSeed) * (segmentSize / maxScroll);
@@ -357,9 +361,9 @@ export class GameState {
     }
 
     enforcePickupProximity() {
-        const maxAttempts = 20;
+        const maxAttempts = 50; // Increased attempts
         const minDistance = 200;
-        const verticalTolerance = 200;
+        const verticalTolerance = 300; // Increased vertical buffer
         
         const random = (s) => {
             const x = Math.sin(s) * 10000;
@@ -650,6 +654,17 @@ export class GameState {
     updateScreenDimensions() {
         this.screenWidth = window.innerWidth;
         this.screenHeight = window.innerHeight;
+        
+        // Calculate restY based on fixed pixel offset from bottom
+        this.restY = (this.screenHeight - this.restOffsetPx) / this.screenHeight;
+        
+        // Ensure stone stays at rest position if not moving
+        if (this.phase === 'resting') {
+            this.stoneVisualY = this.restY;
+        }
+        
+        // Update transition distance dynamically
+        this.transitionDistance = this.restY - this.centerY;
     }
 
 triggerScreenShake(intensity, duration) {
