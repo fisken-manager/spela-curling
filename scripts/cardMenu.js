@@ -18,56 +18,53 @@ export class CardMenu {
     }
 
     initializeCards() {
-        const pollinationsUrl = (prompt) => 
-            `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=400&height=600`;
-        
         return [
             {
                 id: 'maxVelocity',
                 name: 'Maxhastighet',
                 tiers: [
-                    { level: 1, cost: 1, effect: '+15% hastighet', image: pollinationsUrl('anime girl sprint lightning speed blue electric') },
-                    { level: 2, cost: 5, effect: '+30% hastighet', image: pollinationsUrl('anime girl running wind streak blue cyan') },
-                    { level: 3, cost: 20, effect: '+45% hastighet', image: pollinationsUrl('anime girl speed blur motion blue white') },
-                    { level: 4, cost: 40, effect: '+60% hastighet', image: pollinationsUrl('anime girl flying speed sonic blue gold') },
-                    { level: 5, cost: 65, effect: '+75% hastighet', image: pollinationsUrl('anime girl lightning god speed blue golden') },
+                    { level: 1, cost: 1, effect: '+15% hastighet', image: 'waifu-speed.jpg' },
+                    { level: 2, cost: 5, effect: '+30% hastighet', image: 'waifu-speed.jpg' },
+                    { level: 3, cost: 20, effect: '+45% hastighet', image: 'waifu-speed.jpg' },
+                    { level: 4, cost: 40, effect: '+60% hastighet', image: 'waifu-speed.jpg' },
+                    { level: 5, cost: 65, effect: '+75% hastighet', image: 'waifu-speed.jpg' },
                 ]
             },
             {
                 id: 'frictionReduction',
                 name: 'Minska Friktion',
                 tiers: [
-                    { level: 1, cost: 1, effect: '-15% friktion', image: pollinationsUrl('anime girl ice crystal frost blue white') },
-                    { level: 2, cost: 5, effect: '-30% friktion', image: pollinationsUrl('anime girl gliding ice slide silver blue') },
-                    { level: 3, cost: 20, effect: '-45% friktion', image: pollinationsUrl('anime girl frozen breath winter cyan white') },
-                    { level: 4, cost: 40, effect: '-60% friktion', image: pollinationsUrl('anime girl ice princess elegant silver transparent') },
-                    { level: 5, cost: 65, effect: '-75% friktion', image: pollinationsUrl('anime girl ice queen divine frost white crystal') },
+                    { level: 1, cost: 1, effect: '-15% friktion', image: 'waifu-friction.jpg' },
+                    { level: 2, cost: 5, effect: '-30% friktion', image: 'waifu-friction.jpg' },
+                    { level: 3, cost: 20, effect: '-45% friktion', image: 'waifu-friction.jpg' },
+                    { level: 4, cost: 40, effect: '-60% friktion', image: 'waifu-friction.jpg' },
+                    { level: 5, cost: 65, effect: '-75% friktion', image: 'waifu-friction.jpg' },
                 ]
             },
             {
                 id: 'stoneSize',
                 name: 'Stenstorlek',
                 tiers: [
-                    { level: 1, cost: 1, effect: '+25% storlek', image: pollinationsUrl('anime girl strong confident boulder red') },
-                    { level: 2, cost: 5, effect: '+50% storlek', image: pollinationsUrl('anime girl muscular powerful stone red orange') },
-                    { level: 3, cost: 20, effect: '+75% storlek', image: pollinationsUrl('anime girl warrior strong boulder crimson gold') },
-                    { level: 4, cost: 40, effect: '+100% storlek', image: pollinationsUrl('anime girl titan strength massive red fiery') },
-                    { level: 5, cost: 65, effect: '+125% storlek', image: pollinationsUrl('anime girl giant goddess power red golden mountain') },
+                    { level: 1, cost: 1, effect: '+25% storlek', image: 'waifu-size.jpg' },
+                    { level: 2, cost: 5, effect: '+50% storlek', image: 'waifu-size.jpg' },
+                    { level: 3, cost: 20, effect: '+75% storlek', image: 'waifu-size.jpg' },
+                    { level: 4, cost: 40, effect: '+100% storlek', image: 'waifu-size.jpg' },
+                    { level: 5, cost: 65, effect: '+125% storlek', image: 'waifu-size.jpg' },
                 ]
             },
             {
                 id: 'randomCurl',
                 name: 'Random Curl',
                 tiers: [
-                    { level: 1, cost: 10, effect: 'Random snurr/10s', image: pollinationsUrl('anime girl spinning vortex purple swirl') },
-                    { level: 2, cost: 20, effect: 'Random snurr/5s', image: pollinationsUrl('anime girl chaos spiral pink vortex magic') },
+                    { level: 1, cost: 10, effect: 'Random snurr/10s', image: 'waifu-curl.jpg' },
+                    { level: 2, cost: 20, effect: 'Random snurr/5s', image: 'waifu-curl.jpg' },
                 ]
             },
             {
                 id: 'noNegativePickups',
                 name: 'Inga Negativa',
                 tiers: [
-                    { level: 1, cost: 10, effect: 'Ta bort negativa pickups', image: pollinationsUrl('anime girl shield guardian angel white protective') },
+                    { level: 1, cost: 10, effect: 'Ta bort negativa pickups', image: 'waifu-shield.jpg' },
                 ]
             }
         ];
@@ -150,7 +147,11 @@ export class CardMenu {
         for (const bounds of this.cardBounds) {
             if (x >= bounds.x && x <= bounds.x + bounds.width &&
                 y >= bounds.y && y <= bounds.y + bounds.height) {
-                this.selectedCardId = bounds.cardId;
+                if (this.selectedCardId === bounds.cardId) {
+                    this.selectedCardId = null;
+                } else {
+                    this.selectedCardId = bounds.cardId;
+                }
                 return null;
             }
         }
@@ -173,7 +174,7 @@ export class CardMenu {
         });
     }
 
-    drawCard(ctx, x, y, width, height, card, tier, isOwned = false, isSelected = false) {
+    drawCard(ctx, x, y, width, height, card, tier, isOwned = false, isSelected = false, showText = false) {
         const cornerRadius = 14;
         const shadowOffset = 4;
 
@@ -182,16 +183,9 @@ export class CardMenu {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
         ctx.fill();
 
-        let bgGradient;
-        if (isOwned) {
-            bgGradient = ctx.createLinearGradient(x, y, x + width, y + height);
-            bgGradient.addColorStop(0, '#1a3a2a');
-            bgGradient.addColorStop(1, '#0d1f15');
-        } else {
-            bgGradient = ctx.createLinearGradient(x, y, x + width, y + height);
-            bgGradient.addColorStop(0, '#2a1f4a');
-            bgGradient.addColorStop(1, '#1a1035');
-        }
+        const bgGradient = ctx.createLinearGradient(x, y, x + width, y + height);
+        bgGradient.addColorStop(0, '#2a2a3a');
+        bgGradient.addColorStop(1, '#1a1a28');
 
         ctx.beginPath();
         ctx.roundRect(x, y, width, height, cornerRadius);
@@ -199,13 +193,7 @@ export class CardMenu {
         ctx.fill();
 
         ctx.lineWidth = isSelected ? 3 : 2;
-        if (isSelected) {
-            ctx.strokeStyle = '#ffd700';
-        } else if (isOwned) {
-            ctx.strokeStyle = 'rgba(72, 187, 120, 0.6)';
-        } else {
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-        }
+        ctx.strokeStyle = isSelected ? '#ffd700' : 'rgba(255, 255, 255, 0.2)';
         ctx.stroke();
 
         if (isSelected) {
@@ -225,16 +213,15 @@ export class CardMenu {
             ctx.restore();
         }
 
-        const imageAreaHeight = height * 0.6;
-        const imagePadding = 8;
+        const imagePadding = 6;
         const imageX = x + imagePadding;
         const imageY = y + imagePadding;
         const imageWidth = width - imagePadding * 2;
-        const imageHeight = imageAreaHeight - imagePadding;
+        const imageHeight = height - imagePadding * 2;
 
         ctx.save();
         ctx.beginPath();
-        ctx.roundRect(imageX, imageY, imageWidth, imageHeight, 10);
+        ctx.roundRect(imageX, imageY, imageWidth, imageHeight, cornerRadius - 2);
         ctx.clip();
 
         const tierKey = card.tiers[tier.level - 1]?.image;
@@ -244,57 +231,49 @@ export class CardMenu {
             ctx.drawImage(this.images[tierKey], imageX, imageY, imageWidth, imageHeight);
         } else {
             const placeholderGradient = ctx.createLinearGradient(imageX, imageY, imageX + imageWidth, imageY + imageHeight);
-            if (isOwned) {
-                placeholderGradient.addColorStop(0, '#1e4a3a');
-                placeholderGradient.addColorStop(1, '#0a2818');
-            } else {
-                placeholderGradient.addColorStop(0, '#3a2a5a');
-                placeholderGradient.addColorStop(1, '#201040');
-            }
+            placeholderGradient.addColorStop(0, '#3a3a5a');
+            placeholderGradient.addColorStop(1, '#202038');
             ctx.fillStyle = placeholderGradient;
             ctx.fillRect(imageX, imageY, imageWidth, imageHeight);
         }
         ctx.restore();
 
-        const textAreaY = y + imageAreaHeight;
-        const textAreaHeight = height - imageAreaHeight;
+        if (isSelected) {
+            const badgeWidth = 36;
+            const badgeHeight = 20;
+            const badgeX = x + width - badgeWidth - 6;
+            const badgeY = y + height - badgeHeight - 6;
 
-        const textBgGradient = ctx.createLinearGradient(x, textAreaY, x, y + height);
-        textBgGradient.addColorStop(0, 'rgba(20, 20, 30, 0.95)');
-        textBgGradient.addColorStop(1, 'rgba(10, 10, 18, 0.98)');
-        ctx.beginPath();
-        ctx.roundRect(x + 4, textAreaY, width - 8, textAreaHeight - 4, [0, 0, cornerRadius - 2, cornerRadius - 2]);
-        ctx.fillStyle = textBgGradient;
-        ctx.fill();
+            ctx.beginPath();
+            ctx.roundRect(badgeX, badgeY, badgeWidth, badgeHeight, 4);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fill();
 
-        const romanNumerals = ['I', 'II', 'III', 'IV', 'V'];
-        const tierNumeral = romanNumerals[tier.level - 1] || 'I';
+            ctx.font = 'bold 11px "Space Mono", monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#ffd700';
+            ctx.fillText(`$${tier.cost}`, badgeX + badgeWidth / 2, badgeY + badgeHeight / 2);
+        }
 
-        ctx.font = 'bold 16px "Work Sans", sans-serif';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'top';
-        ctx.fillStyle = isOwned ? '#48bb78' : '#e2e8f0';
-        ctx.fillText(`${card.name} ${tierNumeral}`, x + 12, textAreaY + 10);
+        if (isOwned) {
+            const checkSize = 20;
+            const checkX = x + width - checkSize - 8;
+            const checkY = y + 8;
 
-        ctx.font = '12px "Work Sans", sans-serif';
-        ctx.fillStyle = '#94a3b8';
-        ctx.fillText(tier.effect, x + 12, textAreaY + 32, width - 24);
+            ctx.beginPath();
+            ctx.arc(checkX + checkSize / 2, checkY + checkSize / 2, checkSize / 2, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(72, 187, 120, 0.9)';
+            ctx.fill();
 
-        const canAfford = this.canAfford(card.id);
-        const badgeX = x + width - 45;
-        const badgeY = textAreaY + 8;
-        const badgeWidth = 35;
-        const badgeHeight = 22;
-
-        ctx.beginPath();
-        ctx.roundRect(badgeX, badgeY, badgeWidth, badgeHeight, 4);
-        ctx.fillStyle = canAfford && !isOwned ? 'rgba(255, 215, 0, 0.2)' : 'rgba(100, 100, 100, 0.3)';
-        ctx.fill();
-        ctx.font = 'bold 12px "Space Mono", monospace';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillStyle = canAfford && !isOwned ? '#ffd700' : '#718096';
-        ctx.fillText(`$${tier.cost}`, badgeX + badgeWidth / 2, badgeY + badgeHeight / 2);
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(checkX + checkSize * 0.25, checkY + checkSize * 0.5);
+            ctx.lineTo(checkX + checkSize * 0.45, checkY + checkSize * 0.7);
+            ctx.lineTo(checkX + checkSize * 0.75, checkY + checkSize * 0.3);
+            ctx.stroke();
+        }
 
         return { x, y, width, height };
     }
@@ -323,15 +302,13 @@ export class CardMenu {
         this.buyButtonBounds = null;
         this.continueButtonBounds = null;
 
-        ctx.fillStyle = '#1a1a2e';
+        ctx.fillStyle = '#000000';
         ctx.fillRect(0, 0, screenWidth, screenHeight);
 
-        this.renderNoiseOverlay(ctx, screenWidth, screenHeight);
-
         const padding = 16;
-        const purchasableHeight = screenHeight * 0.55;
-        const buyZoneHeight = screenHeight * 0.15;
-        const collectionHeight = screenHeight * 0.30;
+        const purchasableHeight = screenHeight * 0.60;
+        const buyZoneHeight = screenHeight * 0.25;
+        const collectionHeight = screenHeight * 0.15;
 
         const available = this.getAvailableUpgrades();
         const owned = this.getOwnedUpgrades();
@@ -345,18 +322,9 @@ export class CardMenu {
         this.renderCollectionZone(ctx, screenWidth, collectionY, collectionHeight, owned, padding);
     }
 
-    renderNoiseOverlay(ctx, width, height) {
-        const imageData = ctx.createImageData(width, height);
-        const data = imageData.data;
-        for (let i = 0; i < data.length; i += 4) {
-            const noise = Math.random() * 15;
-            data[i] = noise;
-            data[i + 1] = noise;
-            data[i + 2] = noise;
-            data[i + 3] = 8;
-        }
-        ctx.putImageData(imageData, 0, 0);
     }
+
+export class CardMenu {
 
     renderPurchasableZone(ctx, screenWidth, height, available, padding) {
         const titleY = padding + 10;
@@ -388,25 +356,18 @@ export class CardMenu {
 
         this.cardBounds = [];
 
+        const selectedIndex = available.findIndex(c => c.id === this.selectedCardId);
+
         for (let i = 0; i < available.length; i++) {
+            if (i === selectedIndex) continue;
+
             const card = available[i];
-            const isSelected = this.selectedCardId === card.id;
+            const isSelected = false;
             const canBuy = this.canAfford(card.id);
             const x = startX + i * (cardWidth - overlap);
-            let y = baseY;
-            let scale = 1;
+            const y = baseY;
 
-            if (isSelected) {
-                y -= 20;
-                scale = 1.05;
-            }
-
-            const drawX = isSelected ? x - (cardWidth * scale - cardWidth) / 2 : x;
-            const drawY = y;
-            const drawWidth = cardWidth * scale;
-            const drawHeight = cardHeight * scale;
-
-            const bounds = this.drawCard(ctx, drawX, drawY, drawWidth, drawHeight, card, card.currentTier, false, isSelected);
+            const bounds = this.drawCard(ctx, x, y, cardWidth, cardHeight, card, card.currentTier, false, false);
 
             this.cardBounds.push({
                 ...bounds,
@@ -414,32 +375,65 @@ export class CardMenu {
                 canBuy
             });
         }
+
+        if (selectedIndex >= 0) {
+            const card = available[selectedIndex];
+            const canBuy = this.canAfford(card.id);
+            const x = startX + selectedIndex * (cardWidth - overlap);
+            const y = baseY - 20;
+            const scale = 1.05;
+
+            const drawX = x - (cardWidth * scale - cardWidth) / 2;
+            const drawY = y;
+            const drawWidth = cardWidth * scale;
+            const drawHeight = cardHeight * scale;
+
+            const bounds = this.drawCard(ctx, drawX, drawY, drawWidth, drawHeight, card, card.currentTier, false, true);
+
+            this.cardBounds.push({
+                ...bounds,
+                cardId: card.id,
+                canBuy
+            });
+
+            const currentLevel = this.state.upgrades[card.id]?.level || 0;
+            const tier = card.tiers[currentLevel];
+            if (tier) {
+                const romanNumerals = ['I', 'II', 'III', 'IV', 'V'];
+                const tierNumeral = romanNumerals[tier.level - 1] || 'I';
+
+                const textY = drawY + drawHeight + 10;
+                ctx.font = 'bold 16px "Work Sans", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+                ctx.fillStyle = '#ffd700';
+                ctx.fillText(`${card.name} ${tierNumeral}`, drawX + drawWidth / 2, textY);
+
+                ctx.font = '14px "Work Sans", sans-serif';
+                ctx.fillStyle = '#94a3b8';
+                ctx.fillText(tier.effect, drawX + drawWidth / 2, textY + 22);
+            }
+        }
     }
 
     renderBuyZone(ctx, screenWidth, y, height) {
         const centerX = screenWidth / 2;
-        const buttonWidth = 200;
-        const buttonHeight = 40;
-        const buttonSpacing = 10;
-        const totalButtons = this.selectedCardId ? 2 : 1;
-        const totalHeight = totalButtons * buttonHeight + (totalButtons > 1 ? buttonSpacing : 0);
-        const startY = y + (height - totalHeight) / 2;
-
-        const continueY = startY;
-        this.continueButtonBounds = {
-            x: centerX - buttonWidth / 2,
-            y: continueY,
-            width: buttonWidth,
-            height: buttonHeight
-        };
-        this.drawButton(ctx, centerX - buttonWidth / 2, continueY, buttonWidth, buttonHeight, 'FORTSÄTT', true);
 
         if (!this.selectedCardId) {
-            ctx.font = '14px "Work Sans", sans-serif';
+            ctx.font = '16px "Work Sans", sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillStyle = '#94a3b8';
-            ctx.fillText('Välj ett kort för att köpa', centerX, continueY + buttonHeight + 25);
+            ctx.fillStyle = '#718096';
+            ctx.fillText('Välj ett kort för att köpa', centerX, y + height / 2);
+            
+            const buttonY = y + height - 50;
+            this.continueButtonBounds = {
+                x: centerX - 100,
+                y: buttonY,
+                width: 200,
+                height: 40
+            };
+            this.drawContinueButton(ctx, centerX - 100, buttonY, 200, 40);
             return;
         }
 
@@ -452,76 +446,76 @@ export class CardMenu {
 
         const canBuy = this.canAfford(this.selectedCardId);
 
-        const buyY = continueY + buttonHeight + buttonSpacing;
+        const buyY = y + 20;
         this.buyButtonBounds = {
-            x: centerX - buttonWidth / 2,
+            x: centerX - 100,
             y: buyY,
-            width: buttonWidth,
-            height: buttonHeight
+            width: 200,
+            height: 50
         };
 
-        this.drawButton(ctx, centerX - buttonWidth / 2, buyY, buttonWidth, buttonHeight, `KÖPA ${selectedCard.name} - $${tier.cost}`, canBuy);
+        this.drawBuyButton(ctx, centerX - 100, buyY, 200, 50, canBuy);
+
+        ctx.font = 'bold 18px "Work Sans", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillStyle = canBuy ? '#ffd700' : '#718096';
+        ctx.fillText(`${selectedCard.name}`, centerX, buyY + 60);
+
+        ctx.font = '14px "Work Sans", sans-serif';
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText(`${tier.effect}  •  $${tier.cost}`, centerX, buyY + 82);
+
+        const continueY = y + height - 50;
+        this.continueButtonBounds = {
+            x: centerX - 100,
+            y: continueY,
+            width: 200,
+            height: 40
+        };
+        this.drawContinueButton(ctx, centerX - 100, continueY, 200, 40);
     }
 
-    drawButton(ctx, x, y, width, height, text, enabled) {
-        const gradient = ctx.createLinearGradient(x, y, x + width, y + height);
-        if (enabled) {
-            gradient.addColorStop(0, 'rgba(72, 187, 120, 0.3)');
-            gradient.addColorStop(1, 'rgba(56, 161, 105, 0.2)');
-        } else {
-            gradient.addColorStop(0, 'rgba(100, 100, 100, 0.2)');
-            gradient.addColorStop(1, 'rgba(60, 60, 60, 0.15)');
-        }
-
+    drawBuyButton(ctx, x, y, width, height, canBuy) {
         ctx.beginPath();
         ctx.roundRect(x, y, width, height, 10);
-        ctx.fillStyle = gradient;
+        ctx.fillStyle = canBuy ? 'rgba(255, 215, 0, 0.15)' : 'rgba(100, 100, 100, 0.2)';
         ctx.fill();
 
-        ctx.strokeStyle = enabled ? 'rgba(72, 187, 120, 0.7)' : 'rgba(100, 100, 100, 0.4)';
+        ctx.strokeStyle = canBuy ? '#ffd700' : 'rgba(100, 100, 100, 0.5)';
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        ctx.font = 'bold 16px "Work Sans", sans-serif';
+        ctx.font = 'bold 24px "Space Mono", monospace';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillStyle = enabled ? '#48bb78' : '#718096';
-        ctx.fillText(text, x + width / 2, y + height / 2);
+        ctx.fillStyle = canBuy ? '#ffd700' : '#718096';
+        ctx.fillText('KÖP', x + width / 2, y + height / 2);
     }
 
-    renderCollectionZone(ctx, screenWidth, y, height, owned, padding) {
-        const panelY = y + 8;
-        const panelHeight = height - 16;
-
-        const gradient = ctx.createLinearGradient(0, panelY, 0, panelY + panelHeight);
-        gradient.addColorStop(0, 'rgba(20, 40, 30, 0.9)');
-        gradient.addColorStop(1, 'rgba(10, 25, 18, 0.95)');
-
+    drawContinueButton(ctx, x, y, width, height) {
         ctx.beginPath();
-        ctx.roundRect(padding, panelY, screenWidth - padding * 2, panelHeight, 12);
-        ctx.fillStyle = gradient;
+        ctx.roundRect(x, y, width, height, 10);
+        ctx.fillStyle = 'rgba(100, 100, 100, 0.2)';
         ctx.fill();
 
-        ctx.strokeStyle = 'rgba(72, 187, 120, 0.3)';
+        ctx.strokeStyle = 'rgba(150, 150, 150, 0.5)';
         ctx.lineWidth = 1;
         ctx.stroke();
 
         ctx.font = 'bold 16px "Work Sans", sans-serif';
         ctx.textAlign = 'center';
-        ctx.textBaseline = 'top';
-        ctx.fillStyle = '#48bb78';
-        ctx.fillText('DINA KORT', screenWidth / 2, panelY + 12);
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#a0a0a0';
+        ctx.fillText('FORTSÄTT', x + width / 2, y + height / 2);
+    }
 
-        if (owned.length === 0) {
-            ctx.font = '14px "Work Sans", sans-serif';
-            ctx.fillStyle = '#718096';
-            ctx.fillText('Inga kort ägda än', screenWidth / 2, panelY + panelHeight / 2);
-            return;
-        }
+    renderCollectionZone(ctx, screenWidth, y, height, owned, padding) {
+        if (owned.length === 0) return;
 
-        const cardWidth = 100;
-        const cardHeight = panelHeight - 50;
-        const cardY = panelY + 35;
+        const cardWidth = 80;
+        const cardHeight = height - 30;
+        const cardY = y + 15;
         const totalWidth = owned.length * cardWidth + (owned.length - 1) * 10;
         const startX = (screenWidth - totalWidth) / 2;
 
