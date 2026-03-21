@@ -1241,6 +1241,16 @@ drawScoreText(state) {
     }
 
     render(state, deltaTime = 0.016) {
+        // Check game over status
+        const overlay = document.getElementById('game-over');
+        if (overlay && state.gameOver) {
+            overlay.classList.remove('hidden');
+            const finalScoreEl = document.querySelector('.final-score');
+            const moneyEl = document.querySelector('.game-over-money');
+            if (finalScoreEl) finalScoreEl.textContent = Math.floor(state.score);
+            if (moneyEl) moneyEl.textContent = `$${state.money}`;
+        }
+
         this.updateEffects(state, deltaTime);
         this.updateScoreAnimations(state, deltaTime);
         
