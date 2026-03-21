@@ -365,7 +365,7 @@ export class CardMenu {
     renderArchCards(ctx, screenWidth, startY, available, selectedId) {
         const cardHeight = 105;
         const cardWidth = 75;
-        const spacing = 5;
+        const spacing = -10;
         const archHeight = 35;
 
         const totalWidth = available.length * cardWidth + (available.length - 1) * spacing;
