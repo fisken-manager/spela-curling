@@ -136,7 +136,7 @@ drawRingFlash(state) {
         const playArea = state.getPlayArea();
         return {
             x: playArea.left + playArea.width / 2 + state.stone.x,
-            y: state.screenHeight * state.stoneVisualY
+            y: state.stoneYPx
         };
     }
 
@@ -224,15 +224,14 @@ drawSweepZone(state) {
         const playArea = state.getPlayArea();
         
         // Sweep zone positioned ahead of stone (higher on screen = smaller Y)
-        const stoneY = state.stoneVisualY;
-        const zoneHeight = 0.2; // 20% of screen height
-        const zoneY = stoneY - 0.15; // Zone starts15% above stone
+        const zoneHeightPx = this.state.screenHeight * 0.2; // 20% of screen height in pixels
+        const zoneYPx = this.state.stoneYPx - this.state.screenHeight * 0.15; // 15% above stone in pixels
         
-        if (zoneY < 0 || zoneY > 1) return; // Don't draw if off screen
+        if (zoneYPx < 0 || zoneYPx > this.state.screenHeight) return; // Don't draw if off screen
         
         const alpha = state.isSweeping ? 0.3 : 0.1;
         this.ctx.fillStyle = `rgba(66, 153, 225, ${alpha})`;
-        this.ctx.fillRect(playArea.left, zoneY * state.screenHeight, playArea.width, zoneHeight * state.screenHeight);
+        this.ctx.fillRect(playArea.left, zoneYPx, playArea.width, zoneHeightPx);
     }
 
 drawPowerUps(state) {
@@ -1201,7 +1200,7 @@ drawScoreText(state) {
             state.triggerScreenShake(15, 0.3);
             const playArea = state.getPlayArea();
             const screenX = playArea.left + playArea.width / 2 + state.stone.x;
-            const screenY = state.screenHeight * state.stoneVisualY;
+            const screenY = state.stoneYPx;
             for (let i = 0; i < 50; i++) {
                 const angle = Math.random() * Math.PI * 2;
                 const speed = Math.random() * 20 + 8;
@@ -1227,7 +1226,7 @@ drawScoreText(state) {
         const effect = state.superBoostImageEffect;
         const playArea = state.getPlayArea();
         const stoneX = playArea.left + playArea.width / 2 + state.stone.x;
-        const stoneY = state.screenHeight * state.stoneVisualY;
+        const stoneY = state.stoneYPx;
         
         const imageWidth = 60;
         const imageHeight = 120;

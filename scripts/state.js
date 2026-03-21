@@ -21,12 +21,10 @@ export class GameState {
             mass: 19.96,         // kg (standard curling stone)
         };
         
-        // Visual positioning
-        this.stoneVisualY = 0.85;    // fallback
-        this.restY = 0.85;            // fallback
-        this.restOffsetPx = 120;      // Fixed offset from bottom in pixels
-        this.centerY = 0.5;           
-        this.transitionDistance = 0.35; 
+        // Visual positioning - PIXEL BASED
+        this.restOffsetPx = 80;    // Avstånd från botten i pixlar (ännu lägre nu)
+        this.stoneYPx = 0;         // Kommer beräknas
+        this.centerXYPx = 0;       
         
         // World Y offset compensation (tracks scroll position)
         this.worldYOffset = 0;
@@ -638,9 +636,8 @@ export class GameState {
         this.stone.angularVelocity = 0;
         this.stone.rotation = 0;
         this.scrollProgress = 0;
-        this.aimAngle = 0;
         this.input = { isDragging: false, dragStartX: 0, dragStartY: 0, stoneStartX: 0, stoneStartY: 0, flickHistory: [], snapBackProgress: 0, isSnapping: false };
-        this.stoneVisualY = this.restY;
+        this.stoneYPx = this.screenHeight - this.restOffsetPx;
         this.transitionProgress = 0;
         this.inScrollZone = false;
     }
@@ -655,16 +652,17 @@ export class GameState {
         this.screenWidth = window.innerWidth;
         this.screenHeight = window.innerHeight;
         
-        // Calculate restY based on fixed pixel offset from bottom
-        this.restY = (this.screenHeight - this.restOffsetPx) / this.screenHeight;
+        // Calculate stone Y position in pixels (fixed offset from bottom)
+        this.stoneYPx = this.screenHeight - this.restOffsetPx;
         
-        // Ensure stone stays at rest position if not moving
-        if (this.phase === 'resting') {
-            this.stoneVisualY = this.restY;
-        }
+        // Center Y position (for scrolling)
+        this.centerXYPx = this.screenHeight / 2;
         
-        // Update transition distance dynamically
-        this.transitionDistance = this.restY - this.centerY;
+        // Calculate visual Y for compatibility (0-1 ratio)
+        this.stoneVisualY = this.stoneYPx / this.screenHeight;
+        
+        // Update transition distance
+        this.transitionDistance = this.stoneYPx / this.screenHeight - 0.5;
     }
 
 triggerScreenShake(intensity, duration) {

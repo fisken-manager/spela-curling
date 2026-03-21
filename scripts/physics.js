@@ -553,18 +553,24 @@ checkPowerUps(state, effectiveRadius) {
         const { stone } = state;
         
         if (!state.inScrollZone) {
-            const visualSpeed = stone.vy / state.screenHeight;
-            const newVisualY = state.stoneVisualY - visualSpeed * dt * 60;
+            // Move stone upward in pixels until it reaches the center of the screen
+            const pixelSpeed = stone.vy; 
+            const newYPx = state.stoneYPx - pixelSpeed * dt * 60;
             
-            if (newVisualY <= state.centerY) {
-                const overshoot = state.centerY - newVisualY;
-                state.stoneVisualY = state.centerY;
+            if (newYPx <= state.centerXYPx) {
+                const overshoot = state.centerXYPx - newYPx;
+                state.stoneYPx = state.centerXYPx;
                 state.transitionProgress = 1;
                 state.inScrollZone = true;
-                stone.worldY += overshoot * state.screenHeight;
+                stone.worldY += overshoot;
             } else {
-                state.stoneVisualY = newVisualY;
-                state.transitionProgress = (state.restY - newVisualY) / state.transitionDistance;
+                state.stoneYPx = newYPx;
+                // Update stoneVisualY just for legacy/UI if needed, but the game uses stoneYPx
+                state.stoneVisualY = state.stoneYPx / state.screenHeight;
+                
+                const totalTransitionPx = (state.screenHeight - state.restOffsetPx) - state.centerXYPx;
+                const currentProgressPx = (state.screenHeight - state.restOffsetPx) - state.stoneYPx;
+                state.transitionProgress = Math.min(1, currentProgressPx / totalTransitionPx);
             }
         } else {
             stone.worldY += stone.vy * dt * 60;
