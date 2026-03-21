@@ -68,6 +68,13 @@ export class CardMenu {
                 tiers: [
                     { level: 1, cost: 10, effect: 'Ta bort negativa pickups', image: 'waifu-shield.jpg' },
                 ]
+            },
+            {
+                id: 'coinSpeedBoost',
+                name: 'Mynt Acceleration',
+                tiers: [
+                    { level: 1, cost: 10, effect: 'Mynt ger hastighetsboost', image: 'coinSpeedBoost-tier1.jpg' },
+                ]
             }
         ];
     }

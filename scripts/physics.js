@@ -64,12 +64,23 @@ export class Physics {
         this.updateFrictionBoost(state, deltaTime);
         this.updateSweepBoost(state, deltaTime);
         this.updateGrowthBoost(state, deltaTime);
+        this.updateCoinSpeedBoost(state, deltaTime);
 
         const steps = Math.ceil(deltaTime / this.physicsTick);
         const dt = deltaTime / steps;
 
         for (let i = 0; i < steps; i++) {
             this.physicsStep(state, dt);
+        }
+    }
+
+    updateCoinSpeedBoost(state, deltaTime) {
+        if (!state.coinSpeedBoostActive) return;
+        
+        state.coinSpeedBoostTimer -= deltaTime;
+        if (state.coinSpeedBoostTimer <= 0) {
+            state.coinSpeedBoostActive = false;
+            state.coinSpeedBoostTimer = 0;
         }
     }
 
@@ -142,6 +153,11 @@ export class Physics {
         const damping = state.frictionBoost ? 0.9999 : 0.9997;
         stone.vx *= damping;
         stone.vy *= damping;
+        
+        // Coin speed boost
+        if (state.coinSpeedBoostActive) {
+            stone.vy *= 1.001;
+        }
         
         const effectiveRadius = this.getEffectiveRadius(state);
         stone.x += stone.vx * dt * 60;
@@ -431,6 +447,12 @@ checkPowerUps(state, effectiveRadius) {
         // Yellow orbs give money only
         if (orb.type === 'yellow') {
             state.money += config.money || 1;
+            
+            // Coin speed boost upgrade
+            if (state.upgrades.coinSpeedBoost?.level > 0 && !state.coinSpeedBoostActive) {
+                state.coinSpeedBoostActive = true;
+                state.coinSpeedBoostTimer = 3; // 3 seconds
+            }
             
             const playArea = state.getPlayArea();
             const screenX = playArea.left + playArea.width / 2 + orb.x;

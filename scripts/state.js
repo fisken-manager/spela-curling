@@ -186,7 +186,12 @@ export class GameState {
             stoneSize: { level: 0 },
             randomCurl: { level: 0 },
             noNegativePickups: { level: 0 },
+            coinSpeedBoost: { level: 0 },
         };
+
+        // Coin speed boost
+        this.coinSpeedBoostActive = false;
+        this.coinSpeedBoostTimer = 0;
 
         // Random curl timer
         this.randomCurlTimer = 0;
