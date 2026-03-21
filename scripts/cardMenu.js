@@ -18,53 +18,56 @@ export class CardMenu {
     }
 
     initializeCards() {
+        const pollinationsUrl = (prompt) => 
+            `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=400&height=600`;
+        
         return [
             {
                 id: 'maxVelocity',
                 name: 'Maxhastighet',
                 tiers: [
-                    { level: 1, cost: 1, effect: '+15% hastighet', image: null },
-                    { level: 2, cost: 5, effect: '+30% hastighet', image: null },
-                    { level: 3, cost: 20, effect: '+45% hastighet', image: null },
-                    { level: 4, cost: 40, effect: '+60% hastighet', image: null },
-                    { level: 5, cost: 65, effect: '+75% hastighet', image: null },
+                    { level: 1, cost: 1, effect: '+15% hastighet', image: pollinationsUrl('anime girl sprint lightning speed blue electric') },
+                    { level: 2, cost: 5, effect: '+30% hastighet', image: pollinationsUrl('anime girl running wind streak blue cyan') },
+                    { level: 3, cost: 20, effect: '+45% hastighet', image: pollinationsUrl('anime girl speed blur motion blue white') },
+                    { level: 4, cost: 40, effect: '+60% hastighet', image: pollinationsUrl('anime girl flying speed sonic blue gold') },
+                    { level: 5, cost: 65, effect: '+75% hastighet', image: pollinationsUrl('anime girl lightning god speed blue golden') },
                 ]
             },
             {
                 id: 'frictionReduction',
                 name: 'Minska Friktion',
                 tiers: [
-                    { level: 1, cost: 1, effect: '-15% friktion', image: null },
-                    { level: 2, cost: 5, effect: '-30% friktion', image: null },
-                    { level: 3, cost: 20, effect: '-45% friktion', image: null },
-                    { level: 4, cost: 40, effect: '-60% friktion', image: null },
-                    { level: 5, cost: 65, effect: '-75% friktion', image: null },
+                    { level: 1, cost: 1, effect: '-15% friktion', image: pollinationsUrl('anime girl ice crystal frost blue white') },
+                    { level: 2, cost: 5, effect: '-30% friktion', image: pollinationsUrl('anime girl gliding ice slide silver blue') },
+                    { level: 3, cost: 20, effect: '-45% friktion', image: pollinationsUrl('anime girl frozen breath winter cyan white') },
+                    { level: 4, cost: 40, effect: '-60% friktion', image: pollinationsUrl('anime girl ice princess elegant silver transparent') },
+                    { level: 5, cost: 65, effect: '-75% friktion', image: pollinationsUrl('anime girl ice queen divine frost white crystal') },
                 ]
             },
             {
                 id: 'stoneSize',
                 name: 'Stenstorlek',
                 tiers: [
-                    { level: 1, cost: 1, effect: '+25% storlek', image: null },
-                    { level: 2, cost: 5, effect: '+50% storlek', image: null },
-                    { level: 3, cost: 20, effect: '+75% storlek', image: null },
-                    { level: 4, cost: 40, effect: '+100% storlek', image: null },
-                    { level: 5, cost: 65, effect: '+125% storlek', image: null },
+                    { level: 1, cost: 1, effect: '+25% storlek', image: pollinationsUrl('anime girl strong confident boulder red') },
+                    { level: 2, cost: 5, effect: '+50% storlek', image: pollinationsUrl('anime girl muscular powerful stone red orange') },
+                    { level: 3, cost: 20, effect: '+75% storlek', image: pollinationsUrl('anime girl warrior strong boulder crimson gold') },
+                    { level: 4, cost: 40, effect: '+100% storlek', image: pollinationsUrl('anime girl titan strength massive red fiery') },
+                    { level: 5, cost: 65, effect: '+125% storlek', image: pollinationsUrl('anime girl giant goddess power red golden mountain') },
                 ]
             },
             {
                 id: 'randomCurl',
                 name: 'Random Curl',
                 tiers: [
-                    { level: 1, cost: 10, effect: 'Random snurr/10s', image: null },
-                    { level: 2, cost: 20, effect: 'Random snurr/5s', image: null },
+                    { level: 1, cost: 10, effect: 'Random snurr/10s', image: pollinationsUrl('anime girl spinning vortex purple swirl') },
+                    { level: 2, cost: 20, effect: 'Random snurr/5s', image: pollinationsUrl('anime girl chaos spiral pink vortex magic') },
                 ]
             },
             {
                 id: 'noNegativePickups',
                 name: 'Inga Negativa',
                 tiers: [
-                    { level: 1, cost: 10, effect: 'Ta bort negativa pickups', image: null },
+                    { level: 1, cost: 10, effect: 'Ta bort negativa pickups', image: pollinationsUrl('anime girl shield guardian angel white protective') },
                 ]
             }
         ];
@@ -500,24 +503,23 @@ export class CardMenu {
     }
 
     async preloadImages() {
-        const allImages = [];
         for (const card of this.cards) {
             for (const tier of card.tiers) {
-                if (tier.image) {
-                    allImages.push(tier.image);
+                if (!tier.image) continue;
+                
+                const url = tier.image.startsWith('http') 
+                    ? tier.image 
+                    : `assets/${tier.image}`;
+                
+                try {
+                    const response = await fetch(url);
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        this.images[tier.image] = await createImageBitmap(blob);
+                    }
+                } catch (e) {
+                    console.warn(`Failed to load image: ${url}`, e);
                 }
-            }
-        }
-        const uniqueImages = [...new Set(allImages)];
-        for (const imagePath of uniqueImages) {
-            try {
-                const response = await fetch(`assets/${imagePath}`);
-                if (response.ok) {
-                    const blob = await response.blob();
-                    this.images[imagePath] = await createImageBitmap(blob);
-                }
-            } catch (e) {
-                console.warn(`Failed to load image: ${imagePath}`, e);
             }
         }
     }
