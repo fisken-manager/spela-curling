@@ -206,16 +206,15 @@ export class CardMenu {
         const cornerRadius = Math.max(4, width * 0.08);
 
         // Floating shadow - multiple layers for depth
-        const shadowLayers = isSelected ? 4 : 2;
-        const shadowBlur = isSelected ? 12 : 6;
+        const shadowLayers = isSelected ? 4 : 3;
         const shadowOffsetY = isSelected ? 8 : 4;
         
         for (let i = shadowLayers; i > 0; i--) {
-            const opacity = 0.15 + (i * 0.08);
+            const opacity = 0.12 + (i * 0.06);
             const spread = i * 1.5;
             ctx.beginPath();
             ctx.roundRect(x + spread, y + shadowOffsetY + spread, width, height, cornerRadius);
-            ctx.fillStyle = `rgba(0, 0, 0, ${opacity})`;
+            ctx.fillStyle = `rgba(30, 30, 30, ${opacity})`;
             ctx.fill();
         }
 
@@ -552,11 +551,15 @@ export class CardMenu {
             const card = owned[i];
             const x = startX + i * (cardWidth + spacing);
 
+            // Seeded random angle based on card id for consistency
+            const seed = card.id.charCodeAt(card.id.length - 1) + card.tierLevel;
+            const angle = ((seed * 7) % 11 - 5) * 0.02;
+
             const anim = this.animationState.enteringCards.find(
                 a => a.cardId === card.id && a.tierLevel === card.tierLevel
             );
 
-            this.drawCardWithAnimation(ctx, x, cardY, cardWidth, cardHeight, card, card.tier, true, false, anim, 0);
+            this.drawCardWithAnimation(ctx, x, cardY, cardWidth, cardHeight, card, card.tier, true, false, anim, angle);
         }
     }
 
