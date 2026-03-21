@@ -522,7 +522,6 @@ export class CardMenu {
             this.drawCardWithAnimation(ctx, x, cardY, cardWidth, cardHeight, card, card.tier, true, false, anim, 0);
         }
     }
-}
 
     async preloadImages() {
         for (const card of this.cards) {
