@@ -340,12 +340,6 @@ export class CardMenu {
             this.renderSelectedCard(ctx, screenWidth, screenHeight, selectedCard, largeCardWidth, largeCardHeight);
         } else {
             this.renderArchCards(ctx, screenWidth, padding, available, null);
-            
-            ctx.font = '16px "Work Sans", sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillStyle = '#718096';
-            ctx.fillText('Välj ett kort för att köpa', screenWidth / 2, screenHeight * 0.55);
 
             const continueY = screenHeight - 70;
             this.continueButtonBounds = {
