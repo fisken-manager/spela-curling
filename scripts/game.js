@@ -39,27 +39,27 @@ function setupControls() {
     const rotRangeSlider = document.getElementById('rotRange');
     const rotRangeVal = document.getElementById('rotRange-val');
 
-    frictionSlider.addEventListener('input', (e) => {
+    if (frictionSlider) frictionSlider.addEventListener('input', (e) => {
         physics.baseFriction = parseFloat(e.target.value);
         frictionVal.textContent = e.target.value;
     });
 
-    curlSlider.addEventListener('input', (e) => {
+    if (curlSlider) curlSlider.addEventListener('input', (e) => {
         physics.baseCurlStrength = parseFloat(e.target.value);
         curlVal.textContent = e.target.value;
     });
 
-    angDecaySlider.addEventListener('input', (e) => {
+    if (angDecaySlider) angDecaySlider.addEventListener('input', (e) => {
         physics.angularDecayFactor = parseFloat(e.target.value);
         angDecayVal.textContent = e.target.value;
     });
 
-    maxVelSlider.addEventListener('input', (e) => {
+    if (maxVelSlider) maxVelSlider.addEventListener('input', (e) => {
         physics.baseMaxVelocity = parseFloat(e.target.value);
         maxVelVal.textContent = e.target.value;
     });
 
-    rotRangeSlider.addEventListener('input', (e) => {
+    if (rotRangeSlider) rotRangeSlider.addEventListener('input', (e) => {
         const val = parseFloat(e.target.value);
         physics.minAngularVelocity = -val;
         physics.maxAngularVelocity = val;
@@ -67,12 +67,12 @@ function setupControls() {
     });
 
     const addMoneyBtn = document.getElementById('add-money-btn');
-    addMoneyBtn.addEventListener('click', () => {
+    if (addMoneyBtn) addMoneyBtn.addEventListener('click', () => {
         state.money += 100;
     });
 
     const addLifeBtn = document.getElementById('add-life-btn');
-    addLifeBtn.addEventListener('click', () => {
+    if (addLifeBtn) addLifeBtn.addEventListener('click', () => {
         state.lives += 1;
     });
 
