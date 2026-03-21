@@ -123,7 +123,7 @@ export class CardMenu {
                 y >= bb.y && y <= bb.y + bb.height) {
                 if (this.selectedCardId && this.canAfford(this.selectedCardId)) {
                     this.purchase(this.selectedCardId);
-                    return { action: 'purchased' };
+                    return { action: 'purchase', upgradeId: this.selectedCardId };
                 }
             }
         }
