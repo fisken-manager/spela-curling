@@ -278,8 +278,8 @@ export class GameState {
         const maxScroll = Math.max(1, this.pageHeight - this.screenHeight);
         if (maxScroll <= 0 || pixelSpacing <= 0) return items;
         
-        // Start placing items after the first 1200px to avoid crowding the start
-        const startOffsetPx = 1200;
+        // Start placing items after the first 800px to avoid crowding the start
+        const startOffsetPx = 800;
         const availableScroll = Math.max(0, maxScroll - startOffsetPx);
         let targetCount = Math.floor(availableScroll / pixelSpacing);
         
@@ -438,13 +438,13 @@ export class GameState {
         if (maxScroll <= 0) return;
         
         const segmentSize = 1000;
-        const startOffset = 1000;
-        const numSegments = Math.floor(maxScroll / segmentSize);
+        const startOffset = 800;
+        const numSegments = Math.floor((maxScroll - startOffset) / segmentSize);
         
         let orbId = 0;
         
         for (let i = 0; i < numSegments; i++) {
-            const baseProgress = (i * segmentSize + startOffset) / maxScroll;
+            const baseProgress = (startOffset + i * segmentSize) / maxScroll;
             
             if (baseProgress > 1) continue;
             
