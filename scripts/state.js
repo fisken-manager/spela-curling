@@ -22,7 +22,7 @@ export class GameState {
         };
         
         // Visual positioning - PIXEL BASED
-        this.restOffsetPx = 80;    // Avstånd från botten i pixlar (ännu lägre nu)
+        this.restOffsetPx = 300;    // Avstånd från botten i pixlar (för att hamna nära hog-linjen)
         this.stoneYPx = 0;         // Kommer beräknas
         this.centerXYPx = 0;       
         
