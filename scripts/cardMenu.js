@@ -11,7 +11,9 @@ export class CardMenu {
         this.animationState = {
             enteringCards: [],
             exitingCards: [],
-            purchaseAnimation: null
+            purchaseAnimation: null,
+            selectAnimation: null,
+            purchasedCardId: null
         };
         this.scrollOffset = 0;
         this.collectionScrollOffset = 0;
@@ -129,6 +131,8 @@ export class CardMenu {
             const cb = this.continueButtonBounds;
             if (x >= cb.x && x <= cb.x + cb.width &&
                 y >= cb.y && y <= cb.y + cb.height) {
+                this.selectedCardId = null;
+                this.animationState.selectAnimation = null;
                 return { action: 'continue' };
             }
         }
@@ -138,8 +142,14 @@ export class CardMenu {
             if (x >= bb.x && x <= bb.x + bb.width &&
                 y >= bb.y && y <= bb.y + bb.height) {
                 if (this.selectedCardId && this.canAfford(this.selectedCardId)) {
+                    const card = this.cards.find(c => c.id === this.selectedCardId);
+                    const currentLevel = this.state.upgrades[this.selectedCardId]?.level || 0;
+                    this.animationState.purchasedCardId = this.selectedCardId;
+                    this.animationState.purchasedTierLevel = currentLevel + 1;
                     this.purchase(this.selectedCardId);
-                    return { action: 'purchase', upgradeId: this.selectedCardId };
+                    this.selectedCardId = null;
+                    this.animationState.selectAnimation = null;
+                    return { action: 'purchase' };
                 }
             }
         }
@@ -149,14 +159,17 @@ export class CardMenu {
                 y >= bounds.y && y <= bounds.y + bounds.height) {
                 if (this.selectedCardId === bounds.cardId) {
                     this.selectedCardId = null;
+                    this.animationState.selectAnimation = null;
                 } else {
                     this.selectedCardId = bounds.cardId;
+                    this.animationState.selectAnimation = { progress: 0 };
                 }
                 return null;
             }
         }
 
         this.selectedCardId = null;
+        this.animationState.selectAnimation = null;
         return null;
     }
 
@@ -165,6 +178,13 @@ export class CardMenu {
             this.animationState.purchaseAnimation.progress += deltaTime * 3;
             if (this.animationState.purchaseAnimation.progress >= 1) {
                 this.animationState.purchaseAnimation = null;
+            }
+        }
+
+        if (this.animationState.selectAnimation) {
+            this.animationState.selectAnimation.progress += deltaTime * 6;
+            if (this.animationState.selectAnimation.progress >= 1) {
+                this.animationState.selectAnimation.progress = 1;
             }
         }
 
@@ -260,21 +280,16 @@ export class CardMenu {
             const maxTier = card.tiers.length;
             
             if (maxTier > 1) {
-                const badgeW = Math.max(16, width * 0.22);
-                const badgeH = Math.max(12, width * 0.16);
-                const badgeX = x + width - badgeW - 3;
-                const badgeY = y + 3;
+                const fontSize = isSelected ? Math.max(14, width * 0.12) : Math.max(10, width * 0.2);
+                const offsetY = isSelected ? 16 : 0;
+                const badgeX = x + width / 2;
+                const badgeY = y + imageY + imageHeight + offsetY;
 
-                ctx.beginPath();
-                ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 3);
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-                ctx.fill();
-
-                ctx.font = `bold ${Math.max(8, width * 0.14)}px "Space Mono", monospace`;
+                ctx.font = `bold ${fontSize}px "Space Mono", monospace`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillStyle = '#ffd700';
-                ctx.fillText(tierNumeral, badgeX + badgeW / 2, badgeY + badgeH / 2);
+                ctx.fillStyle = '#000000';
+                ctx.fillText(tierNumeral, badgeX, badgeY);
             }
         }
 
@@ -346,10 +361,10 @@ export class CardMenu {
     }
 
     renderArchCards(ctx, screenWidth, startY, available, selectedId) {
-        const cardHeight = 70;
-        const cardWidth = 50;
-        const spacing = 15;
-        const archHeight = 25;
+        const cardHeight = 105;
+        const cardWidth = 75;
+        const spacing = 20;
+        const archHeight = 35;
 
         const totalWidth = available.length * cardWidth + (available.length - 1) * spacing;
         const startX = (screenWidth - totalWidth) / 2;
@@ -361,7 +376,6 @@ export class CardMenu {
             const isSelected = card.id === selectedId;
             if (isSelected) continue;
 
-            const centerX = startX + i * (cardWidth + spacing) + cardWidth / 2;
             const normalizedPos = (i - (available.length - 1) / 2) / (available.length > 1 ? (available.length - 1) / 2 : 1);
             
             const angle = normalizedPos * 0.35;
@@ -406,28 +420,49 @@ export class CardMenu {
     renderSelectedCard(ctx, screenWidth, screenHeight, card, cardWidth, cardHeight) {
         const currentLevel = this.state.upgrades[card.id]?.level || 0;
         const tier = card.tiers[currentLevel];
-        if (!tier) return { action: 'continue' };
+        if (!tier) return;
 
         const canBuy = this.canAfford(card.id);
         const centerX = screenWidth / 2;
-        const cardY = 120;
+        
+        const anim = this.animationState.selectAnimation;
+        let cardY = 120;
+        let scale = 1;
+        let alpha = 1;
 
-        const x = centerX - cardWidth / 2;
-        this.drawCard(ctx, x, cardY, cardWidth, cardHeight, card, card.currentTier, false, true, 0);
+        if (anim && anim.progress < 1) {
+            const t = anim.progress;
+            const ease = 1 - Math.pow(1 - t, 3);
+            scale = 0.3 + ease * 0.7;
+            alpha = ease;
+            cardY = 60 + ease * 60;
+        }
+
+        const x = centerX - (cardWidth * scale) / 2;
+        const y = cardY;
+        const w = cardWidth * scale;
+        const h = cardHeight * scale;
+
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        
+        this.drawCard(ctx, x, y, w, h, card, card.currentTier, false, true, 0);
+        
+        ctx.restore();
 
         this.selectedCardBounds = {
             x: x,
-            y: cardY,
-            width: cardWidth,
-            height: cardHeight,
+            y: y,
+            width: w,
+            height: h,
             cardId: card.id,
             canBuy
         };
         this.cardBounds.push({
             x: x,
-            y: cardY,
-            width: cardWidth,
-            height: cardHeight,
+            y: y,
+            width: w,
+            height: h,
             cardId: card.id,
             canBuy
         });
@@ -435,7 +470,7 @@ export class CardMenu {
         const romanNumerals = ['I', 'II', 'III', 'IV', 'V'];
         const tierNumeral = romanNumerals[tier.level - 1] || 'I';
 
-        const textY = cardY + cardHeight + 20;
+        const textY = y + h + 16;
         ctx.font = 'bold 20px "Work Sans", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
