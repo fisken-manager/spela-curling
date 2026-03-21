@@ -142,43 +142,6 @@ export class GameState {
         this.powerUps = [];
         this.frictionBoost = null;
         
-        // Lives
-        this.lives = 1;
-        this.lifePowerUps = [];
-        this.lifePowerUpConfig = {
-            radius: 25,
-            positions: [
-                { scrollProgress: 0.50, x: 0 },
-            ]
-        };
-        
-        // Sweep power-ups
-        this.sweepPowerUps = [];
-        this.sweepPowerUpConfig = {
-            radius: 25,
-            duration: 5,
-            positions: [
-                { scrollProgress: 0.25,x: -60 },
-                { scrollProgress: 0.55, x: 50 },
-                { scrollProgress: 0.80, x: 0 },
-            ]
-        };
-        this.sweepBoost = null;
-        
-// Rotation power-ups
-        this.rotationPowerUps = [];
-        this.rotationPowerUpConfig = {
-            radius: 25,
-            minAngularVelocity: 3,
-            maxAngularVelocity: 10,
-            positions: [
-                { scrollProgress: 0.15, x: 40 },
-                { scrollProgress: 0.35, x: -30 },
-                { scrollProgress: 0.55, x: 50 },
-                { scrollProgress: 0.75, x: -45 },
-            ]
-        };
-
         // Super boost power-up
         this.superBoostPowerUps = [];
         this.superBoostPowerUpConfig = {
@@ -274,7 +237,7 @@ export class GameState {
         if (maxScroll <= 0 || pixelSpacing <= 0) return items;
         
         // Start placing items after the first 800px to avoid crowding the start
-        const startOffsetPx = 800;
+        const startOffsetPx = 10;
         const availableScroll = Math.max(0, maxScroll - startOffsetPx);
         let targetCount = Math.floor(availableScroll / pixelSpacing);
         
@@ -298,8 +261,7 @@ export class GameState {
             const progressOffset = random(itemSeed) * (segmentSize / maxScroll);
             let itemProgress = baseProgress + progressOffset;
             
-            // Keep away from absolute top/bottom
-            if (itemProgress < 0.02) itemProgress = 0.02;
+            // Keep away from absolute bottom
             if (itemProgress > 0.98) itemProgress = 0.98;
             
             const itemX = (random(itemSeed + 1) - 0.5) * xRange;

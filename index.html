@@ -1,566 +1,664 @@
 <!DOCTYPE html>
 <html lang="sv">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spela Curling</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥌</text></svg>">
-    <link rel="stylesheet" href="styles/main.css">
-    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Work+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spela Curling</title>
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥌</text></svg>">
+  <link rel="stylesheet" href="styles/main.css">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Work+Sans:wght@300;400;600;800&display=swap"
+    rel="stylesheet">
 </head>
+
 <body>
-    <canvas id="game-canvas"></canvas>
-    
-    <div id="physics-controls">
-        <h3>Physics <span id="toggle-controls" class="toggle-arrow">▼</span></h3>
-        <div id="controls-content">
-        <label><span>Friction: <span id="friction-val">0.01</span></span><input type="range" id="friction" min="0.001" max="0.5" step="0.001" value="0.01"></label>
-        <label><span>Curl: <span id="curl-val">0.05</span></span><input type="range" id="curl" min="0" max="1" step="0.01" value="0.05"></label>
-        <label><span>Ang Decay: <span id="angDecay-val">0.5</span></span><input type="range" id="angDecay" min="0.01" max="2" step="0.01" value="0.5"></label>
-        <label><span>Max Vel: <span id="maxVel-val">25</span></span><input type="range" id="maxVel" min="5" max="50" step="1" value="25"></label>
-        <label><span>Rot Range: <span id="rotRange-val">10</span></span><input type="range" id="rotRange" min="0" max="30" step="1" value="10"></label>
-        <div class="debug-section">
-            <button id="add-money-btn">+$100</button>
-            <button id="add-life-btn">+Life</button>
+  <canvas id="game-canvas"></canvas>
+
+  <div id="physics-controls">
+    <h3>Physics <span id="toggle-controls" class="toggle-arrow">▼</span></h3>
+    <div id="controls-content">
+      <label><span>Friction: <span id="friction-val">0.01</span></span><input type="range" id="friction" min="0.001"
+          max="0.5" step="0.001" value="0.01"></label>
+      <label><span>Curl: <span id="curl-val">0.05</span></span><input type="range" id="curl" min="0" max="1" step="0.01"
+          value="0.05"></label>
+      <label><span>Ang Decay: <span id="angDecay-val">0.5</span></span><input type="range" id="angDecay" min="0.01"
+          max="2" step="0.01" value="0.5"></label>
+      <label><span>Max Vel: <span id="maxVel-val">25</span></span><input type="range" id="maxVel" min="5" max="50"
+          step="1" value="25"></label>
+      <label><span>Rot Range: <span id="rotRange-val">10</span></span><input type="range" id="rotRange" min="0" max="30"
+          step="1" value="10"></label>
+      <div class="debug-section">
+        <button id="add-money-btn">+$100</button>
+        <button id="add-life-btn">+Life</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="content">
+    <!-- HERO -->
+    <section class="hero">
+      <div class="hero-inner">
+        <h1>SPELA<br>CURLING</h1>
+        <p class="hero-sub">Spela Curling. Spela Curling. Spela Curling. Spela Curling. Spela Curling. Spela Curling.
+        </p>
+      </div>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <!-- ÄLVDALSKA REGLERNA -->
+    <section class="text-block">
+      <p style="font-size: 1.2rem; color: rgba(255,255,255,0.4); margin-bottom: 100px;">— Övdalskia Tæwlingsbestemmælser
+        —<br><span style="font-size: 0.9rem;">eftir Svenska Kærlingförbundet</span></p>
+
+      <p style="margin-bottom: 80px; color: rgba(255,255,255,0.5);">Svenska Kærlingförbundets tæwlingsbestemmælser
+        kompletterar reglu-bokunni. I di faul æn tæwlings-arrangør frångår bestemmælserna ska dä tydligt framgå i den
+        information so lagen får i samband mäð tæwlingen.</p>
+
+      <p style="margin-bottom: 80px;"><strong>1. Medlemskap.</strong> Føy at deltæ i SCF-tæwlinger måst spælaren
+        tilhøyra æn kærling-førening so uppfyller kråvæ i SCF:s stadgar, og æv føreningen wara registrerad sum medlem i
+        SCF.</p>
+
+      <p style="margin-bottom: 80px;"><strong>2. Tæwlingslisens.</strong> Spælare so ska deltæ i tæwling anordnad æv SCF
+        bøyʒ inneha giltig tæwlingslisens. Undantaget ær yngre juniorer so eʒ bøyʒ hawa lisens.</p>
+
+      <p style="margin-bottom: 80px;"><strong>3. Definitsion tæwling.</strong> SCF og dess distriktsførbund arrangerar
+        seriespel båðe føy damer og føy herrar. Di serier so arrangeras æv SCF ingår i wat so kallas det høyra
+        seriespelet. Dæt ær Elit-serien Damer, Elit-serien Herrar og Division 1 føy damer sum Division 1 Norra,
+        Mellersta og Sødra føy herrar.</p>
+
+      <p style="margin-bottom: 80px;"><strong>3.1. Pågående tæwling.</strong> Pågående tæwling innebær æn tæwling æller
+        deltæwling so pågår æn æller fleura dagar i følged, og so ær lokaliserad til æn ort æller område.</p>
+
+      <p style="margin-bottom: 80px;"><strong>4. Offisiell status.</strong> Føy at tæwlingen ska uppnå offisiell
+        SM-status og Riksidrottsförbundets mæstertecken ska kunna utdelas, måst tæwlingen omfattas æv minst twå olika
+        klubbar og fyra deltagande lag.</p>
+
+      <p style="margin-bottom: 80px;"><strong>5. Deltagarkrav.</strong></p>
+
+      <p style="margin-bottom: 80px;"><strong>5.1. Åldersgrænser.</strong> Yngre Junior: Spælare so fyller 16 år under
+        det kalenderår so sæsongen inleds og yngre ræknas sum Yngre Junior. Junior: Spælare ræknas sum junior til og mäð
+        den sæsong spælaren fyller 21 år. Senior (+51): Fra og mäð den sæsong diar spælaren fyller 51 år. Weteran (+65):
+        Fra og mäð den sæsong diar spælaren fyller 65 år.</p>
+
+      <p style="margin-bottom: 80px;"><strong>5.2. Klubbtillhørighet.</strong> Æn kærlar har rætt at wara medlem i
+        fleura klubbar føy at tæna, men kan bara spæla aktivt i æn klubb i tæwlinger arrangeradæ æv SCF. Føy damer
+        gæller utøver detta at di har møjlighet at represæntera æn klubb på damtæwlinger og æn annan klubb um di deltar
+        i herrarnas seriespel.</p>
+
+      <p style="margin-bottom: 80px;"><strong>5.3. Icke klubb-bindande tæwlinger.</strong> Føy anmælan til tæwlinger
+        arrangeradæ æv SCF anses føljande inte klubb-bindande: Deltagande i tæwlinger fra div 2 og nedåt. Deltagande i
+        inbydningstæwlinger. Deltagande i SM Figur, SM Mixed Dubbel, SM Mixed, SM Seniorer (+51), SM Weteraner samt
+        junior- og rullstolstæwlinger.</p>
+
+      <p style="margin-bottom: 80px;"><strong>5.5. Start på tre.</strong> Føy at inleda tæwling æller deltæwling måst
+        lagit bestå av fyra spælare. Laget får starta på tre spælare i matcher so følger æftær den match æller matcher
+        diar man spelat mäð fyra spælare. Wid tæwlinger anordnadæ æv SCF kan tillåtelse ges at starta på tre spælare wid
+        extraordinære hændelser.</p>
+
+      <p style="margin-bottom: 80px;"><strong>6. Spelform, kwalifisering og antal omgonger.</strong></p>
+
+      <p style="margin-bottom: 80px;"><strong>6.1. SM Yngre Juniorer.</strong> Spelform anpassas til antalet deltagande
+        lag. SM føy yngre juniorer utgør inget kwal til internationellt spel. Antal omgonger: 6 + ewentuelt
+        skilje-omgonger.</p>
+
+      <p style="margin-bottom: 80px;"><strong>6.2. Junior-SM.</strong> Spelform: 14-16 lag: Trippel knockout i førsøken
+        worifrån di 8 bæsta lagen går widare til kwartsfinaler mäð rak utslagning. 8-13 lag: Twå seedadæ grupper i
+        seriespel. Di tre bæsta lagen i respektive grupp går widare til slutspel. Antal omgonger: 8 + ewentuelt
+        skilje-omgonger.</p>
+
+      <p style="margin-bottom: 80px;"><strong>6.3. SM Lag Damer.</strong> Fri anmælan til SM damer. Spelform anpassas
+        utifran antal anmælda lag. Antal omgonger: 8 + ewentuelt skilje-omgonger.</p>
+
+      <p style="margin-bottom: 80px;"><strong>6.4. SM Lag Herrar.</strong> SM lag herrar spelas mäð 16 deltagande lag.
+        13 til 15 lag kwalifiserar seg til SM wid DM. Trippel-knock i grundserie og rak utslagning i slutspel. Antal
+        omgonger: 8 + ewentuelt skilje-omgonger.</p>
+
+      <p style="margin-bottom: 80px;"><strong>6.5. SM Rullstolskærling.</strong> SM spelas mäð fyrmannalag, mäð
+        tillåtelse at spela på tre. Antal omgonger: 8 + ewentuelt skilje-omgonger.</p>
+
+      <p style="margin-bottom: 80px;"><strong>6.6. SM Seniorer (+51).</strong> Spelform anpassas æftær antal deltagande
+        lag, antal tilgængeliga bånor og antal speldagar. Antal omgonger: 8 + ewentuelt skilje-omgonger.</p>
+
+      <p style="margin-bottom: 80px;"><strong>6.7. SM Weteraner (+65).</strong> Spelform anpassas æftær antal deltagande
+        lag, antal tilgængeliga bånor og antal speldagar. Antal omgonger: 8 + ewentuelt skilje-omgonger.</p>
+
+      <p style="margin-bottom: 80px;"><strong>6.8. SM Mixed.</strong> Spelform anpassas til antal deltagande lag. Antal
+        grupper beror på antal deltagande lag og antal speldagar. Antal omgonger: 8 + ewentuelt skilje-omgonger.</p>
+
+      <p style="margin-bottom: 80px;"><strong>6.9. SM Mixed Dubbel.</strong> Spelform anpassas æftær antal deltagande
+        lag, antal tilgængeliga bånor og antal speldagar. Antal omgonger: 8 + ewentuelt skilje-omgonger.</p>
+
+      <p style="margin-bottom: 80px;"><strong>6.10. SM Mixed Dubbel Junior.</strong> Spelform anpassas æftær antal
+        deltagande lag, antal tilgængeliga bånor og antal speldagar. Antal omgonger: 8 + ewentuelt skilje-omgonger.</p>
+
+      <p style="margin-bottom: 80px;"><strong>6.11. SM Figur.</strong> SM Figur awgjøres øwer twå serier diar det bæsta
+        sammanslagna resultatet winner i respektive klass.</p>
+
+      <p style="margin-bottom: 80px;"><strong>6.12. Elitserien Damer.</strong> Elitserien damer spelas sum æn ænkelserie
+        diar seriesegæren ær direkt-kwalifiserad føy final. Lag mäð plassering 2-3 spelar semifinal om den andra
+        final-plassen. Antal omgonger: 8 + ewentuelt skilje-omgonger.</p>
+
+      <p style="margin-bottom: 80px;"><strong>6.13. Elitserien Herrar.</strong> Ænkelserie mäð 12 lag som møtes i twå
+        seriesammandrag mäð æftærføljande slutspel til wilket di fyra fræmsta lagen awanserar. Slutspel spelas i form æv
+        rakt slutspel mäð semifinal, final og match om 3:je pris. Antal omgonger: 8 + ewentuelt skilje-omgonger.</p>
+
+      <p style="margin-bottom: 80px;"><strong>6.14. Division 1 Herrar.</strong> Ænkelserie mäð 16 lag. Antal omgonger: 8
+        + ewentuelt skilje-omgonger.</p>
+
+      <p style="margin-bottom: 80px;"><strong>7. Spel på tid.</strong></p>
+
+      <p style="margin-bottom: 80px;"><strong>7.1. Tidsbegrænsat spel.</strong> I det fall tidsbegrænsat spel anwændas
+        finnes twå modeller so kan anwændas, den æna nær antal omgonger kan wariera, den andra nær antal omgonger ær
+        førbestæmt.</p>
+
+      <p style="margin-bottom: 80px;"><strong>7.2. Warierande antal omgonger.</strong> Wid tidsbegrænsat spel diar antal
+        omgonger tilåts wariera ska æn signal ljuda æftær føljande tid: Wid spel i maksimalt 10 omgonger ska signalen
+        ljuda æftær 1 time og 50 minutter. Wid spel i maksimalt 9 omgonger ska signalen ljuda æftær 1 time og 35
+        minutter. Wid spel i maksimalt 8 omgonger ska signalen ljuda æftær 1 time og 20 minutter.</p>
+
+      <p style="margin-bottom: 80px;"><strong>7.3. Fast antal omgonger.</strong> Wid spel i 10 omgonger ska lagen
+        tildelas 38 minutters betænketid. Wid spel i 8 omgonger ska lagen tildelas 30 minutter. I mixed dubbel tildelas
+        lagen 22 minutter. I rullstolskærling tildelas lagen 38 minutter.</p>
+
+      <p style="-bottom: 80px;"><strong>8. Poængberækning.</strong></p>
+
+      <p style="margin-bottom: 80px;"><strong>8.1. Seriespel.</strong> I seriespel tildelas laget twå poæng føy seger,
+        ætt poæng føy oawgjørt og noll poæng føy førlust.</p>
+
+      <p style="margin-bottom: 80px;"><strong>8.2. Plassering.</strong> Um twå æller fleura lag har samme poæng wid
+        seriespel awgøres plasseringen æftær føljande: a) inbyrdes møte b) stæin-kwot c) antal wunna omgonger d) totalt
+        antal poæng føy e) lottning.</p>
+
+      <p style="margin-bottom: 80px;"><strong>9. No Tick.</strong> Æn stæin so wid utspel berører æller passerar delar
+        æv centrum-linjen so befinner seg mellan hogg-linjer, bedømmes sum æn sentralt plasserad stæin. Æn sentralt
+        plasserad stæin får inte sættas i rørelse æv æn stæin i gard-zunen innan den fjærde utspelade stænen i æn omgong
+        har stannat.</p>
+
+      <p style="margin-bottom: 80px;"><strong>10. Domare.</strong> Det åligger alltid Tæwlings-arrangøren at beslutta om
+        nær domare ska wara på plass. Æn domares beslut ska respekteras.</p>
+
+      <p style="margin-bottom: 80px;"><strong>11. Isskøtsel.</strong> Isen ska wara jæmn og i gott skick. Skador på isen
+        ska åtgærdas so snart sum møjligt.</p>
+
+      <p style="margin-bottom: 80px;"><strong>12. Reserw.</strong> Æn reserw ær æn spælare so inte ær ordinarie spælare
+        i laget men so kan ærsætta æn ordinarie spælare um denne inte kan deltæ. Reserw ska anmælas til
+        tæwlings-ledningen innan matchen bøyʒar. Bara æn reserw kan anwændas under æn og samme match.</p>
+
+      <p style="margin-bottom: 80px;"><strong>13. Coach.</strong> Æn coach får befinnas wid sidan om bånan under
+        pågående match. Coach får kommunicera mäð sitt lag under pågående match, men får inte støra motstandar-laget.
+      </p>
+
+      <p style="margin-bottom: 80px;"><strong>14. Time-Out.</strong> Wart lag har rætt til æn time-out per match.
+        Time-out får wara maksimum 60 sekunder. Time-out begæres æv lagets skip æller wice-skip. Under time-out får
+        laget rådgøra mäð sin coach.</p>
+
+      <p style="margin-bottom: 80px;"><strong>15. Lagnamn.</strong> Lagnamn ska registreras wid anmælan og får inte
+        ændras under pågående tæwling.</p>
+
+      <p style="margin-bottom: 80px;"><strong>16. Utrustning.</strong> All utrustning ska wara godkænd æv SCF. Stæinar
+        ska hawa æn førening unik og synlig markering.</p>
+
+      <p style="margin-bottom: 80px;"><strong>17. Represæntation.</strong> Spælare får represæntera bara æn klubb i
+        nationella tæwlinger.</p>
+
+      <p style="margin-bottom: 80px;"><strong>18. Anmælan.</strong> Anmælan ska wara tæwlings-arrangøren tilhanda
+        sennast den dag so anges i inbydan. Æftær-anmælan kan tillåtas mot ækstra awgift.</p>
+
+      <p style="margin-bottom: 80px;"><strong>19. Friplasser.</strong> Friplasser førdelas æv SCF:s Tæwlings-utskott.
+      </p>
+
+      <p style="margin-bottom: 80px;"><strong>20. Wakans.</strong> Um æn plass i æn tæwling blær wakant førdelas den
+        æftær fastställda regler.</p>
+
+      <p style="margin-bottom: 80px;"><strong>21. Protokoll.</strong> Protokoll ska føras øwer alla matcher. Protokollet
+        ska undertecknas æv båðe lagen æftær matchen.</p>
+
+      <p style="margin-bottom: 80px;"><strong>22. Træning infør tæwlingens start.</strong> Lag ska ges møjlighet til
+        træning innan tæwlingen startar.</p>
+
+      <p style="margin-bottom: 80px;"><strong>23. Træning innan match i grundspel.</strong> Wart lag har rætt til wiss
+        tid føy uppwærmning innan match.</p>
+
+      <p style="margin-bottom: 80px;"><strong>24. Træning infør slutspel.</strong> Di lag so går til slutspel ska ges
+        træningstillfælle innan slutspelen bøyʒar.</p>
+
+      <p style="margin-bottom: 80px;"><strong>25. Træning infør match i slutspel.</strong> Lag i slutspel har rætt til
+        uppwærmning innan match.</p>
+
+      <p style="margin-bottom: 80px;"><strong>26. Walk Ower.</strong> Um ætt lag inte infinnær seg til match innan 15
+        minutter æftær utsatt tid, wunnær motstandar-laget matchen mäð Walk Ower. Resultatet wid Walk Ower registreras
+        sum W-O.</p>
+
+      <p style="margin-bottom: 80px;"><strong>27. Stæinfærg i grundserie.</strong> Wid førra matchen i æn grundserie
+        lottas stæinfærg. I føljande matcher alternerar stæinfærg.</p>
+
+      <p style="margin-bottom: 80px;"><strong>28. Teæ-dragning.</strong> Teæ-dragning ska genomføras innan tæwlingen
+        bøyʒar føy at awgøra wilka lag so får wælja stæinfærg i førra match.</p>
+
+      <p style="margin-bottom: 80px;"><strong>29. Ranking infør slutspel.</strong> Grupp-segrare rankas høgst infør
+        slutspel.</p>
+
+      <p style="margin-bottom: 80px;"><strong>30. Slutspel.</strong> Slutspel spelas i form æv utslagning.</p>
+
+      <p style="margin-bottom: 80px;"><strong>31. Medaljer.</strong> Medaljer utdelas til lag so plasserar seg på
+        pris-pallens platser.</p>
+
+      <p style="margin-bottom: 80px;"><strong>32. Øwærtærelser.</strong> Øwærtærelser mot diæsæ bestemmælser kan medføra
+        bestraffning.</p>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <!-- OFFER 1 -->
+    <section class="victim-full"> <img src="assets/victim1.jpg" alt="">
+      <div class="victim-text">
+        <span class="num">01</span>
+        <h2>Johan<br>Nygren</h2>
+        <p>"Vi vet var ni sover."</p>
+      </div>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <section class="proverb">
+      <p>"Man ska inte måla kycklingen blå innan den har dansat."</p>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <section class="proverb dark">
+      <p>"Inte förty att væðja ip dier, um du int har bænat."</p>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <!-- OFFER 2 -->
+    <section class="victim-full">
+      <img src="assets/victim2.jpg" alt="">
+      <div class="victim-text">
+        <span class="num">02</span>
+        <h2>Daniel<br>Berggren</h2>
+        <p>"Fem stenar. Fem öden."</p>
+      </div>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <section class="proverb">
+      <p>"Även en stannad klocka har rätt två gånger om dagen."</p>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <section class="proverb dark">
+      <p>"Alla hattar, ingen boskap, men mycket sås."</p>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <!-- ENKAN BIL -->
+    <section class="image-full">
+      <img src="assets/enkan_trabant_20260225.jpg" alt="">
+      <div class="caption">
+        <h3>Trabanten</h3>
+        <p>Den går på luft och vilja. Och tvåtakt.</p>
+      </div>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <section class="proverb">
+      <p>"Sadeln skaver bara om hästen är död."</p>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <!-- OFFER 3 -->
+    <section class="victim-full">
+      <img src="assets/victim3.jpg" alt="">
+      <div class="victim-text">
+        <span class="num">03</span>
+        <h2>Victor<br>Martinsson</h2>
+        <p>"Kasta inte bävern i sågverket."</p>
+      </div>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <section class="proverb">
+      <p>"Ät inte gul snö om du inte har bråttom."</p>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <section class="proverb dark">
+      <p>"Wænn byøðin so kaller, ska du int svara."</p>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <!-- ENKAN NORRLAND -->
+    <section class="image-full">
+      <img src="assets/enkan_norrland.jpg" alt="">
+      <div class="caption">
+        <h3>Norrland</h3>
+        <p>Långt bortom polcirkeln. Där vägarna aldrig tar slut.</p>
+      </div>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <section class="text-block">
+      <p>Enligt årsredovisningen (bilaga fyra, punkt två) som jag påbörjade i ett tillstånd av elektrolytrubbning har vi
+        implementerat (men ej genomfört) kvalitetssäkringen av curlingstenens nervbanor.</p>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <section class="proverb dark">
+      <p>"Ropa inte hej förrän du är över bäcken med yxan i foten."</p>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <section class="proverb">
+      <p>"Ung som gammal, so bråðaðu man ropaðe 'stop'."</p>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <!-- OFFER 4 -->
+    <section class="victim-full">
+      <img src="assets/victim4.jpg" alt="">
+      <div class="victim-text">
+        <span class="num">04</span>
+        <h2>Johan<br>Järvenson</h2>
+        <p>"Den som kastar sist, kastar bäst."</p>
+      </div>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <section class="proverb">
+      <p>"Man kan inte göra omelett utan att knäcka ägg."</p>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <section class="proverb dark">
+      <p>"Grannen har alltid grönsakslandet närmast staketet."</p>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <!-- ENKAN BETTAN -->
+    <section class="image-full">
+      <img src="assets/enkan_bettan_final.jpg" alt="">
+      <div class="caption">
+        <h3>Bettan</h3>
+        <p>Amazonen glömmer aldrig. Den bara rostar långsammare.</p>
+      </div>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <section class="proverb">
+      <p>"Den som gräver en grop åt andra, faller ofta själv i rabatten."</p>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <!-- OFFER 5 -->
+    <section class="victim-full">
+      <img src="assets/victim5.jpg" alt="">
+      <div class="victim-text">
+        <span class="num">05</span>
+        <h2>Ture<br>Rodling</h2>
+        <p>"Sova kan ni göra när ni är döda, pöjkar."</p>
+      </div>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <!-- ISVAKTAREN -->
+    <section class="image-full">
+      <img src="assets/enkan_attack_waifu_amazon_1772758922.jpg" alt="">
+      <div class="caption">
+        <h3>Isvaktaren</h3>
+        <p>Hon sopar rent. Alltid.</p>
+      </div>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <section class="text-block">
+      <p>Implementera.</p>
+      <p>Implementera inte.</p>
+      <p>Slemhinneproblem i protokollet.</p>
+      <p>Stenen glider mot avgrunden.</p>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <section class="proverb">
+      <p>"Man ska inte gråta över spilld mjölk när grannen har bränt hela ladan."</p>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <!-- ENKAN WILDCARD -->
+    <section class="image-full">
+      <img src="assets/enkan_wildcard_1771587628.jpg" alt="">
+      <div class="caption">
+        <h3>Wildcard</h3>
+        <p>Man vet aldrig vad som döljer sig i skuggorna.</p>
+      </div>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <section class="text-block">
+      <p>Och när vi (jag och de andra, om det nu fanns andra, vilket protokollet varken bekräftar eller dementerar) stod
+        där i korridoren (som egentligen var en sopa, eller möjligen en sten) så insåg vi att årsredovisningen redan
+        hade skrivit sig själv.</p>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <section class="proverb dark">
+      <p>"Kasta inte pärlor åt svinen, de kan trilla i diket."</p>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <!-- ENKAN DM -->
+    <section class="image-full">
+      <img src="assets/enkan_dm_1772240493.jpg" alt="">
+      <div class="caption">
+        <h3>Meddelanden</h3>
+        <p>Klockan 03:14. Telefonen lyste upp ansiktet med ett sjukt sken.</p>
+      </div>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <section class="proverb">
+      <p>"Man ska inte döpa bävern innan den har simmat."</p>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <section class="proverb dark">
+      <p>"Fiskar so sova, so fænger aungin."</p>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <!-- LAGKLÄDER -->
+    <section class="image-full">
+      <img src="assets/lagklader_design.jpg" alt="">
+      <div class="caption">
+        <h3>Rustningen</h3>
+        <p>Blått och vitt. Amatörföreningens färger.</p>
+      </div>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <section class="image-full">
+      <img src="assets/lagklader_fullbody.jpg" alt="">
+      <div class="caption">
+        <h3>Manager</h3>
+        <p>Hon vakar. Hon ser. Hon soper.</p>
+      </div>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <section class="image-full">
+      <img src="assets/lagklader_helmet.jpg" alt="">
+      <div class="caption">
+        <h3>Hjälmen</h3>
+        <p>Skydd mot stenarna. Skydd mot verkligheten.</p>
+      </div>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <section class="proverb dark">
+      <p>"Morgonstund har guld i mun, men kvällen har silver i skägget."</p>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <section class="proverb">
+      <p>"Skoða igæð som du vil, men tjueðer skuða aungin."</p>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <section class="proverb dark">
+      <p>"Tjueðer ska du byða, men int jærna."</p>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <section class="proverb">
+      <p>"Bättre en fågel i handen än tio på taket som skitar ner."</p>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <!-- LYRICS -->
+    <section class="lyrics">
+      <div class="lyrics-inner">
+        <h2>Spela Curling</h2>
+
+        <div class="stanza">
+          <p>Slänga kvasten upp i luften</p>
         </div>
+        <div class="stanza">
+          <p>Spela slagning blejsa stenen</p>
         </div>
-    </div>
-
-    <div id="content">
-        <!-- HERO -->
-        <section class="hero">
-            <div class="hero-inner">
-                <h1>SPELA<br>CURLING</h1>
-                <p class="hero-sub">Skjut stenen. Se den glida. Vänta på våren som aldrig kommer.</p>
-            </div>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <!-- ÄLVDALSKA REGLERNA -->
-        <section class="text-block">
-            <p style="font-size: 1.2rem; color: rgba(255,255,255,0.4); margin-bottom: 100px;">— Övdalskia Tæwlingsbestemmælser —<br><span style="font-size: 0.9rem;">eftir Svenska Kærlingförbundet</span></p>
-            
-            <p style="margin-bottom: 80px; color: rgba(255,255,255,0.5);">Svenska Kærlingförbundets tæwlingsbestemmælser kompletterar reglu-bokunni. I di faul æn tæwlings-arrangør frångår bestemmælserna ska dä tydligt framgå i den information so lagen får i samband mäð tæwlingen.</p>
-
-            <p style="margin-bottom: 80px;"><strong>1. Medlemskap.</strong> Føy at deltæ i SCF-tæwlinger måst spælaren tilhøyra æn kærling-førening so uppfyller kråvæ i SCF:s stadgar, og æv føreningen wara registrerad sum medlem i SCF.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>2. Tæwlingslisens.</strong> Spælare so ska deltæ i tæwling anordnad æv SCF bøyʒ inneha giltig tæwlingslisens. Undantaget ær yngre juniorer so eʒ bøyʒ hawa lisens.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>3. Definitsion tæwling.</strong> SCF og dess distriktsførbund arrangerar seriespel båðe føy damer og føy herrar. Di serier so arrangeras æv SCF ingår i wat so kallas det høyra seriespelet. Dæt ær Elit-serien Damer, Elit-serien Herrar og Division 1 føy damer sum Division 1 Norra, Mellersta og Sødra føy herrar.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>3.1. Pågående tæwling.</strong> Pågående tæwling innebær æn tæwling æller deltæwling so pågår æn æller fleura dagar i følged, og so ær lokaliserad til æn ort æller område.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>4. Offisiell status.</strong> Føy at tæwlingen ska uppnå offisiell SM-status og Riksidrottsförbundets mæstertecken ska kunna utdelas, måst tæwlingen omfattas æv minst twå olika klubbar og fyra deltagande lag.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>5. Deltagarkrav.</strong></p>
-            
-            <p style="margin-bottom: 80px;"><strong>5.1. Åldersgrænser.</strong> Yngre Junior: Spælare so fyller 16 år under det kalenderår so sæsongen inleds og yngre ræknas sum Yngre Junior. Junior: Spælare ræknas sum junior til og mäð den sæsong spælaren fyller 21 år. Senior (+51): Fra og mäð den sæsong diar spælaren fyller 51 år. Weteran (+65): Fra og mäð den sæsong diar spælaren fyller 65 år.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>5.2. Klubbtillhørighet.</strong> Æn kærlar har rætt at wara medlem i fleura klubbar føy at tæna, men kan bara spæla aktivt i æn klubb i tæwlinger arrangeradæ æv SCF. Føy damer gæller utøver detta at di har møjlighet at represæntera æn klubb på damtæwlinger og æn annan klubb um di deltar i herrarnas seriespel.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>5.3. Icke klubb-bindande tæwlinger.</strong> Føy anmælan til tæwlinger arrangeradæ æv SCF anses føljande inte klubb-bindande: Deltagande i tæwlinger fra div 2 og nedåt. Deltagande i inbydningstæwlinger. Deltagande i SM Figur, SM Mixed Dubbel, SM Mixed, SM Seniorer (+51), SM Weteraner samt junior- og rullstolstæwlinger.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>5.5. Start på tre.</strong> Føy at inleda tæwling æller deltæwling måst lagit bestå av fyra spælare. Laget får starta på tre spælare i matcher so følger æftær den match æller matcher diar man spelat mäð fyra spælare. Wid tæwlinger anordnadæ æv SCF kan tillåtelse ges at starta på tre spælare wid extraordinære hændelser.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>6. Spelform, kwalifisering og antal omgonger.</strong></p>
-            
-            <p style="margin-bottom: 80px;"><strong>6.1. SM Yngre Juniorer.</strong> Spelform anpassas til antalet deltagande lag. SM føy yngre juniorer utgør inget kwal til internationellt spel. Antal omgonger: 6 + ewentuelt skilje-omgonger.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>6.2. Junior-SM.</strong> Spelform: 14-16 lag: Trippel knockout i førsøken worifrån di 8 bæsta lagen går widare til kwartsfinaler mäð rak utslagning. 8-13 lag: Twå seedadæ grupper i seriespel. Di tre bæsta lagen i respektive grupp går widare til slutspel. Antal omgonger: 8 + ewentuelt skilje-omgonger.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>6.3. SM Lag Damer.</strong> Fri anmælan til SM damer. Spelform anpassas utifran antal anmælda lag. Antal omgonger: 8 + ewentuelt skilje-omgonger.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>6.4. SM Lag Herrar.</strong> SM lag herrar spelas mäð 16 deltagande lag. 13 til 15 lag kwalifiserar seg til SM wid DM. Trippel-knock i grundserie og rak utslagning i slutspel. Antal omgonger: 8 + ewentuelt skilje-omgonger.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>6.5. SM Rullstolskærling.</strong> SM spelas mäð fyrmannalag, mäð tillåtelse at spela på tre. Antal omgonger: 8 + ewentuelt skilje-omgonger.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>6.6. SM Seniorer (+51).</strong> Spelform anpassas æftær antal deltagande lag, antal tilgængeliga bånor og antal speldagar. Antal omgonger: 8 + ewentuelt skilje-omgonger.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>6.7. SM Weteraner (+65).</strong> Spelform anpassas æftær antal deltagande lag, antal tilgængeliga bånor og antal speldagar. Antal omgonger: 8 + ewentuelt skilje-omgonger.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>6.8. SM Mixed.</strong> Spelform anpassas til antal deltagande lag. Antal grupper beror på antal deltagande lag og antal speldagar. Antal omgonger: 8 + ewentuelt skilje-omgonger.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>6.9. SM Mixed Dubbel.</strong> Spelform anpassas æftær antal deltagande lag, antal tilgængeliga bånor og antal speldagar. Antal omgonger: 8 + ewentuelt skilje-omgonger.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>6.10. SM Mixed Dubbel Junior.</strong> Spelform anpassas æftær antal deltagande lag, antal tilgængeliga bånor og antal speldagar. Antal omgonger: 8 + ewentuelt skilje-omgonger.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>6.11. SM Figur.</strong> SM Figur awgjøres øwer twå serier diar det bæsta sammanslagna resultatet winner i respektive klass.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>6.12. Elitserien Damer.</strong> Elitserien damer spelas sum æn ænkelserie diar seriesegæren ær direkt-kwalifiserad føy final. Lag mäð plassering 2-3 spelar semifinal om den andra final-plassen. Antal omgonger: 8 + ewentuelt skilje-omgonger.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>6.13. Elitserien Herrar.</strong> Ænkelserie mäð 12 lag som møtes i twå seriesammandrag mäð æftærføljande slutspel til wilket di fyra fræmsta lagen awanserar. Slutspel spelas i form æv rakt slutspel mäð semifinal, final og match om 3:je pris. Antal omgonger: 8 + ewentuelt skilje-omgonger.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>6.14. Division 1 Herrar.</strong> Ænkelserie mäð 16 lag. Antal omgonger: 8 + ewentuelt skilje-omgonger.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>7. Spel på tid.</strong></p>
-            
-            <p style="margin-bottom: 80px;"><strong>7.1. Tidsbegrænsat spel.</strong> I det fall tidsbegrænsat spel anwændas finnes twå modeller so kan anwændas, den æna nær antal omgonger kan wariera, den andra nær antal omgonger ær førbestæmt.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>7.2. Warierande antal omgonger.</strong> Wid tidsbegrænsat spel diar antal omgonger tilåts wariera ska æn signal ljuda æftær føljande tid: Wid spel i maksimalt 10 omgonger ska signalen ljuda æftær 1 time og 50 minutter. Wid spel i maksimalt 9 omgonger ska signalen ljuda æftær 1 time og 35 minutter. Wid spel i maksimalt 8 omgonger ska signalen ljuda æftær 1 time og 20 minutter.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>7.3. Fast antal omgonger.</strong> Wid spel i 10 omgonger ska lagen tildelas 38 minutters betænketid. Wid spel i 8 omgonger ska lagen tildelas 30 minutter. I mixed dubbel tildelas lagen 22 minutter. I rullstolskærling tildelas lagen 38 minutter.</p>
-            
-            <p style="-bottom: 80px;"><strong>8. Poængberækning.</strong></p>
-            
-            <p style="margin-bottom: 80px;"><strong>8.1. Seriespel.</strong> I seriespel tildelas laget twå poæng føy seger, ætt poæng føy oawgjørt og noll poæng føy førlust.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>8.2. Plassering.</strong> Um twå æller fleura lag har samme poæng wid seriespel awgøres plasseringen æftær føljande: a) inbyrdes møte b) stæin-kwot c) antal wunna omgonger d) totalt antal poæng føy e) lottning.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>9. No Tick.</strong> Æn stæin so wid utspel berører æller passerar delar æv centrum-linjen so befinner seg mellan hogg-linjer, bedømmes sum æn sentralt plasserad stæin. Æn sentralt plasserad stæin får inte sættas i rørelse æv æn stæin i gard-zunen innan den fjærde utspelade stænen i æn omgong har stannat.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>10. Domare.</strong> Det åligger alltid Tæwlings-arrangøren at beslutta om nær domare ska wara på plass. Æn domares beslut ska respekteras.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>11. Isskøtsel.</strong> Isen ska wara jæmn og i gott skick. Skador på isen ska åtgærdas so snart sum møjligt.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>12. Reserw.</strong> Æn reserw ær æn spælare so inte ær ordinarie spælare i laget men so kan ærsætta æn ordinarie spælare um denne inte kan deltæ. Reserw ska anmælas til tæwlings-ledningen innan matchen bøyʒar. Bara æn reserw kan anwændas under æn og samme match.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>13. Coach.</strong> Æn coach får befinnas wid sidan om bånan under pågående match. Coach får kommunicera mäð sitt lag under pågående match, men får inte støra motstandar-laget.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>14. Time-Out.</strong> Wart lag har rætt til æn time-out per match. Time-out får wara maksimum 60 sekunder. Time-out begæres æv lagets skip æller wice-skip. Under time-out får laget rådgøra mäð sin coach.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>15. Lagnamn.</strong> Lagnamn ska registreras wid anmælan og får inte ændras under pågående tæwling.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>16. Utrustning.</strong> All utrustning ska wara godkænd æv SCF. Stæinar ska hawa æn førening unik og synlig markering.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>17. Represæntation.</strong> Spælare får represæntera bara æn klubb i nationella tæwlinger.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>18. Anmælan.</strong> Anmælan ska wara tæwlings-arrangøren tilhanda sennast den dag so anges i inbydan. Æftær-anmælan kan tillåtas mot ækstra awgift.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>19. Friplasser.</strong> Friplasser førdelas æv SCF:s Tæwlings-utskott.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>20. Wakans.</strong> Um æn plass i æn tæwling blær wakant førdelas den æftær fastställda regler.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>21. Protokoll.</strong> Protokoll ska føras øwer alla matcher. Protokollet ska undertecknas æv båðe lagen æftær matchen.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>22. Træning infør tæwlingens start.</strong> Lag ska ges møjlighet til træning innan tæwlingen startar.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>23. Træning innan match i grundspel.</strong> Wart lag har rætt til wiss tid føy uppwærmning innan match.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>24. Træning infør slutspel.</strong> Di lag so går til slutspel ska ges træningstillfælle innan slutspelen bøyʒar.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>25. Træning infør match i slutspel.</strong> Lag i slutspel har rætt til uppwærmning innan match.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>26. Walk Ower.</strong> Um ætt lag inte infinnær seg til match innan 15 minutter æftær utsatt tid, wunnær motstandar-laget matchen mäð Walk Ower. Resultatet wid Walk Ower registreras sum W-O.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>27. Stæinfærg i grundserie.</strong> Wid førra matchen i æn grundserie lottas stæinfærg. I føljande matcher alternerar stæinfærg.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>28. Teæ-dragning.</strong> Teæ-dragning ska genomføras innan tæwlingen bøyʒar føy at awgøra wilka lag so får wælja stæinfærg i førra match.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>29. Ranking infør slutspel.</strong> Grupp-segrare rankas høgst infør slutspel.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>30. Slutspel.</strong> Slutspel spelas i form æv utslagning.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>31. Medaljer.</strong> Medaljer utdelas til lag so plasserar seg på pris-pallens platser.</p>
-            
-            <p style="margin-bottom: 80px;"><strong>32. Øwærtærelser.</strong> Øwærtærelser mot diæsæ bestemmælser kan medføra bestraffning.</p>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <!-- OFFER 1 -->
-        <section class="victim-full">            <img src="assets/victim1.jpg" alt="">
-            <div class="victim-text">
-                <span class="num">01</span>
-                <h2>Johan<br>Nygren</h2>
-                <p>"Vi vet var ni sover."</p>
-            </div>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <section class="proverb">
-            <p>"Man ska inte måla kycklingen blå innan den har dansat."</p>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <section class="proverb dark">
-            <p>"Inte förty att væðja ip dier, um du int har bænat."</p>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <!-- OFFER 2 -->
-        <section class="victim-full">
-            <img src="assets/victim2.jpg" alt="">
-            <div class="victim-text">
-                <span class="num">02</span>
-                <h2>Daniel<br>Berggren</h2>
-                <p>"Fem stenar. Fem öden."</p>
-            </div>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <section class="proverb">
-            <p>"Även en stannad klocka har rätt två gånger om dagen."</p>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <section class="proverb dark">
-            <p>"Alla hattar, ingen boskap, men mycket sås."</p>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <!-- ENKAN BIL -->
-        <section class="image-full">
-            <img src="assets/enkan_trabant_20260225.jpg" alt="">
-            <div class="caption">
-                <h3>Trabanten</h3>
-                <p>Den går på luft och vilja. Och tvåtakt.</p>
-            </div>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <section class="proverb">
-            <p>"Sadeln skaver bara om hästen är död."</p>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <!-- OFFER 3 -->
-        <section class="victim-full">
-            <img src="assets/victim3.jpg" alt="">
-            <div class="victim-text">
-                <span class="num">03</span>
-                <h2>Victor<br>Martinsson</h2>
-                <p>"Kasta inte bävern i sågverket."</p>
-            </div>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <section class="proverb">
-            <p>"Ät inte gul snö om du inte har bråttom."</p>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <section class="proverb dark">
-            <p>"Wænn byøðin so kaller, ska du int svara."</p>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <!-- ENKAN NORRLAND -->
-        <section class="image-full">
-            <img src="assets/enkan_norrland.jpg" alt="">
-            <div class="caption">
-                <h3>Norrland</h3>
-                <p>Långt bortom polcirkeln. Där vägarna aldrig tar slut.</p>
-            </div>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <section class="text-block">
-            <p>Enligt årsredovisningen (bilaga fyra, punkt två) som jag påbörjade i ett tillstånd av elektrolytrubbning har vi implementerat (men ej genomfört) kvalitetssäkringen av curlingstenens nervbanor.</p>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <section class="proverb dark">
-            <p>"Ropa inte hej förrän du är över bäcken med yxan i foten."</p>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <section class="proverb">
-            <p>"Ung som gammal, so bråðaðu man ropaðe 'stop'."</p>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <!-- OFFER 4 -->
-        <section class="victim-full">
-            <img src="assets/victim4.jpg" alt="">
-            <div class="victim-text">
-                <span class="num">04</span>
-                <h2>Johan<br>Järvenson</h2>
-                <p>"Den som kastar sist, kastar bäst."</p>
-            </div>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <section class="proverb">
-            <p>"Man kan inte göra omelett utan att knäcka ägg."</p>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <section class="proverb dark">
-            <p>"Grannen har alltid grönsakslandet närmast staketet."</p>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <!-- ENKAN BETTAN -->
-        <section class="image-full">
-            <img src="assets/enkan_bettan_final.jpg" alt="">
-            <div class="caption">
-                <h3>Bettan</h3>
-                <p>Amazonen glömmer aldrig. Den bara rostar långsammare.</p>
-            </div>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <section class="proverb">
-            <p>"Den som gräver en grop åt andra, faller ofta själv i rabatten."</p>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <!-- OFFER 5 -->
-        <section class="victim-full">
-            <img src="assets/victim5.jpg" alt="">
-            <div class="victim-text">
-                <span class="num">05</span>
-                <h2>Ture<br>Rodling</h2>
-                <p>"Sova kan ni göra när ni är döda, pöjkar."</p>
-            </div>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <!-- ISVAKTAREN -->
-        <section class="image-full">
-            <img src="assets/enkan_attack_waifu_amazon_1772758922.jpg" alt="">
-            <div class="caption">
-                <h3>Isvaktaren</h3>
-                <p>Hon sopar rent. Alltid.</p>
-            </div>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <section class="text-block">
-            <p>Implementera.</p>
-            <p>Implementera inte.</p>
-            <p>Slemhinneproblem i protokollet.</p>
-            <p>Stenen glider mot avgrunden.</p>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <section class="proverb">
-            <p>"Man ska inte gråta över spilld mjölk när grannen har bränt hela ladan."</p>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <!-- ENKAN WILDCARD -->
-        <section class="image-full">
-            <img src="assets/enkan_wildcard_1771587628.jpg" alt="">
-            <div class="caption">
-                <h3>Wildcard</h3>
-                <p>Man vet aldrig vad som döljer sig i skuggorna.</p>
-            </div>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <section class="text-block">
-            <p>Och när vi (jag och de andra, om det nu fanns andra, vilket protokollet varken bekräftar eller dementerar) stod där i korridoren (som egentligen var en sopa, eller möjligen en sten) så insåg vi att årsredovisningen redan hade skrivit sig själv.</p>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <section class="proverb dark">
-            <p>"Kasta inte pärlor åt svinen, de kan trilla i diket."</p>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <!-- ENKAN DM -->
-        <section class="image-full">
-            <img src="assets/enkan_dm_1772240493.jpg" alt="">
-            <div class="caption">
-                <h3>Meddelanden</h3>
-                <p>Klockan 03:14. Telefonen lyste upp ansiktet med ett sjukt sken.</p>
-            </div>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <section class="proverb">
-            <p>"Man ska inte döpa bävern innan den har simmat."</p>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <section class="proverb dark">
-            <p>"Fiskar so sova, so fænger aungin."</p>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <!-- LAGKLÄDER -->
-        <section class="image-full">
-            <img src="assets/lagklader_design.jpg" alt="">
-            <div class="caption">
-                <h3>Rustningen</h3>
-                <p>Blått och vitt. Amatörföreningens färger.</p>
-            </div>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <section class="image-full">
-            <img src="assets/lagklader_fullbody.jpg" alt="">
-            <div class="caption">
-                <h3>Manager</h3>
-                <p>Hon vakar. Hon ser. Hon soper.</p>
-            </div>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <section class="image-full">
-            <img src="assets/lagklader_helmet.jpg" alt="">
-            <div class="caption">
-                <h3>Hjälmen</h3>
-                <p>Skydd mot stenarna. Skydd mot verkligheten.</p>
-            </div>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <section class="proverb dark">
-            <p>"Morgonstund har guld i mun, men kvällen har silver i skägget."</p>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <section class="proverb">
-            <p>"Skoða igæð som du vil, men tjueðer skuða aungin."</p>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <section class="proverb dark">
-            <p>"Tjueðer ska du byða, men int jærna."</p>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <section class="proverb">
-            <p>"Bättre en fågel i handen än tio på taket som skitar ner."</p>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <!-- LYRICS -->
-        <section class="lyrics">
-            <div class="lyrics-inner">
-                <h2>Spela Curling</h2>
-                
-                <div class="stanza">
-                    <p>Slänga kvasten upp i luften</p>
-                </div>
-                <div class="stanza">
-                    <p>Spela slagning blejsa stenen</p>
-                </div>
-                <div class="stanza">
-                    <p>Jättearg och jätteledsen</p>
-                </div>
-                <div class="stanza">
-                    <p>Smälla kvasten tappa modet</p>
-                </div>
-
-                <div class="stanza chorus">
-                    <p>Rakt igenom rakt igenom</p>
-                </div>
-                <div class="stanza chorus">
-                    <p>Oj den gliider</p>
-                </div>
-                <div class="stanza chorus">
-                    <p>Kasta stenar in i boet men den gliider</p>
-                </div>
-                <div class="stanza chorus">
-                    <p class="big">Spela curling spela curling</p>
-                </div>
-
-                <div class="stanza">
-                    <p>Slänga kvasten upp i luften</p>
-                </div>
-                <div class="stanza">
-                    <p>Spela slagning blejsa stenen</p>
-                </div>
-                <div class="stanza">
-                    <p>Jättearg och jätteledsen</p>
-                </div>
-                <div class="stanza">
-                    <p>Smälla kvasten tappa modet</p>
-                </div>
-
-                <div class="stanza chorus">
-                    <p>Rakt igenom rakt igenom</p>
-                </div>
-                <div class="stanza chorus">
-                    <p>Oj den gliider</p>
-                </div>
-                <div class="stanza chorus">
-                    <p>Kasta stenar in i boet men den gliider</p>
-                </div>
-                <div class="stanza chorus">
-                    <p class="big">Spela curling spela curling</p>
-                </div>
-            </div>
-        </section>
-
-        <section class="spacer-xl"></section>
-
-        <!-- CURLING SHEET -->
-        <section class="curling-sheet-section">
-            <div class="curling-sheet">
-                <div class="curling-house curling-house-top">
-                    <div class="ring ring-outer"></div>
-                    <div class="ring ring-middle"></div>
-                    <div class="ring ring-inner"></div>
-                    <div class="ring ring-button"></div>
-                </div>
-                <div class="curling-tee-line curling-tee-line-top"></div>
-                <div class="curling-hog-line curling-hog-line-top"></div>
-                <div class="curling-centre-line"></div>
-                <div class="curling-text-between-hogs">
-                    <span>Nästan där</span>
-                    <span>Bara lite till</span>
-                    <span>Snart där</span>
-                </div>
-                <div class="curling-hog-line curling-hog-line-bottom"></div>
-                <div class="curling-tee-line curling-tee-line-bottom"></div>
-                <div class="curling-house curling-house-bottom">
-                    <div class="ring ring-outer"></div>
-                    <div class="ring ring-middle"></div>
-                    <div class="ring ring-inner"></div>
-                    <div class="ring ring-button"></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- SLUTET - INGEN ENDING SEKTION -->
-    </div>
-
-    <div id="game-over" class="hidden">
-        <div class="game-over-content">
-            <div class="game-over-title">Slut</div>
-            <div class="final-score">0</div>
-            <div class="game-over-money">$0</div>
-
-            <button id="restart-btn">Spela Igen</button>
+        <div class="stanza">
+          <p>Jättearg och jätteledsen</p>
         </div>
-    </div>
-    
-    <div id="loop-transition">
-        <div id="loop-text">Loop #1</div>
-    </div>
+        <div class="stanza">
+          <p>Smälla kvasten tappa modet</p>
+        </div>
 
-    <script type="module" src="scripts/game.js"></script>
+        <div class="stanza chorus">
+          <p>Rakt igenom rakt igenom</p>
+        </div>
+        <div class="stanza chorus">
+          <p>Oj den gliider</p>
+        </div>
+        <div class="stanza chorus">
+          <p>Kasta stenar in i boet men den gliider</p>
+        </div>
+        <div class="stanza chorus">
+          <p class="big">Spela curling spela curling</p>
+        </div>
+
+        <div class="stanza">
+          <p>Slänga kvasten upp i luften</p>
+        </div>
+        <div class="stanza">
+          <p>Spela slagning blejsa stenen</p>
+        </div>
+        <div class="stanza">
+          <p>Jättearg och jätteledsen</p>
+        </div>
+        <div class="stanza">
+          <p>Smälla kvasten tappa modet</p>
+        </div>
+
+        <div class="stanza chorus">
+          <p>Rakt igenom rakt igenom</p>
+        </div>
+        <div class="stanza chorus">
+          <p>Oj den gliider</p>
+        </div>
+        <div class="stanza chorus">
+          <p>Kasta stenar in i boet men den gliider</p>
+        </div>
+        <div class="stanza chorus">
+          <p class="big">Spela curling spela curling</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="spacer-xl"></section>
+
+    <!-- CURLING SHEET -->
+    <section class="curling-sheet-section">
+      <div class="curling-sheet">
+        <div class="curling-house curling-house-top">
+          <div class="ring ring-outer"></div>
+          <div class="ring ring-middle"></div>
+          <div class="ring ring-inner"></div>
+          <div class="ring ring-button"></div>
+        </div>
+        <div class="curling-tee-line curling-tee-line-top"></div>
+        <div class="curling-hog-line curling-hog-line-top"></div>
+        <div class="curling-centre-line"></div>
+        <div class="curling-text-between-hogs">
+          <span>Nästan där</span>
+          <span>Bara lite till</span>
+          <span>Snart där</span>
+        </div>
+        <div class="curling-hog-line curling-hog-line-bottom"></div>
+        <div class="curling-tee-line curling-tee-line-bottom"></div>
+        <div class="curling-house curling-house-bottom">
+          <div class="ring ring-outer"></div>
+          <div class="ring ring-middle"></div>
+          <div class="ring ring-inner"></div>
+          <div class="ring ring-button"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLUTET - INGEN ENDING SEKTION -->
+  </div>
+
+  <div id="game-over" class="hidden">
+    <div class="game-over-content">
+      <div class="game-over-title">Slut</div>
+      <div class="final-score">0</div>
+      <div class="game-over-money">$0</div>
+
+      <button id="restart-btn">Spela Igen</button>
+    </div>
+  </div>
+
+  <div id="loop-transition">
+    <div id="loop-text">Loop #1</div>
+  </div>
+
+  <script type="module" src="scripts/game.js"></script>
 </body>
+
 </html>

@@ -222,10 +222,10 @@ drawSweepZone(state) {
         const playArea = state.getPlayArea();
         
         // Sweep zone positioned ahead of stone (higher on screen = smaller Y)
-        const zoneHeightPx = this.state.screenHeight * 0.2; // 20% of screen height in pixels
-        const zoneYPx = this.state.stoneYPx - this.state.screenHeight * 0.15; // 15% above stone in pixels
+        const zoneHeightPx = state.screenHeight * 0.2;
+        const zoneYPx = state.stoneYPx - state.screenHeight * 0.15;
         
-        if (zoneYPx < 0 || zoneYPx > this.state.screenHeight) return; // Don't draw if off screen
+        if (zoneYPx < 0 || zoneYPx > state.screenHeight) return;
         
         const alpha = state.isSweeping ? 0.3 : 0.1;
         this.ctx.fillStyle = `rgba(66, 153, 225, ${alpha})`;

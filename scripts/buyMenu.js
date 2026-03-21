@@ -2,11 +2,11 @@ export class BuyMenu {
     constructor(state) {
         this.state = state;
         this.upgrades = [
-            { id: 'maxVelocity', name: 'Maxhastighet', icon: '⚡', effect: '+15% per nivå', pricing: [1, 5, 20, 40, 65], image: 'waifu-speed.png' },
-            { id: 'frictionReduction', name: 'Minska Friktion', icon: '❄', effect: '-15% per nivå', pricing: [1, 5, 20, 40, 65], image: 'waifu-friction.png' },
-            { id: 'stoneSize', name: 'Stenstorlek', icon: '🥌', effect: '+25% per nivå', pricing: [1, 5, 20, 40, 65], image: 'waifu-size.png' },
-            { id: 'randomCurl', name: 'Random Curl', icon: '↺', effect: 'Random snurr/10s', pricing: [10, 20], image: 'waifu-curl.png' },
-            { id: 'noNegativePickups', name: 'Inga Negativa', icon: '✨', effect: 'Ta bort pickups', pricing: [10], image: 'waifu-shield.png' },
+            { id: 'maxVelocity', name: 'Maxhastighet', icon: '⚡', effect: '+15% per nivå', pricing: [1, 5, 20, 40, 65], image: 'waifu-speed.jpg' },
+            { id: 'frictionReduction', name: 'Minska Friktion', icon: '❄', effect: '-15% per nivå', pricing: [1, 5, 20, 40, 65], image: 'waifu-friction.jpg' },
+            { id: 'stoneSize', name: 'Stenstorlek', icon: '🥌', effect: '+25% per nivå', pricing: [1, 5, 20, 40, 65], image: 'waifu-size.jpg' },
+            { id: 'randomCurl', name: 'Random Curl', icon: '↺', effect: 'Random snurr/10s', pricing: [10, 20], image: 'waifu-curl.jpg' },
+            { id: 'noNegativePickups', name: 'Inga Negativa', icon: '✨', effect: 'Ta bort pickups', pricing: [10], image: 'waifu-shield.jpg' },
         ];
         this.clickAreas = [];
         this.images = {};
