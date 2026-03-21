@@ -152,6 +152,9 @@ function checkGameOver(state, overlay, scoreEl, moneyEl, buyLifeBtn) {
         } else {
             buyLifeBtn.classList.add('hidden');
         }
+
+        // Preload waifu images when buy menu opens
+        buyMenu.preloadWaifuImages();
     }
 }
 
