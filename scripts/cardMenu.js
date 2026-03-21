@@ -205,17 +205,16 @@ export class CardMenu {
 
         const cornerRadius = Math.max(4, width * 0.08);
 
-        // Floating shadow - multiple layers for depth
-        const shadowLayers = isSelected ? 5 : 4;
-        const shadowOffsetY = isSelected ? 12 : 8;
-        const shadowSpread = isSelected ? 3 : 2;
+        // Floating shadow
+        const shadowLayers = isSelected ? 3 : 2;
+        const shadowOffsetY = isSelected ? 6 : 3;
         
         for (let i = shadowLayers; i > 0; i--) {
-            const opacity = 0.08 + (i * 0.04);
-            const spread = i * shadowSpread;
+            const opacity = 0.06 + (i * 0.03);
+            const spread = i * 1;
             ctx.beginPath();
             ctx.roundRect(x + spread, y + shadowOffsetY + spread, width, height, cornerRadius);
-            ctx.fillStyle = `rgba(40, 40, 40, ${opacity})`;
+            ctx.fillStyle = `rgba(60, 60, 60, ${opacity})`;
             ctx.fill();
         }
 
@@ -279,15 +278,17 @@ export class CardMenu {
             const tierNumeral = romanNumerals[tier.level - 1] || 'I';
             const maxTier = card.tiers.length;
             
-            if (maxTier > 1 && isSelected) {
-                const fontSize = Math.max(16, width * 0.08);
-                const badgeY = y + height + 8;
+            if (maxTier > 1) {
+                const fontSize = Math.max(8, width * 0.12);
+                const inset = Math.max(3, width * 0.06);
+                const badgeX = x + width - inset - fontSize * 0.8;
+                const badgeY = y + inset + fontSize * 0.5;
 
                 ctx.font = `bold ${fontSize}px "Space Mono", monospace`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'top';
-                ctx.fillStyle = '#ffd700';
-                ctx.fillText(tierNumeral, x + width / 2, badgeY);
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = '#000000';
+                ctx.fillText(tierNumeral, badgeX, badgeY);
             }
         }
 
@@ -322,6 +323,13 @@ export class CardMenu {
         ctx.fillStyle = '#000000';
         ctx.fillRect(0, 0, screenWidth, screenHeight);
 
+        // Draw money at top right
+        ctx.font = 'bold 16px "Space Mono", monospace';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'top';
+        ctx.fillStyle = '#ffd700';
+        ctx.fillText(`$${Math.floor(this.state.money)}`, screenWidth - 15, 15);
+
         const padding = 20;
         const available = this.getAvailableUpgrades();
         const owned = this.getOwnedUpgrades();
@@ -336,10 +344,21 @@ export class CardMenu {
         if (selectedCard) {
             this.renderArchCards(ctx, screenWidth, padding, available, selectedCard.id);
             this.renderSelectedCard(ctx, screenWidth, screenHeight, selectedCard, largeCardWidth, largeCardHeight);
+            
+            // Draw continue button BEFORE owned cards
+            const continueY = screenHeight - 130;
+            this.continueButtonBounds = {
+                x: screenWidth / 2 - 80,
+                y: continueY,
+                width: 160,
+                height: 40
+            };
+            this.drawContinueButton(ctx, screenWidth / 2 - 80, continueY, 160, 40);
         } else {
             this.renderArchCards(ctx, screenWidth, padding, available, null);
 
-            const continueY = screenHeight - 70;
+            // Draw continue button BEFORE owned cards
+            const continueY = screenHeight - 130;
             this.continueButtonBounds = {
                 x: screenWidth / 2 - 100,
                 y: continueY,
@@ -355,7 +374,7 @@ export class CardMenu {
     renderArchCards(ctx, screenWidth, startY, available, selectedId) {
         const cardHeight = 105;
         const cardWidth = 75;
-        const spacing = 20;
+        const spacing = 5;
         const archHeight = 35;
 
         const totalWidth = available.length * cardWidth + (available.length - 1) * spacing;
@@ -485,15 +504,6 @@ export class CardMenu {
             height: 45
         };
         this.drawBuyButton(ctx, centerX - 80, buyY, 160, 45, canBuy);
-
-        const continueY = screenHeight - 60;
-        this.continueButtonBounds = {
-            x: centerX - 80,
-            y: continueY,
-            width: 160,
-            height: 40
-        };
-        this.drawContinueButton(ctx, centerX - 80, continueY, 160, 40);
     }
 
     drawBuyButton(ctx, x, y, width, height, canBuy) {
@@ -531,12 +541,6 @@ export class CardMenu {
     }
 
     renderCollectionZone(ctx, screenWidth, screenHeight, owned, padding) {
-        ctx.font = 'bold 16px "Space Mono", monospace';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'top';
-        ctx.fillStyle = '#ffd700';
-        ctx.fillText(`$${Math.floor(this.state.money)}`, screenWidth / 2, 20);
-
         if (owned.length === 0) return;
 
         const cardWidth = 50;
