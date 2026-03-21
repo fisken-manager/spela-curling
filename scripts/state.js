@@ -385,13 +385,18 @@ export class GameState {
         const sizeShrink = tuning.sizeShrink ?? 19000;
 
         this.powerUps = this.generateItems('powerup', 100, powerup, 160);
-        this.lifePowerUps = this.generateItems('life', 200, life, 100);
-        this.sweepPowerUps = [];
+this.lifePowerUps = this.generateItems('life', 200, life, 100);
         this.rotationPowerUps = this.generateItems('rotation', 400, rotation, 400);
         this.superBoostPowerUps = [];
         this.growthPowerUps = this.generateItems('growth', 600, growth, 100);
         this.curlChaosPickups = this.generateItems('curlChaos', 700, curlChaos, 90);
         this.sizeShrinkPickups = this.generateItems('sizeShrink', 800, sizeShrink, 110);
+        
+        // Apply coinSpeedBoost tier 2: remove speed pickups, 2x coins
+        if (this.upgrades.coinSpeedBoost?.level >= 2) {
+            this.powerUps = [];
+        }
+        
         this.convertPowerupsToSweepAndSuper();
         this.positionSweepNearEdges();
         this.enforcePickupProximity();
@@ -402,7 +407,10 @@ export class GameState {
         const maxScroll = Math.max(1, this.pageHeight - this.screenHeight);
         if (maxScroll <= 0) return;
         
-        const segmentSize = 1000;
+        // Apply coinSpeedBoost tier 2: 2x spawn rate
+        const coinBoostTier2 = this.upgrades.coinSpeedBoost?.level >= 2;
+        const segmentSize = coinBoostTier2 ? 500 : 1000; // 2x more spawn points
+        
         const startOffset = 800;
         const numSegments = Math.floor((maxScroll - startOffset) / segmentSize);
         

@@ -74,7 +74,7 @@ export class CardMenu {
                 name: 'Mynt Acceleration',
                 tiers: [
                     { level: 1, cost: 10, effect: 'Mynt ger hastighetsboost', image: 'coinSpeedBoost-tier1.jpg' },
-                    { level: 2, cost: 25, effect: '3x mynt, inga hastighetspickup', image: 'coinSpeedBoost-tier2.jpg' },
+                    { level: 2, cost: 25, effect: '2x mynt, inga hastighetspickup', image: 'coinSpeedBoost-tier2.jpg' },
                 ]
             }
         ];
@@ -130,12 +130,12 @@ export class CardMenu {
             // Remove speed boost pickups
             this.state.powerUps = [];
             
-            // Remove existing yellow orbs
+            // Remove existing yellow orbs and respawn with 2x frequency
             this.state.scoringOrbs = this.state.scoringOrbs.filter(o => o.type !== 'yellow');
             
-            // Respawn yellow orbs with 3x frequency (smaller segments = more spawn points)
+            // Respawn yellow orbs with 2x frequency (smaller segments)
             const maxScroll = Math.max(1, this.state.pageHeight - this.state.screenHeight);
-            const segmentSize = 333; // 3x more frequent than original 1000
+            const segmentSize = 500; // 2x more frequent than original 1000
             const startOffset = 800;
             let orbId = this.state.scoringOrbs.length;
             
@@ -145,7 +145,7 @@ export class CardMenu {
                 const baseProgress = (startOffset + i * segmentSize) / maxScroll;
                 if (baseProgress > 1) continue;
                 
-                const seed = Math.floor(this.state.pageHeight + i * 333 + (this.state.loopCount || 1) * 100000);
+                const seed = Math.floor(this.state.pageHeight + i * 500 + (this.state.loopCount || 1) * 100000);
                 const random = (s) => { const x = Math.sin(s) * 10000; return x - Math.floor(x); };
                 
                 if (random(seed + 2000) < 0.8) {
