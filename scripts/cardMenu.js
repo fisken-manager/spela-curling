@@ -174,13 +174,21 @@ export class CardMenu {
         });
     }
 
-    drawCard(ctx, x, y, width, height, card, tier, isOwned = false, isSelected = false, showText = false) {
-        const cornerRadius = 14;
-        const shadowOffset = 4;
+    drawCard(ctx, x, y, width, height, card, tier, isOwned = false, isSelected = false, angle = 0) {
+        ctx.save();
+        
+        if (angle !== 0) {
+            ctx.translate(x + width / 2, y + height / 2);
+            ctx.rotate(angle);
+            ctx.translate(-(x + width / 2), -(y + height / 2));
+        }
+
+        const cornerRadius = Math.max(4, width * 0.08);
+        const shadowOffset = 2;
 
         ctx.beginPath();
         ctx.roundRect(x + shadowOffset, y + shadowOffset, width, height, cornerRadius);
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
         ctx.fill();
 
         const bgGradient = ctx.createLinearGradient(x, y, x + width, y + height);
@@ -192,28 +200,11 @@ export class CardMenu {
         ctx.fillStyle = bgGradient;
         ctx.fill();
 
-        ctx.lineWidth = isSelected ? 3 : 2;
-        ctx.strokeStyle = isSelected ? '#ffd700' : 'rgba(255, 255, 255, 0.2)';
+        ctx.lineWidth = isSelected ? 2 : 1;
+        ctx.strokeStyle = isSelected ? '#ffd700' : 'rgba(255, 255, 255, 0.15)';
         ctx.stroke();
 
-        if (isSelected) {
-            ctx.save();
-            ctx.beginPath();
-            ctx.roundRect(x, y, width, height, cornerRadius);
-            ctx.clip();
-            
-            const innerGlow = ctx.createRadialGradient(
-                x + width / 2, y + height / 2, 0,
-                x + width / 2, y + height / 2, Math.max(width, height) * 0.7
-            );
-            innerGlow.addColorStop(0, 'rgba(255, 215, 0, 0.15)');
-            innerGlow.addColorStop(1, 'rgba(255, 215, 0, 0)');
-            ctx.fillStyle = innerGlow;
-            ctx.fillRect(x, y, width, height);
-            ctx.restore();
-        }
-
-        const imagePadding = 6;
+        const imagePadding = Math.max(2, width * 0.04);
         const imageX = x + imagePadding;
         const imageY = y + imagePadding;
         const imageWidth = width - imagePadding * 2;
@@ -238,28 +229,10 @@ export class CardMenu {
         }
         ctx.restore();
 
-        if (isSelected) {
-            const badgeWidth = 36;
-            const badgeHeight = 20;
-            const badgeX = x + width - badgeWidth - 6;
-            const badgeY = y + height - badgeHeight - 6;
-
-            ctx.beginPath();
-            ctx.roundRect(badgeX, badgeY, badgeWidth, badgeHeight, 4);
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-            ctx.fill();
-
-            ctx.font = 'bold 11px "Space Mono", monospace';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillStyle = '#ffd700';
-            ctx.fillText(`$${tier.cost}`, badgeX + badgeWidth / 2, badgeY + badgeHeight / 2);
-        }
-
         if (isOwned) {
-            const checkSize = 20;
-            const checkX = x + width - checkSize - 8;
-            const checkY = y + 8;
+            const checkSize = Math.max(12, width * 0.15);
+            const checkX = x + width - checkSize - 4;
+            const checkY = y + 4;
 
             ctx.beginPath();
             ctx.arc(checkX + checkSize / 2, checkY + checkSize / 2, checkSize / 2, 0, Math.PI * 2);
@@ -267,7 +240,7 @@ export class CardMenu {
             ctx.fill();
 
             ctx.strokeStyle = '#fff';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 1.5;
             ctx.beginPath();
             ctx.moveTo(checkX + checkSize * 0.25, checkY + checkSize * 0.5);
             ctx.lineTo(checkX + checkSize * 0.45, checkY + checkSize * 0.7);
@@ -275,10 +248,11 @@ export class CardMenu {
             ctx.stroke();
         }
 
+        ctx.restore();
         return { x, y, width, height };
     }
 
-    drawCardWithAnimation(ctx, x, y, width, height, card, tier, isOwned, isSelected, animation) {
+    drawCardWithAnimation(ctx, x, y, width, height, card, tier, isOwned, isSelected, animation, angle = 0) {
         if (animation && animation.progress < 1) {
             const t = animation.progress;
             const spring = 1 + Math.sin(t * Math.PI * 0.5) * 0.2;
@@ -289,11 +263,11 @@ export class CardMenu {
             ctx.globalAlpha = alpha;
             ctx.translate(x + width / 2, y + height / 2);
             ctx.scale(scale, scale);
-            this.drawCard(ctx, -width / 2, -height / 2, width, height, card, tier, isOwned, isSelected);
+            this.drawCard(ctx, -width / 2, -height / 2, width, height, card, tier, isOwned, isSelected, angle);
             ctx.restore();
             return { x: x, y: y, width, height };
         } else {
-            return this.drawCard(ctx, x, y, width, height, card, tier, isOwned, isSelected);
+            return this.drawCard(ctx, x, y, width, height, card, tier, isOwned, isSelected, angle);
         }
     }
 
@@ -305,156 +279,164 @@ export class CardMenu {
         ctx.fillStyle = '#000000';
         ctx.fillRect(0, 0, screenWidth, screenHeight);
 
-        const padding = 16;
-        const purchasableHeight = screenHeight * 0.60;
-        const buyZoneHeight = screenHeight * 0.25;
-        const collectionHeight = screenHeight * 0.15;
-
+        const padding = 20;
         const available = this.getAvailableUpgrades();
         const owned = this.getOwnedUpgrades();
 
-        this.renderPurchasableZone(ctx, screenWidth, purchasableHeight, available, padding);
+        const selectedCard = this.selectedCardId 
+            ? available.find(c => c.id === this.selectedCardId) 
+            : null;
 
-        const buyZoneY = purchasableHeight;
-        this.renderBuyZone(ctx, screenWidth, buyZoneY, buyZoneHeight);
+        const largeCardHeight = screenHeight * 0.40;
+        const largeCardWidth = largeCardHeight * 0.65;
 
-        const collectionY = purchasableHeight + buyZoneHeight;
-        this.renderCollectionZone(ctx, screenWidth, collectionY, collectionHeight, owned, padding);
-    }
-
-    renderPurchasableZone(ctx, screenWidth, height, available, padding) {
-        const titleY = padding + 10;
-        ctx.font = 'bold 24px "Space Mono", monospace';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'top';
-        ctx.fillStyle = '#ffd700';
-        ctx.fillText('UPPGRADERINGAR', screenWidth / 2, titleY);
-
-        ctx.font = 'bold 20px "Space Mono", monospace';
-        ctx.fillStyle = '#ffd700';
-        ctx.fillText(`$${Math.floor(this.state.money)}`, screenWidth / 2, titleY + 35);
-
-        if (available.length === 0) {
-            ctx.font = '18px "Work Sans", sans-serif';
-            ctx.fillStyle = '#94a3b8';
-            ctx.fillText('Alla uppgraderingar köpta!', screenWidth / 2, height / 2 + 50);
-            return;
-        }
-
-        const cardHeight = height - 180;
-        const cardWidth = Math.min(140, (screenWidth - padding * 2) / available.length + 40);
-        const overlap = cardWidth * 0.3;
-        const totalWidth = available.length > 1 
-            ? cardWidth + (available.length - 1) * (cardWidth - overlap)
-            : cardWidth;
-        const startX = (screenWidth - totalWidth) / 2;
-        const baseY = padding + 70;
-
-        this.cardBounds = [];
-
-        const selectedIndex = available.findIndex(c => c.id === this.selectedCardId);
-
-        for (let i = 0; i < available.length; i++) {
-            if (i === selectedIndex) continue;
-
-            const card = available[i];
-            const isSelected = false;
-            const canBuy = this.canAfford(card.id);
-            const x = startX + i * (cardWidth - overlap);
-            const y = baseY;
-
-            const bounds = this.drawCard(ctx, x, y, cardWidth, cardHeight, card, card.currentTier, false, false);
-
-            this.cardBounds.push({
-                ...bounds,
-                cardId: card.id,
-                canBuy
-            });
-        }
-
-        if (selectedIndex >= 0) {
-            const card = available[selectedIndex];
-            const canBuy = this.canAfford(card.id);
-            const x = startX + selectedIndex * (cardWidth - overlap);
-            const y = baseY - 20;
-            const scale = 1.05;
-
-            const drawX = x - (cardWidth * scale - cardWidth) / 2;
-            const drawY = y;
-            const drawWidth = cardWidth * scale;
-            const drawHeight = cardHeight * scale;
-
-            const bounds = this.drawCard(ctx, drawX, drawY, drawWidth, drawHeight, card, card.currentTier, false, true);
-
-            this.cardBounds.push({
-                ...bounds,
-                cardId: card.id,
-                canBuy
-            });
-        }
-    }
-
-    renderBuyZone(ctx, screenWidth, y, height) {
-        const centerX = screenWidth / 2;
-
-        if (!this.selectedCardId) {
+        if (selectedCard) {
+            this.renderArchCards(ctx, screenWidth, padding, available, selectedCard.id);
+            this.renderSelectedCard(ctx, screenWidth, screenHeight, selectedCard, largeCardWidth, largeCardHeight);
+        } else {
+            this.renderArchCards(ctx, screenWidth, padding, available, null);
+            
             ctx.font = '16px "Work Sans", sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillStyle = '#718096';
-            ctx.fillText('Välj ett kort för att köpa', centerX, y + height / 2);
-            
-            const buttonY = y + height - 50;
+            ctx.fillText('Välj ett kort för att köpa', screenWidth / 2, screenHeight * 0.55);
+
+            const continueY = screenHeight - 70;
             this.continueButtonBounds = {
-                x: centerX - 100,
-                y: buttonY,
+                x: screenWidth / 2 - 100,
+                y: continueY,
                 width: 200,
                 height: 40
             };
-            this.drawContinueButton(ctx, centerX - 100, buttonY, 200, 40);
-            return;
+            this.drawContinueButton(ctx, screenWidth / 2 - 100, continueY, 200, 40);
         }
 
-        const selectedCard = this.cards.find(c => c.id === this.selectedCardId);
-        if (!selectedCard) return;
+        this.renderCollectionZone(ctx, screenWidth, screenHeight, owned, padding);
+    }
 
-        const currentLevel = this.state.upgrades[this.selectedCardId]?.level || 0;
-        const tier = selectedCard.tiers[currentLevel];
-        if (!tier) return;
+    renderArchCards(ctx, screenWidth, startY, available, selectedId) {
+        const cardHeight = 70;
+        const cardWidth = 50;
+        const spacing = 15;
+        const archHeight = 25;
 
-        const canBuy = this.canAfford(this.selectedCardId);
+        const totalWidth = available.length * cardWidth + (available.length - 1) * spacing;
+        const startX = (screenWidth - totalWidth) / 2;
+
+        this.cardBounds = [];
+
+        for (let i = 0; i < available.length; i++) {
+            const card = available[i];
+            const isSelected = card.id === selectedId;
+            if (isSelected) continue;
+
+            const centerX = startX + i * (cardWidth + spacing) + cardWidth / 2;
+            const normalizedPos = (i - (available.length - 1) / 2) / (available.length > 1 ? (available.length - 1) / 2 : 1);
+            
+            const angle = normalizedPos * 0.35;
+            const archY = startY + Math.abs(normalizedPos) * archHeight;
+            
+            const x = startX + i * (cardWidth + spacing);
+            const y = archY;
+
+            ctx.save();
+            ctx.translate(x + cardWidth / 2, y + cardHeight / 2);
+            ctx.rotate(angle);
+            ctx.translate(-(x + cardWidth / 2), -(y + cardHeight / 2));
+
+            const bounds = this.drawCard(ctx, x, y, cardWidth, cardHeight, card, card.currentTier, false, false, 0);
+
+            ctx.restore();
+
+            const rotatedBounds = this.getRotatedBounds(x, y, cardWidth, cardHeight, angle);
+            this.cardBounds.push({
+                ...rotatedBounds,
+                cardId: card.id,
+                canBuy: this.canAfford(card.id)
+            });
+        }
+    }
+
+    getRotatedBounds(x, y, width, height, angle) {
+        const cx = x + width / 2;
+        const cy = y + height / 2;
+        const cos = Math.abs(Math.cos(angle));
+        const sin = Math.abs(Math.sin(angle));
+        const newWidth = width * cos + height * sin;
+        const newHeight = width * sin + height * cos;
+        return {
+            x: cx - newWidth / 2,
+            y: cy - newHeight / 2,
+            width: newWidth,
+            height: newHeight
+        };
+    }
+
+    renderSelectedCard(ctx, screenWidth, screenHeight, card, cardWidth, cardHeight) {
+        const currentLevel = this.state.upgrades[card.id]?.level || 0;
+        const tier = card.tiers[currentLevel];
+        if (!tier) return { action: 'continue' };
+
+        const canBuy = this.canAfford(card.id);
+        const centerX = screenWidth / 2;
+        const cardY = 120;
+
+        const x = centerX - cardWidth / 2;
+        this.drawCard(ctx, x, cardY, cardWidth, cardHeight, card, card.currentTier, false, true, 0);
+
+        this.selectedCardBounds = {
+            x: x,
+            y: cardY,
+            width: cardWidth,
+            height: cardHeight,
+            cardId: card.id,
+            canBuy
+        };
+        this.cardBounds.push({
+            x: x,
+            y: cardY,
+            width: cardWidth,
+            height: cardHeight,
+            cardId: card.id,
+            canBuy
+        });
 
         const romanNumerals = ['I', 'II', 'III', 'IV', 'V'];
         const tierNumeral = romanNumerals[tier.level - 1] || 'I';
 
-        ctx.font = 'bold 18px "Work Sans", sans-serif';
+        const textY = cardY + cardHeight + 20;
+        ctx.font = 'bold 20px "Work Sans", sans-serif';
         ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
+        ctx.textBaseline = 'top';
         ctx.fillStyle = '#ffd700';
-        ctx.fillText(`${selectedCard.name} ${tierNumeral}`, centerX, y + 30);
+        ctx.fillText(`${card.name} ${tierNumeral}`, centerX, textY);
 
-        ctx.font = '14px "Work Sans", sans-serif';
+        ctx.font = '16px "Work Sans", sans-serif';
         ctx.fillStyle = '#94a3b8';
-        ctx.fillText(`${tier.effect}  •  $${tier.cost}`, centerX, y + 55);
+        ctx.fillText(tier.effect, centerX, textY + 28);
 
-        const buyY = y + 80;
+        ctx.font = 'bold 18px "Space Mono", monospace';
+        ctx.fillStyle = canBuy ? '#ffd700' : '#718096';
+        ctx.fillText(`$${tier.cost}`, centerX, textY + 52);
+
+        const buyY = textY + 80;
         this.buyButtonBounds = {
-            x: centerX - 100,
+            x: centerX - 80,
             y: buyY,
-            width: 200,
-            height: 50
+            width: 160,
+            height: 45
         };
+        this.drawBuyButton(ctx, centerX - 80, buyY, 160, 45, canBuy);
 
-        this.drawBuyButton(ctx, centerX - 100, buyY, 200, 50, canBuy);
-
-        const continueY = y + height - 50;
+        const continueY = screenHeight - 60;
         this.continueButtonBounds = {
-            x: centerX - 100,
+            x: centerX - 80,
             y: continueY,
-            width: 200,
+            width: 160,
             height: 40
         };
-        this.drawContinueButton(ctx, centerX - 100, continueY, 200, 40);
+        this.drawContinueButton(ctx, centerX - 80, continueY, 160, 40);
     }
 
     drawBuyButton(ctx, x, y, width, height, canBuy) {
@@ -491,26 +473,34 @@ export class CardMenu {
         ctx.fillText('FORTSÄTT', x + width / 2, y + height / 2);
     }
 
-    renderCollectionZone(ctx, screenWidth, y, height, owned, padding) {
+    renderCollectionZone(ctx, screenWidth, screenHeight, owned, padding) {
+        ctx.font = 'bold 16px "Space Mono", monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillStyle = '#ffd700';
+        ctx.fillText(`$${Math.floor(this.state.money)}`, screenWidth / 2, 20);
+
         if (owned.length === 0) return;
 
-        const cardWidth = 80;
-        const cardHeight = height - 30;
-        const cardY = y + 15;
-        const totalWidth = owned.length * cardWidth + (owned.length - 1) * 10;
+        const cardWidth = 50;
+        const cardHeight = 70;
+        const spacing = 8;
+        const totalWidth = owned.length * cardWidth + (owned.length - 1) * spacing;
         const startX = (screenWidth - totalWidth) / 2;
+        const cardY = screenHeight - cardHeight - 15;
 
         for (let i = 0; i < owned.length; i++) {
             const card = owned[i];
-            const x = startX + i * (cardWidth + 10);
+            const x = startX + i * (cardWidth + spacing);
 
             const anim = this.animationState.enteringCards.find(
                 a => a.cardId === card.id && a.tierLevel === card.tierLevel
             );
 
-            this.drawCardWithAnimation(ctx, x, cardY, cardWidth, cardHeight, card, card.tier, true, false, anim);
+            this.drawCardWithAnimation(ctx, x, cardY, cardWidth, cardHeight, card, card.tier, true, false, anim, 0);
         }
     }
+}
 
     async preloadImages() {
         for (const card of this.cards) {
