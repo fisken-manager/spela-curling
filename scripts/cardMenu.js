@@ -7,6 +7,7 @@ export class CardMenu {
         this.clickAreas = [];
         this.cardBounds = [];
         this.buyButtonBounds = null;
+        this.continueButtonBounds = null;
         this.animationState = {
             enteringCards: [],
             exitingCards: [],
@@ -117,6 +118,14 @@ export class CardMenu {
     }
 
     handleClick(x, y) {
+        if (this.continueButtonBounds) {
+            const cb = this.continueButtonBounds;
+            if (x >= cb.x && x <= cb.x + cb.width &&
+                y >= cb.y && y <= cb.y + cb.height) {
+                return { action: 'continue' };
+            }
+        }
+
         if (this.buyButtonBounds) {
             const bb = this.buyButtonBounds;
             if (x >= bb.x && x <= bb.x + bb.width &&
@@ -278,6 +287,7 @@ export class CardMenu {
     render(ctx, screenWidth, screenHeight) {
         this.clickAreas = [];
         this.buyButtonBounds = null;
+        this.continueButtonBounds = null;
 
         ctx.fillStyle = '#1a1a2e';
         ctx.fillRect(0, 0, screenWidth, screenHeight);
@@ -374,13 +384,28 @@ export class CardMenu {
 
     renderBuyZone(ctx, screenWidth, y, height) {
         const centerX = screenWidth / 2;
+        const buttonWidth = 200;
+        const buttonHeight = 40;
+        const buttonSpacing = 10;
+        const totalButtons = this.selectedCardId ? 2 : 1;
+        const totalHeight = totalButtons * buttonHeight + (totalButtons > 1 ? buttonSpacing : 0);
+        const startY = y + (height - totalHeight) / 2;
+
+        const continueY = startY;
+        this.continueButtonBounds = {
+            x: centerX - buttonWidth / 2,
+            y: continueY,
+            width: buttonWidth,
+            height: buttonHeight
+        };
+        this.drawButton(ctx, centerX - buttonWidth / 2, continueY, buttonWidth, buttonHeight, 'FORTSÄTT', true);
 
         if (!this.selectedCardId) {
-            ctx.font = '16px "Work Sans", sans-serif';
+            ctx.font = '14px "Work Sans", sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillStyle = '#94a3b8';
-            ctx.fillText('Välj ett kort för att köpa', centerX, y + height / 2);
+            ctx.fillText('Välj ett kort för att köpa', centerX, continueY + buttonHeight + 25);
             return;
         }
 
@@ -393,20 +418,20 @@ export class CardMenu {
 
         const canBuy = this.canAfford(this.selectedCardId);
 
-        const buttonWidth = 200;
-        const buttonHeight = 50;
-        const buttonX = centerX - buttonWidth / 2;
-        const buttonY = y + (height - buttonHeight) / 2;
-
+        const buyY = continueY + buttonHeight + buttonSpacing;
         this.buyButtonBounds = {
-            x: buttonX,
-            y: buttonY,
+            x: centerX - buttonWidth / 2,
+            y: buyY,
             width: buttonWidth,
             height: buttonHeight
         };
 
-        const gradient = ctx.createLinearGradient(buttonX, buttonY, buttonX + buttonWidth, buttonY + buttonHeight);
-        if (canBuy) {
+        this.drawButton(ctx, centerX - buttonWidth / 2, buyY, buttonWidth, buttonHeight, `KÖPA ${selectedCard.name} - $${tier.cost}`, canBuy);
+    }
+
+    drawButton(ctx, x, y, width, height, text, enabled) {
+        const gradient = ctx.createLinearGradient(x, y, x + width, y + height);
+        if (enabled) {
             gradient.addColorStop(0, 'rgba(72, 187, 120, 0.3)');
             gradient.addColorStop(1, 'rgba(56, 161, 105, 0.2)');
         } else {
@@ -415,19 +440,19 @@ export class CardMenu {
         }
 
         ctx.beginPath();
-        ctx.roundRect(buttonX, buttonY, buttonWidth, buttonHeight, 10);
+        ctx.roundRect(x, y, width, height, 10);
         ctx.fillStyle = gradient;
         ctx.fill();
 
-        ctx.strokeStyle = canBuy ? 'rgba(72, 187, 120, 0.7)' : 'rgba(100, 100, 100, 0.4)';
+        ctx.strokeStyle = enabled ? 'rgba(72, 187, 120, 0.7)' : 'rgba(100, 100, 100, 0.4)';
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        ctx.font = 'bold 18px "Work Sans", sans-serif';
+        ctx.font = 'bold 16px "Work Sans", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillStyle = canBuy ? '#48bb78' : '#718096';
-        ctx.fillText(`KÖPA ${selectedCard.name} - $${tier.cost}`, centerX, buttonY + buttonHeight / 2);
+        ctx.fillStyle = enabled ? '#48bb78' : '#718096';
+        ctx.fillText(text, x + width / 2, y + height / 2);
     }
 
     renderCollectionZone(ctx, screenWidth, y, height, owned, padding) {
