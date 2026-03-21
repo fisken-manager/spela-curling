@@ -130,27 +130,34 @@ export class CardMenu {
             // Remove speed boost pickups
             this.state.powerUps = [];
             
-            // Add extra yellow orbs (2 more per existing yellow orb)
-            const existingYellows = this.state.scoringOrbs.filter(o => o.type === 'yellow' && !o.collected);
+            // Add additional yellow orbs throughout the level (not at same positions)
             const maxScroll = Math.max(1, this.state.pageHeight - this.state.screenHeight);
+            const segmentSize = 333; // 3x more frequent than original 1000
+            const startOffset = 600;
             let orbId = this.state.scoringOrbs.length;
             
-            // Add 2 more yellow orbs for each existing one at same position
-            for (const orb of existingYellows) {
-                this.state.scoringOrbs.push({
-                    id: `orb-${orbId++}`,
-                    type: 'yellow',
-                    x: orb.x - 30,
-                    scrollProgress: orb.scrollProgress,
-                    collected: false
-                });
-                this.state.scoringOrbs.push({
-                    id: `orb-${orbId++}`,
-                    type: 'yellow',
-                    x: orb.x + 30,
-                    scrollProgress: orb.scrollProgress,
-                    collected: false
-                });
+            const numSegments = Math.floor((maxScroll - startOffset) / segmentSize);
+            
+            for (let i = 0; i < numSegments; i++) {
+                const progressOffset = (i * segmentSize + startOffset) / maxScroll;
+                
+                if (progressOffset <= 1) {
+                    // Add one on each wall at new positions
+                    this.state.scoringOrbs.push({
+                        id: `orb-${orbId++}`,
+                        type: 'yellow',
+                        x: -180,
+                        scrollProgress: progressOffset,
+                        collected: false
+                    });
+                    this.state.scoringOrbs.push({
+                        id: `orb-${orbId++}`,
+                        type: 'yellow',
+                        x: 180,
+                        scrollProgress: progressOffset,
+                        collected: false
+                    });
+                }
             }
         }
 
