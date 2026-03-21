@@ -246,6 +246,28 @@ export class CardMenu {
             ctx.lineTo(checkX + checkSize * 0.45, checkY + checkSize * 0.7);
             ctx.lineTo(checkX + checkSize * 0.75, checkY + checkSize * 0.3);
             ctx.stroke();
+        } else {
+            const romanNumerals = ['I', 'II', 'III', 'IV', 'V'];
+            const tierNumeral = romanNumerals[tier.level - 1] || 'I';
+            const maxTier = card.tiers.length;
+            
+            if (maxTier > 1) {
+                const badgeW = Math.max(16, width * 0.22);
+                const badgeH = Math.max(12, width * 0.16);
+                const badgeX = x + width - badgeW - 3;
+                const badgeY = y + 3;
+
+                ctx.beginPath();
+                ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 3);
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fill();
+
+                ctx.font = `bold ${Math.max(8, width * 0.14)}px "Space Mono", monospace`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = '#ffd700';
+                ctx.fillText(tierNumeral, badgeX + badgeW / 2, badgeY + badgeH / 2);
+            }
         }
 
         ctx.restore();
