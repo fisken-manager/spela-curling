@@ -22,8 +22,8 @@ export class GameState {
         };
         
         // Visual positioning
-        this.stoneVisualY = 0.85;    // current visual Y (ratio 0-1, where 0 is top)
-        this.restY = 0.85;            // rest position (near bottom)
+        this.stoneVisualY = 0.945;    // current visual Y (ratio 0-1, where 0 is top)
+        this.restY = 0.945;            // rest position (just below hog line)
         this.centerY = 0.5;           // position where scrolling starts (center)
         this.transitionDistance = 0.35; // distance from rest to center (0.85 - 0.50)
         
@@ -358,8 +358,8 @@ export class GameState {
 
     enforcePickupProximity() {
         const maxAttempts = 20;
-        const minDistance = 100;
-        const verticalTolerance = 50;
+        const minDistance = 200;
+        const verticalTolerance = 200;
         
         const random = (s) => {
             const x = Math.sin(s) * 10000;
