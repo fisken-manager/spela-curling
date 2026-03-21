@@ -37,10 +37,14 @@ body {
     will-change: transform;
 }
 
-/* ===== SPACER ===== */
-.spacer {
-    height: 80vh;
-    min-height: 500px;
+/* ===== SPACERS ===== */
+.spacer-xl {
+    height: 150vh;
+    min-height: 800px;
+}
+
+.spacer-m {
+    height: 60px;
 }
 
 /* ===== HERO ===== */
@@ -50,26 +54,26 @@ body {
     align-items: center;
     justify-content: center;
     text-align: center;
-    padding: 40px 20px;
-    background: linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%);
+    padding: 60px 30px;
+    background: linear-gradient(180deg, #0a0a0a 0%, #111 100%);
 }
 
 .hero-inner h1 {
-    font-size: clamp(4rem, 15vw, 6rem);
+    font-size: clamp(5rem, 20vw, 8rem);
     font-weight: 800;
-    line-height: 0.9;
-    letter-spacing: -0.05em;
-    margin-bottom: 2rem;
+    line-height: 0.85;
+    letter-spacing: -0.08em;
+    margin-bottom: 3rem;
     color: #fff;
 }
 
 .hero-sub {
-    font-size: clamp(1rem, 3vw, 1.3rem);
+    font-size: clamp(1.3rem, 4vw, 1.8rem);
     font-weight: 300;
-    color: rgba(255,255,255,0.5);
-    max-width: 300px;
+    color: rgba(255,255,255,0.4);
+    max-width: 350px;
     margin: 0 auto;
-    line-height: 1.6;
+    line-height: 1.7;
 }
 
 /* ===== VICTIM FULL ===== */
@@ -89,31 +93,32 @@ body {
     bottom: 0;
     left: 0;
     right: 0;
-    padding: 40px 30px;
-    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%);
+    padding: 60px 40px;
+    background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, transparent 100%);
 }
 
 .victim-text .num {
     font-family: 'Space Mono', monospace;
-    font-size: 0.9rem;
-    color: rgba(255,255,255,0.4);
+    font-size: 1.2rem;
+    color: rgba(255,255,255,0.3);
     display: block;
-    margin-bottom: 10px;
+    margin-bottom: 20px;
 }
 
 .victim-text h2 {
-    font-size: clamp(2.5rem, 8vw, 4rem);
+    font-size: clamp(3.5rem, 12vw, 5rem);
     font-weight: 800;
-    line-height: 0.95;
-    margin-bottom: 15px;
+    line-height: 0.9;
+    margin-bottom: 25px;
     color: #fff;
 }
 
 .victim-text p {
-    font-size: 1.1rem;
+    font-size: 1.5rem;
     font-weight: 300;
-    color: rgba(255,255,255,0.7);
+    color: rgba(255,255,255,0.6);
     font-style: italic;
+    line-height: 1.5;
 }
 
 /* ===== IMAGE FULL ===== */
@@ -129,30 +134,31 @@ body {
 }
 
 .caption {
-    padding: 30px;
-    background: #111;
+    padding: 50px 40px;
+    background: #0a0a0a;
 }
 
 .caption h3 {
-    font-size: 1.5rem;
+    font-size: 2rem;
     font-weight: 600;
-    margin-bottom: 8px;
+    margin-bottom: 15px;
     color: #fff;
 }
 
 .caption p {
-    font-size: 1rem;
+    font-size: 1.3rem;
     font-weight: 300;
-    color: rgba(255,255,255,0.5);
+    color: rgba(255,255,255,0.4);
+    line-height: 1.5;
 }
 
 /* ===== PROVERB ===== */
 .proverb {
-    min-height: 60vh;
+    min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 60px 40px;
+    padding: 80px 50px;
     background: #f5f5f5;
 }
 
@@ -165,30 +171,36 @@ body {
 }
 
 .proverb p {
-    font-size: clamp(1.8rem, 6vw, 2.8rem);
+    font-size: clamp(2.5rem, 8vw, 4rem);
     font-weight: 300;
     text-align: center;
-    line-height: 1.3;
+    line-height: 1.2;
     color: #0a0a0a;
-    max-width: 400px;
+    max-width: 90%;
 }
 
 /* ===== TEXT BLOCK ===== */
 .text-block {
-    min-height: 80vh;
+    min-height: 100vh;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 60px 40px;
-    background: #1a1a1a;
+    padding: 80px 50px;
+    background: #111;
 }
 
 .text-block p {
-    font-size: clamp(1.3rem, 4vw, 1.8rem);
+    font-size: clamp(1.8rem, 6vw, 2.8rem);
     font-weight: 300;
-    line-height: 1.7;
-    color: rgba(255,255,255,0.8);
-    max-width: 380px;
+    line-height: 1.8;
+    color: rgba(255,255,255,0.7);
+    max-width: 90%;
+    margin-bottom: 30px;
+}
+
+.text-block p:last-child {
+    margin-bottom: 0;
 }
 
 /* ===== MANIFEST ===== */
@@ -197,24 +209,24 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: 80px 40px;
+    padding: 100px 50px;
     background: #0a0a0a;
 }
 
 .manifest h2 {
-    font-size: clamp(2rem, 6vw, 3rem);
+    font-size: clamp(3rem, 10vw, 5rem);
     font-weight: 800;
-    margin-bottom: 60px;
+    margin-bottom: 80px;
     color: #fff;
 }
 
 .manifest p {
-    font-size: clamp(1.2rem, 4vw, 1.6rem);
+    font-size: clamp(2rem, 7vw, 3rem);
     font-weight: 300;
-    line-height: 1.8;
-    color: rgba(255,255,255,0.7);
-    margin-bottom: 40px;
-    max-width: 380px;
+    line-height: 1.6;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 50px;
+    max-width: 90%;
 }
 
 /* ===== LYRICS ===== */
@@ -223,8 +235,8 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 80px 30px;
-    background: linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%);
+    padding: 100px 40px;
+    background: linear-gradient(180deg, #0a0a0a 0%, #111 50%, #0a0a0a 100%);
 }
 
 .lyrics-inner {
@@ -232,25 +244,25 @@ body {
 }
 
 .lyrics h2 {
-    font-size: clamp(2rem, 6vw, 3rem);
+    font-size: clamp(3rem, 10vw, 5rem);
     font-weight: 800;
-    margin-bottom: 80px;
+    margin-bottom: 100px;
     color: #fff;
 }
 
 .stanza {
-    margin-bottom: 80px;
+    margin-bottom: 40px;
 }
 
 .stanza p {
-    font-size: clamp(1.5rem, 5vw, 2.2rem);
+    font-size: clamp(2.2rem, 7vw, 3.5rem);
     font-weight: 300;
-    line-height: 2;
-    color: rgba(255,255,255,0.9);
+    line-height: 1.4;
+    color: rgba(255,255,255,0.85);
 }
 
 .stanza.chorus {
-    margin: 100px 0;
+    margin: 60px 0;
 }
 
 .stanza.chorus p {
@@ -259,9 +271,9 @@ body {
 }
 
 .stanza .big {
-    font-size: clamp(2rem, 6vw, 3rem);
+    font-size: clamp(3rem, 9vw, 4.5rem);
     font-weight: 600;
-    margin-top: 30px;
+    margin-top: 20px;
     color: #fff;
 }
 
@@ -396,30 +408,6 @@ body {
     bottom: 2.2%;
 }
 
-/* ===== ENDING ===== */
-.ending {
-    min-height: 80vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 60px 40px;
-    background: #0a0a0a;
-}
-
-.ending p {
-    font-size: clamp(1.5rem, 5vw, 2.5rem);
-    font-weight: 300;
-    color: rgba(255,255,255,0.8);
-    margin-bottom: 20px;
-}
-
-.ending .small {
-    font-size: 1rem;
-    color: rgba(255,255,255,0.4);
-}
-
 /* ===== PHYSICS CONTROLS ===== */
 #physics-controls {
     position: fixed;
@@ -551,7 +539,6 @@ body {
     background: #fff;
     color: #0a0a0a;
     border: none;
-    border-radius: 0;
     cursor: pointer;
     font-weight: 600;
     transition: transform 0.2s;

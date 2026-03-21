@@ -12,7 +12,7 @@
     <canvas id="game-canvas"></canvas>
     
     <div id="physics-controls">
-        <h3>Physics <span id="toggle-controls" class="toggle-arrow">▼</span> <span id="debug-toggle" style="float:right;cursor:pointer;color:#0f0;">⚡</span></h3>
+        <h3>Physics <span id="toggle-controls" class="toggle-arrow">▼</span></h3>
         <div id="controls-content">
         <label><span>Friction: <span id="friction-val">0.01</span></span><input type="range" id="friction" min="0.001" max="0.5" step="0.001" value="0.01"></label>
         <label><span>Curl: <span id="curl-val">0.05</span></span><input type="range" id="curl" min="0" max="1" step="0.01" value="0.05"></label>
@@ -22,7 +22,6 @@
         <div class="debug-section">
             <button id="add-money-btn">+$100</button>
             <button id="add-life-btn">+Life</button>
-            <button id="re-init-powerups" style="display:none;">Regen</button>
         </div>
         </div>
     </div>
@@ -36,7 +35,9 @@
             </div>
         </section>
 
-        <!-- OFFER -->
+        <section class="spacer-xl"></section>
+
+        <!-- OFFER 1 -->
         <section class="victim-full">
             <img src="assets/victim1.jpg" alt="">
             <div class="victim-text">
@@ -46,14 +47,21 @@
             </div>
         </section>
 
-        <section class="spacer"></section>
+        <section class="spacer-xl"></section>
 
         <section class="proverb">
             <p>"Man ska inte måla kycklingen blå innan den har dansat."</p>
         </section>
 
-        <section class="spacer"></section>
+        <section class="spacer-xl"></section>
 
+        <section class="proverb dark">
+            <p>"Även en stannad klocka har rätt två gånger om dagen."</p>
+        </section>
+
+        <section class="spacer-xl"></section>
+
+        <!-- OFFER 2 -->
         <section class="victim-full">
             <img src="assets/victim2.jpg" alt="">
             <div class="victim-text">
@@ -63,7 +71,13 @@
             </div>
         </section>
 
-        <section class="spacer"></section>
+        <section class="spacer-xl"></section>
+
+        <section class="proverb">
+            <p>"Alla hattar, ingen boskap, men mycket sås."</p>
+        </section>
+
+        <section class="spacer-xl"></section>
 
         <!-- ENKAN BIL -->
         <section class="image-full">
@@ -74,14 +88,15 @@
             </div>
         </section>
 
-        <section class="spacer"></section>
+        <section class="spacer-xl"></section>
 
-        <section class="proverb">
-            <p>"Även en stannad klocka har rätt två gånger om dagen."</p>
+        <section class="proverb dark">
+            <p>"Sadeln skaver bara om hästen är död."</p>
         </section>
 
-        <section class="spacer"></section>
+        <section class="spacer-xl"></section>
 
+        <!-- OFFER 3 -->
         <section class="victim-full">
             <img src="assets/victim3.jpg" alt="">
             <div class="victim-text">
@@ -91,7 +106,13 @@
             </div>
         </section>
 
-        <section class="spacer"></section>
+        <section class="spacer-xl"></section>
+
+        <section class="proverb">
+            <p>"Ät inte gul snö om du inte har bråttom."</p>
+        </section>
+
+        <section class="spacer-xl"></section>
 
         <!-- ENKAN NORRLAND -->
         <section class="image-full">
@@ -102,14 +123,21 @@
             </div>
         </section>
 
-        <section class="spacer"></section>
+        <section class="spacer-xl"></section>
 
         <section class="text-block">
             <p>Enligt årsredovisningen (bilaga fyra, punkt två) som jag påbörjade i ett tillstånd av elektrolytrubbning har vi implementerat (men ej genomfört) kvalitetssäkringen av curlingstenens nervbanor.</p>
         </section>
 
-        <section class="spacer"></section>
+        <section class="spacer-xl"></section>
 
+        <section class="proverb dark">
+            <p>"Ropa inte hej förrän du är över bäcken med yxan i foten."</p>
+        </section>
+
+        <section class="spacer-xl"></section>
+
+        <!-- OFFER 4 -->
         <section class="victim-full">
             <img src="assets/victim4.jpg" alt="">
             <div class="victim-text">
@@ -119,13 +147,19 @@
             </div>
         </section>
 
-        <section class="spacer"></section>
+        <section class="spacer-xl"></section>
 
-        <section class="proverb dark">
-            <p>"Alla hattar, ingen boskap, men mycket sås."</p>
+        <section class="proverb">
+            <p>"Man kan inte göra omelett utan att knäcka ägg."</p>
         </section>
 
-        <section class="spacer"></section>
+        <section class="spacer-xl"></section>
+
+        <section class="proverb dark">
+            <p>"Grannen har alltid grönsakslandet närmast staketet."</p>
+        </section>
+
+        <section class="spacer-xl"></section>
 
         <!-- ENKAN BETTAN -->
         <section class="image-full">
@@ -136,8 +170,15 @@
             </div>
         </section>
 
-        <section class="spacer"></section>
+        <section class="spacer-xl"></section>
 
+        <section class="proverb">
+            <p>"Den som gräver en grop åt andra, faller ofta själv i rabatten."</p>
+        </section>
+
+        <section class="spacer-xl"></section>
+
+        <!-- OFFER 5 -->
         <section class="victim-full">
             <img src="assets/victim5.jpg" alt="">
             <div class="victim-text">
@@ -147,7 +188,7 @@
             </div>
         </section>
 
-        <section class="spacer"></section>
+        <section class="spacer-xl"></section>
 
         <!-- ISVAKTAREN -->
         <section class="image-full">
@@ -158,19 +199,22 @@
             </div>
         </section>
 
-        <section class="spacer"></section>
+        <section class="spacer-xl"></section>
 
         <section class="text-block">
-            <p>Implementera.<br>Implementera inte.<br>Slemhinneproblem i protokollet.<br>Stenen glider mot avgrunden.</p>
+            <p>Implementera.</p>
+            <p>Implementera inte.</p>
+            <p>Slemhinneproblem i protokollet.</p>
+            <p>Stenen glider mot avgrunden.</p>
         </section>
 
-        <section class="spacer"></section>
+        <section class="spacer-xl"></section>
 
         <section class="proverb">
-            <p>"Sadeln skaver bara om hästen är död."</p>
+            <p>"Man ska inte gråta över spilld mjölk när grannen har bränt hela ladan."</p>
         </section>
 
-        <section class="spacer"></section>
+        <section class="spacer-xl"></section>
 
         <!-- ENKAN WILDCARD -->
         <section class="image-full">
@@ -181,19 +225,19 @@
             </div>
         </section>
 
-        <section class="spacer"></section>
+        <section class="spacer-xl"></section>
 
         <section class="text-block">
             <p>Och när vi (jag och de andra, om det nu fanns andra, vilket protokollet varken bekräftar eller dementerar) stod där i korridoren (som egentligen var en sopa, eller möjligen en sten) så insåg vi att årsredovisningen redan hade skrivit sig själv.</p>
         </section>
 
-        <section class="spacer"></section>
+        <section class="spacer-xl"></section>
 
         <section class="proverb dark">
-            <p>"Ropa inte hej förrän du är över bäcken med yxan i foten."</p>
+            <p>"Kasta inte pärlor åt svinen, de kan trilla i diket."</p>
         </section>
 
-        <section class="spacer"></section>
+        <section class="spacer-xl"></section>
 
         <!-- ENKAN DM -->
         <section class="image-full">
@@ -204,18 +248,24 @@
             </div>
         </section>
 
-        <section class="spacer"></section>
+        <section class="spacer-xl"></section>
+
+        <section class="proverb">
+            <p>"Man ska inte döpa bävern innan den har simmat."</p>
+        </section>
+
+        <section class="spacer-xl"></section>
 
         <!-- LAGKLÄDER -->
         <section class="image-full">
             <img src="assets/lagklader_design.jpg" alt="">
             <div class="caption">
                 <h3>Rustningen</h3>
-                <p>Blått och vitt. Amatörföreningens färger. En uniform som står i kontrast till själen.</p>
+                <p>Blått och vitt. Amatörföreningens färger.</p>
             </div>
         </section>
 
-        <section class="spacer"></section>
+        <section class="spacer-xl"></section>
 
         <section class="image-full">
             <img src="assets/lagklader_fullbody.jpg" alt="">
@@ -225,7 +275,7 @@
             </div>
         </section>
 
-        <section class="spacer"></section>
+        <section class="spacer-xl"></section>
 
         <section class="image-full">
             <img src="assets/lagklader_helmet.jpg" alt="">
@@ -235,23 +285,30 @@
             </div>
         </section>
 
-        <section class="spacer"></section>
+        <section class="spacer-xl"></section>
 
-        <section class="proverb">
-            <p>"Ät inte gul snö om du inte har bråttom."</p>
+        <section class="proverb dark">
+            <p>"Morgonstund har guld i mun, men kvällen har silver i skägget."</p>
         </section>
 
-        <section class="spacer"></section>
+        <section class="spacer-xl"></section>
 
         <!-- MANIFEST -->
         <section class="manifest">
             <h2>MANIFEST</h2>
-            <p>Vi är inte här för att vinna. Vi är här för att visa att segern är meningslös. Att alla stenar rullar mot samma hål. Att isen alltid vinner.</p>
-            <p>Varje sten de kastar är en sten vi räknar. Varje sopa de gör är ett steg närmare avgrunden.</p>
-            <p>Fisken vakar. Isen väntar. Stenarna rullar.</p>
+            <p>Vi är inte här för att vinna.</p>
+            <p>Vi är här för att visa att segern är meningslös.</p>
+            <p>Att alla stenar rullar mot samma hål.</p>
+            <p>Att isen alltid vinner.</p>
         </section>
 
-        <section class="spacer"></section>
+        <section class="spacer-xl"></section>
+
+        <section class="proverb">
+            <p>"Bättre en fågel i handen än tio på taket som skitar ner."</p>
+        </section>
+
+        <section class="spacer-xl"></section>
 
         <!-- LYRICS -->
         <section class="lyrics">
@@ -260,35 +317,65 @@
                 
                 <div class="stanza">
                     <p>Slänga kvasten upp i luften</p>
+                </div>
+                <div class="stanza">
                     <p>Spela slagning blejsa stenen</p>
+                </div>
+                <div class="stanza">
                     <p>Jättearg och jätteledsen</p>
+                </div>
+                <div class="stanza">
                     <p>Smälla kvasten tappa modet</p>
                 </div>
 
+                <div class="spacer-m"></div>
+
                 <div class="stanza chorus">
                     <p>Rakt igenom rakt igenom</p>
+                </div>
+                <div class="stanza chorus">
                     <p>Oj den gliider</p>
+                </div>
+                <div class="stanza chorus">
                     <p>Kasta stenar in i boet men den gliider</p>
+                </div>
+                <div class="stanza chorus">
                     <p class="big">Spela curling spela curling</p>
                 </div>
 
+                <div class="spacer-m"></div>
+
                 <div class="stanza">
                     <p>Slänga kvasten upp i luften</p>
+                </div>
+                <div class="stanza">
                     <p>Spela slagning blejsa stenen</p>
+                </div>
+                <div class="stanza">
                     <p>Jättearg och jätteledsen</p>
+                </div>
+                <div class="stanza">
                     <p>Smälla kvasten tappa modet</p>
                 </div>
 
+                <div class="spacer-m"></div>
+
                 <div class="stanza chorus">
                     <p>Rakt igenom rakt igenom</p>
+                </div>
+                <div class="stanza chorus">
                     <p>Oj den gliider</p>
+                </div>
+                <div class="stanza chorus">
                     <p>Kasta stenar in i boet men den gliider</p>
+                </div>
+                <div class="stanza chorus">
                     <p class="big">Spela curling spela curling</p>
                 </div>
             </div>
         </section>
 
-        <section class="spacer"></section>
+        <section class="spacer-xl"></section>
 
         <!-- CURLING SHEET -->
         <section class="curling-sheet-section">
@@ -318,14 +405,7 @@
             </div>
         </section>
 
-        <section class="spacer"></section>
-
-        <section class="ending">
-            <p>Slutet är bara början.</p>
-            <p class="small">Skjut stenen igen.</p>
-        </section>
-
-        <section class="spacer"></section>
+        <!-- SLUTET - INGEN ENDING SEKTION -->
     </div>
 
     <div id="game-over" class="hidden">
@@ -341,49 +421,6 @@
     <div id="loop-transition">
         <div id="loop-text">Loop #1</div>
     </div>
-
-    <div id="debug-overlay" style="position:fixed;top:0;left:0;width:100%;height:100px;background:rgba(0,0,0,0.9);color:#0f0;font-family:monospace;font-size:10px;z-index:9999;overflow:auto;padding:5px;display:none;"></div>
-
-    <script>
-        // Debug overlay for mobile
-        const debugOverlay = document.getElementById('debug-overlay');
-        const logs = [];
-        function showDebug(msg) {
-            logs.push(msg);
-            if (logs.length > 20) logs.shift();
-            debugOverlay.style.display = 'block';
-            debugOverlay.textContent = logs.join('\n');
-            debugOverlay.scrollTop = debugOverlay.scrollHeight;
-        }
-        window.onerror = function(msg, url, line) {
-            showDebug('ERR: ' + msg + ' @' + line);
-            return false;
-        };
-        window.addEventListener('unhandledrejection', function(e) {
-            showDebug('PROMISE: ' + (e.reason && e.reason.message ? e.reason.message : e.reason));
-        });
-        const origLog = console.log;
-        const origErr = console.error;
-        console.log = function(...args) {
-            showDebug('LOG: ' + args.join(' '));
-            origLog.apply(console, args);
-        };
-        console.error = function(...args) {
-            showDebug('ERR: ' + args.join(' '));
-            origErr.apply(console, args);
-        };
-        
-        // Debug toggle button
-        document.addEventListener('DOMContentLoaded', function() {
-            const debugToggle = document.getElementById('debug-toggle');
-            if (debugToggle) {
-                debugToggle.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    debugOverlay.style.display = debugOverlay.style.display === 'none' ? 'block' : 'none';
-                });
-            }
-        });
-    </script>
 
     <script type="module" src="scripts/game.js"></script>
 </body>
