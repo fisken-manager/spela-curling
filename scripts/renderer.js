@@ -221,15 +221,9 @@ drawSweepZone(state) {
         
         const playArea = state.getPlayArea();
         
-        // Sweep zone positioned ahead of stone (higher on screen = smaller Y)
-        const zoneHeightPx = state.screenHeight * 0.2;
-        const zoneYPx = state.stoneYPx - state.screenHeight * 0.15;
-        
-        if (zoneYPx < 0 || zoneYPx > state.screenHeight) return;
-        
         const alpha = state.isSweeping ? 0.3 : 0.1;
         this.ctx.fillStyle = `rgba(66, 153, 225, ${alpha})`;
-        this.ctx.fillRect(playArea.left, zoneYPx, playArea.width, zoneHeightPx);
+        this.ctx.fillRect(playArea.left, 0, playArea.width, state.screenHeight);
     }
 
 drawPowerUps(state) {
@@ -1146,7 +1140,7 @@ drawScoreText(state) {
             this.ctx.shadowOffsetY = 2;
         }
         
-        this.ctx.fillText(`Score: ${Math.floor(currentScore)}`, centerX, baseY);
+        this.ctx.fillText(`Score: ${state.formatScore(currentScore)}`, centerX, baseY);
         
         this.ctx.restore();
         
@@ -1247,7 +1241,7 @@ drawScoreText(state) {
             overlay.classList.remove('hidden');
             const finalScoreEl = document.querySelector('.final-score');
             const moneyEl = document.querySelector('.game-over-money');
-            if (finalScoreEl) finalScoreEl.textContent = Math.floor(state.score);
+            if (finalScoreEl) finalScoreEl.textContent = state.formatScore(state.score);
             if (moneyEl) moneyEl.textContent = `$${state.money}`;
         }
 

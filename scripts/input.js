@@ -198,7 +198,7 @@ bindEvents() {
         const stoneY = this.state.stoneVisualY;
         const sweepZoneTop = stoneY - 0.15;
         const pointerYRatio = pointerY / this.state.screenHeight;
-        const inSweepZone = pointerYRatio < sweepZoneTop && pointerYRatio > 0;
+        const inSweepZone = true; // Whole screen sweep area
         
         if (inSweepZone && totalMovement > this.sweepThreshold) {
             this.state.isSweeping = true;
