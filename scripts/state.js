@@ -148,6 +148,7 @@ export class GameState {
             radius: 30,
             speedBoost: 30,
             frictionMultiplier: 0.03,
+            maxVelocityMultiplier: 1.5,
             duration: 5,
             positions: [
                 { scrollProgress: 0.50, x: 0 },
@@ -409,7 +410,10 @@ this.lifePowerUps = this.generateItems('life', 200, life, 100);
         
         // Apply coinSpeedBoost tier 2: 2x spawn rate
         const coinBoostTier2 = this.upgrades.coinSpeedBoost?.level >= 2;
-        const segmentSize = coinBoostTier2 ? 500 : 1000; // 2x more spawn points
+        const segmentSize = coinBoostTier2 ? 167 : 333; // 3x baseline, 2x with tier 2
+        
+        // Scale offsets to segment size so coins distribute evenly
+        const progressOffsetScale = segmentSize / maxScroll;
         
         const startOffset = 800;
         const numSegments = Math.floor((maxScroll - startOffset) / segmentSize);
@@ -437,10 +441,10 @@ this.lifePowerUps = this.generateItems('life', 200, life, 100);
             const countRange = { min: 3, max: 5 };
             const count = countRange.min + Math.floor(random(groupSeed + 1) * (countRange.max - countRange.min + 1));
             
-            const progressOffset = random(groupSeed + 2) * 0.3;
+            const progressOffset = random(groupSeed + 2) * 3 * progressOffsetScale;
             const orbProgress = baseProgress + progressOffset;
             
-            if (orbProgress <= 1) {
+            if (orbProgress <= 1 && random(groupSeed + 4) < 0.2) {
                 const centerX = (random(groupSeed + 3) - 0.5) * 320;
                 
                 const orbs = this.generatePatternOrbs(pattern, count, centerX, orbProgress);
@@ -456,11 +460,11 @@ this.lifePowerUps = this.generateItems('life', 200, life, 100);
             }
             
             // 0-1 purple per segment
-            const numPurples = Math.floor(random(seed + 500) * 2);
+            const numPurples = random(seed + 499) < 0.2 ? Math.floor(random(seed + 500) * 2) : 0;
             
             for (let p = 0; p < numPurples; p++) {
                 const purpleSeed = seed + 1000 + p * 50;
-                const progressOffset = 0.1 + random(purpleSeed) * 0.3 + p * 0.25;
+                const progressOffset = progressOffsetScale + random(purpleSeed) * 3 * progressOffsetScale + p * 2.5 * progressOffsetScale;
                 const orbProgress = baseProgress + progressOffset;
                 
                 if (orbProgress > 1) continue;
@@ -477,10 +481,10 @@ this.lifePowerUps = this.generateItems('life', 200, life, 100);
             }
             
             // Yellow orbs at wall edges (80% chance per segment)
-            if (random(seed + 2000) < 0.8) {
+            if (random(seed + 2000) < (0.8 / 3)) {
                 const yellowSeed = seed + 3000;
-                const progressOffset = random(yellowSeed) * 0.5;
-                const orbProgress = baseProgress + progressOffset;
+const progressOffset = random(yellowSeed) * 5 * progressOffsetScale;
+            const orbProgress = baseProgress + progressOffset;
                 
                 if (orbProgress <= 1) {
                     const wallOffset = 180;
@@ -568,6 +572,12 @@ this.lifePowerUps = this.generateItems('life', 200, life, 100);
         this.sweepBoost = null;
     }
     
+    formatScore(score) {
+        if (score < 100000) return Math.floor(score).toLocaleString();
+        const parts = score.toExponential(3).split('e+');
+        return `${parts[0]}e${parts[1]}`;
+    }
+
     resetGame() {
         this.lives = 1;
         this.frictionBoost = null;

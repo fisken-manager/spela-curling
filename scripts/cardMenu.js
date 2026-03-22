@@ -135,7 +135,8 @@ export class CardMenu {
             
             // Respawn yellow orbs with 2x frequency (smaller segments)
             const maxScroll = Math.max(1, this.state.pageHeight - this.state.screenHeight);
-            const segmentSize = 500; // 2x more frequent than original 1000
+            const segmentSize = 167; // 2x more frequent than new baseline 333
+            const progressOffsetScale = segmentSize / maxScroll;
             const startOffset = 800;
             let orbId = this.state.scoringOrbs.length;
             
@@ -148,9 +149,9 @@ export class CardMenu {
                 const seed = Math.floor(this.state.pageHeight + i * 500 + (this.state.loopCount || 1) * 100000);
                 const random = (s) => { const x = Math.sin(s) * 10000; return x - Math.floor(x); };
                 
-                if (random(seed + 2000) < 0.8) {
+                if (random(seed + 2000) < (0.8 / 3)) {
                     const yellowSeed = seed + 3000;
-                    const progressOffset = random(yellowSeed) * 0.5;
+                    const progressOffset = random(yellowSeed) * 5 * progressOffsetScale;
                     const orbProgress = baseProgress + progressOffset;
                     
                     if (orbProgress <= 1) {
