@@ -1,7 +1,7 @@
 export class Physics {
     constructor() {
         this.physicsTick = 0.001;
-        this.baseMaxVelocity = 12;
+        this.baseMaxVelocity = 18;
         this.wallBounceEnergy = 0.8;
         this.sweepBoost = 1.5;
         this.stopThreshold = 0.1;
@@ -20,6 +20,11 @@ export class Physics {
         if (state.frictionBoost && state.frictionBoost.maxVelocityMultiplier) {
             maxVel *= state.frictionBoost.maxVelocityMultiplier;
         }
+        
+        const loopCount = state.loopCount || 1;
+        const halvingFactor = Math.pow(0.5, Math.floor(loopCount / 5));
+        maxVel *= halvingFactor;
+
         return maxVel;
     }
 
@@ -487,7 +492,8 @@ checkPowerUps(state, effectiveRadius) {
         
         state.lastOrbTime = now;
         
-        const basePoints = config.points;
+        const loopMultiplier = state.loopCount || 1;
+        const basePoints = config.points * loopMultiplier;
         const multipliedPoints = basePoints * state.comboMultiplier;
         state.score += multipliedPoints;
         state.recentScore += multipliedPoints;
