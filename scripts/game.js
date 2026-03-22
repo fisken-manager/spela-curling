@@ -139,7 +139,7 @@ function checkGameOver(state, overlay, scoreEl, moneyEl) {
 
     if (state.gameOver) {
         overlay.classList.remove('hidden');
-        scoreEl.textContent = Math.floor(state.score);
+        scoreEl.textContent = state.formatScore(state.score);
         moneyEl.textContent = `$${state.money}`;
     }
 
