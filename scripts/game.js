@@ -180,6 +180,25 @@ async function init() {
         'assets/song_5.mp3'
     ]);
     
+    window.addEventListener('blur', () => {
+        state.isPaused = true;
+        if (audio && audio.isPlaying) {
+            audio.stop();
+        }
+        if (state.input && state.input.isDragging) {
+            state.phase = 'resting';
+            state.input.isDragging = false;
+            state.input.isSnapping = true;
+            state.input.snapBackProgress = 0;
+            state.aimAngle = 0;
+        }
+    });
+
+    window.addEventListener('focus', () => {
+        state.isPaused = false;
+        lastTime = performance.now(); // prevent huge deltaTime
+    });
+
     console.log('All systems ready');
     requestAnimationFrame(gameLoop);
 }
@@ -189,6 +208,17 @@ function gameLoop(timestamp) {
     lastTime = timestamp;
     
     if (!renderer || !scrollController) {
+        requestAnimationFrame(gameLoop);
+        return;
+    }
+    
+    if (state.isPaused) {
+        if (state.showBuyMenu) {
+            const ctx = renderer.ctx;
+            cardMenu.render(ctx, state.screenWidth, state.screenHeight);
+        } else {
+            renderer.render(state, 0);
+        }
         requestAnimationFrame(gameLoop);
         return;
     }

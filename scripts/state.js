@@ -7,6 +7,7 @@ export const GamePhase = {
 
 export class GameState {
     constructor() {
+        this.isPaused = false;
         this.phase = GamePhase.RESTING;
         
         // Stone state
