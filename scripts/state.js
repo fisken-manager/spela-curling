@@ -27,16 +27,13 @@ export class GameState {
         this.stoneYPx = 0;         // Kommer beräknas
         this.centerXYPx = 0;       
         
-        // World Y offset compensation (tracks scroll position)
-        this.worldYOffset = 0;
-        
         // Input state for flick throw
         this.input = {
             isDragging: false,
             dragStartX: 0,
-            dragStartY: 0,
+            dragStartYPx: 0,
             stoneStartX: 0,
-            stoneStartY: 0,
+            stoneStartYPx: 0,
             flickHistory: [], 
             snapBackProgress: 0, 
             isSnapping: false
@@ -73,28 +70,7 @@ export class GameState {
             radius: 25,
             speedBoost: 15,
             frictionMultiplier: 0.03,
-            boostDuration: 2.5,
-            positions: [
-                { scrollProgress: 0.03, x: -80 },
-                { scrollProgress: 0.08, x: 70 },
-                { scrollProgress: 0.13, x: 0 },
-                { scrollProgress: 0.18, x: -50 },
-                { scrollProgress: 0.23, x: 60 },
-                { scrollProgress: 0.28, x: -70 },
-                { scrollProgress: 0.33, x: 40 },
-                { scrollProgress: 0.38, x: 0 },
-                { scrollProgress: 0.43, x: 50 },
-                { scrollProgress: 0.48, x: -60 },
-                { scrollProgress: 0.53, x: 0 },
-                { scrollProgress: 0.58, x: 70 },
-                { scrollProgress: 0.63, x: -40 },
-                { scrollProgress: 0.68, x: 0 },
-                { scrollProgress: 0.73, x: 55 },
-                { scrollProgress: 0.78, x: -50 },
-                { scrollProgress: 0.83, x: 0 },
-                { scrollProgress: 0.88, x: 60 },
-                { scrollProgress: 0.93, x: -70 },
-            ]
+            boostDuration: 2.5
         };
         this.powerUps = [];
         this.frictionBoost = null;
@@ -103,27 +79,14 @@ export class GameState {
         this.lives = 1;
         this.lifePowerUps = [];
         this.lifePowerUpConfig = {
-            radius: 25,
-            positions: [
-                { scrollProgress: 0.10, x: 0 },
-                { scrollProgress: 0.35, x: 0 },
-                { scrollProgress: 0.60, x: 0 },
-                { scrollProgress: 0.85, x: 0 },
-            ]
+            radius: 25
         };
         
         // Sweep power-ups
         this.sweepPowerUps = [];
         this.sweepPowerUpConfig = {
             radius: 25,
-            duration: 5,
-            positions: [
-                { scrollProgress: 0.05, x: -60 },
-                { scrollProgress: 0.25, x: 50 },
-                { scrollProgress: 0.45, x: 0 },
-                { scrollProgress: 0.65, x: -50 },
-                { scrollProgress: 0.85, x: 40 },
-            ]
+            duration: 5
         };
         this.sweepBoost = null;
         
@@ -132,16 +95,8 @@ export class GameState {
         this.rotationPowerUpConfig = {
             radius: 25,
             minAngularVelocity: 3,
-            maxAngularVelocity: 10,
-            positions: [
-                { scrollProgress: 0.15, x: 40 },
-                { scrollProgress: 0.40, x: -30 },
-                { scrollProgress: 0.70, x: 50 },
-                { scrollProgress: 0.90, x: -40 },
-            ]
+            maxAngularVelocity: 10
         };
-        this.powerUps = [];
-        this.frictionBoost = null;
         
         // Super boost power-up
         this.superBoostPowerUps = [];
@@ -150,10 +105,7 @@ export class GameState {
             speedBoost: 30,
             frictionMultiplier: 0.03,
             maxVelocityMultiplier: 1.5,
-            duration: 5,
-            positions: [
-                { scrollProgress: 0.50, x: 0 },
-            ]
+            duration: 5
         };
         this.superBoostCollected = null;
         this.superBoostImageEffect = null;
@@ -203,38 +155,19 @@ export class GameState {
         this.growthPowerUpConfig = {
             radius: 25,
             duration: 5,
-            growthMultiplier: 1.3,
-            positions: [
-                { scrollProgress: 0.30, x: 0 },
-                { scrollProgress: 0.55, x: -50 },
-                { scrollProgress: 0.75, x: 50 },
-            ]
+            growthMultiplier: 1.3
         };
         this.growthBoost = null;
 
         // Powerdown pickups
         this.curlChaosPickups = [];
         this.curlChaosConfig = {
-            radius: 25,
-            positions: [
-                { scrollProgress: 0.12, x: 30 },
-                { scrollProgress: 0.32, x: -40 },
-                { scrollProgress: 0.52, x: 45 },
-                { scrollProgress: 0.72, x: -35 },
-                { scrollProgress: 0.92, x: 25 },
-            ]
+            radius: 25
         };
 
         this.sizeShrinkPickups = [];
         this.sizeShrinkConfig = {
-            radius: 25,
-            positions: [
-                { scrollProgress: 0.18, x: -45 },
-                { scrollProgress: 0.38, x: 55 },
-                { scrollProgress: 0.58, x: -30 },
-                { scrollProgress: 0.78, x: 40 },
-                { scrollProgress: 0.98, x: -20 },
-            ]
+            radius: 25
         };
     }
     
@@ -604,9 +537,6 @@ const progressOffset = random(yellowSeed) * 5 * progressOffsetScale;
             this.upgrades[key].level = 0;
         }
 
-        // Reset life cost
-        this.lifeCost = 10;
-
         // Reset powerdown effects
         this.curlChaosStrength = 0;
         this.sizeShrinkPenalty = 0;
@@ -619,7 +549,7 @@ const progressOffset = random(yellowSeed) * 5 * progressOffsetScale;
         this.stone.angularVelocity = 0;
         this.stone.rotation = 0;
         this.scrollProgress = 0;
-        this.input = { isDragging: false, dragStartX: 0, dragStartY: 0, stoneStartX: 0, stoneStartY: 0, flickHistory: [], snapBackProgress: 0, isSnapping: false };
+        this.input = { isDragging: false, dragStartX: 0, dragStartYPx: 0, stoneStartX: 0, stoneStartYPx: 0, flickHistory: [], snapBackProgress: 0, isSnapping: false };
         this.stoneYPx = this.screenHeight - this.restOffsetPx;
         this.transitionProgress = 0;
         this.inScrollZone = false;

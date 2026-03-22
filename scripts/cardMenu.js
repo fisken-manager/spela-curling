@@ -4,7 +4,6 @@ export class CardMenu {
         this.cards = this.initializeCards();
         this.images = {};
         this.selectedCardId = null;
-        this.clickAreas = [];
         this.cardBounds = [];
         this.buyButtonBounds = null;
         this.continueButtonBounds = null;
@@ -15,8 +14,6 @@ export class CardMenu {
             selectAnimation: null,
             purchasedCardId: null
         };
-        this.scrollOffset = 0;
-        this.collectionScrollOffset = 0;
     }
 
     initializeCards() {
@@ -353,7 +350,6 @@ export class CardMenu {
     }
 
     render(ctx, screenWidth, screenHeight) {
-        this.clickAreas = [];
         this.buyButtonBounds = null;
         this.continueButtonBounds = null;
 

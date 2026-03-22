@@ -162,7 +162,7 @@ async function init() {
     cardMenu = new CardMenu(state);
     input = new InputHandler(canvas, state, physics, audio);
     input.setCardMenu(cardMenu);
-    scrollController = new ScrollController(state, audio);
+    scrollController = new ScrollController(state, audio, physics);
     setupControls();
     setupGameOverUI();
 

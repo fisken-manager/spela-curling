@@ -123,11 +123,6 @@ drawRingFlash(state) {
         }
     }
 
-    resize(width, height) {
-        this.canvas.width = width;
-        this.canvas.height = height;
-    }
-
     clear() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
@@ -212,13 +207,9 @@ drawRingFlash(state) {
         this.ctx.restore();
     }
 
-    drawAimLine(state) {
-    }
-
 drawSweepZone(state) {
-        if (state.phase !== 'moving' && state.phase !== 'returning') return;
-        if (!state.sweepBoost || state.sweepBoost.timer <= 0) return;
-        
+    if (state.phase !== 'moving' && state.phase !== 'returning') return;
+    if (!state.sweepBoost || state.sweepBoost.timer <= 0) return;        
         const playArea = state.getPlayArea();
         
         const alpha = state.isSweeping ? 0.3 : 0.1;
@@ -227,7 +218,7 @@ drawSweepZone(state) {
     }
 
 drawPowerUps(state) {
-        if (state.phase !== 'moving' && state.phase !== 'returning') return;
+        // Removed phase check to show pickups during rest/launch
         
         const playArea = state.getPlayArea();
         const config = state.powerUpConfig;
@@ -321,7 +312,7 @@ addPowerUpParticles(state, powerUp) {
     }
 
     drawLifePowerUps(state) {
-        if (state.phase !== 'moving' && state.phase !== 'returning') return;
+        // Removed phase check to show pickups during rest/launch
         
         const playArea = state.getPlayArea();
         const config = state.lifePowerUpConfig;
@@ -391,7 +382,7 @@ addPowerUpParticles(state, powerUp) {
     }
 
     drawSweepPowerUps(state) {
-        if (state.phase !== 'moving' && state.phase !== 'returning') return;
+        // Removed phase check to show pickups during rest/launch
         
         const playArea = state.getPlayArea();
         const config = state.sweepPowerUpConfig;
@@ -509,7 +500,7 @@ addPowerUpParticles(state, powerUp) {
     }
 
     drawRotationPowerUps(state) {
-        if (state.phase !== 'moving' && state.phase !== 'returning') return;
+        // Removed phase check to show pickups during rest/launch
         
         const playArea = state.getPlayArea();
         const config = state.rotationPowerUpConfig;
@@ -584,7 +575,7 @@ addPowerUpParticles(state, powerUp) {
     }
 
     drawSuperBoostPowerUps(state) {
-        if (state.phase !== 'moving' && state.phase !== 'returning') return;
+        // Removed phase check to show pickups during rest/launch
 
         const playArea = state.getPlayArea();
         const config = state.superBoostPowerUpConfig;
@@ -654,7 +645,7 @@ addPowerUpParticles(state, powerUp) {
     }
 
     drawGrowthPowerUps(state) {
-        if (state.phase !== 'moving' && state.phase !== 'returning') return;
+        // Removed phase check to show pickups during rest/launch
         
         const playArea = state.getPlayArea();
         const config = state.growthPowerUpConfig;
@@ -724,7 +715,7 @@ addPowerUpParticles(state, powerUp) {
     }
 
     drawCurlChaosPickups(state) {
-        if (state.phase !== 'moving' && state.phase !== 'returning') return;
+        // Removed phase check to show pickups during rest/launch
         
         const playArea = state.getPlayArea();
         const config = state.curlChaosConfig;
@@ -794,7 +785,7 @@ addPowerUpParticles(state, powerUp) {
     }
 
     drawSizeShrinkPickups(state) {
-        if (state.phase !== 'moving' && state.phase !== 'returning') return;
+        // Removed phase check to show pickups during rest/launch
         
         const playArea = state.getPlayArea();
         const config = state.sizeShrinkConfig;
@@ -864,7 +855,7 @@ addPowerUpParticles(state, powerUp) {
     }
 
     drawScoringOrbs(state) {
-        if (state.phase !== 'moving' && state.phase !== 'returning') return;
+        // Removed phase check to show pickups during rest/launch
         if (!state.scoringOrbs || state.scoringOrbs.length === 0) return;
         
         const playArea = state.getPlayArea();
