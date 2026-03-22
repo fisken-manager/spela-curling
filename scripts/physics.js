@@ -1,7 +1,7 @@
 export class Physics {
     constructor() {
         this.physicsTick = 0.001;
-        this.baseMaxVelocity = 25;
+        this.baseMaxVelocity = 12;
         this.wallBounceEnergy = 0.8;
         this.sweepBoost = 1.5;
         this.stopThreshold = 0.1;
@@ -15,8 +15,12 @@ export class Physics {
     }
 
     getMaxVelocity(state) {
-        const bonus = state.upgrades.maxVelocity.level * 5;
-        return this.baseMaxVelocity + bonus;
+        const bonusMultiplier = 1 + (state.upgrades.maxVelocity.level * 0.15);
+        let maxVel = this.baseMaxVelocity * bonusMultiplier;
+        if (state.frictionBoost && state.frictionBoost.maxVelocityMultiplier) {
+            maxVel *= state.frictionBoost.maxVelocityMultiplier;
+        }
+        return maxVel;
     }
 
     getEffectiveFriction(state) {
@@ -64,23 +68,12 @@ export class Physics {
         this.updateFrictionBoost(state, deltaTime);
         this.updateSweepBoost(state, deltaTime);
         this.updateGrowthBoost(state, deltaTime);
-        this.updateCoinSpeedBoost(state, deltaTime);
 
         const steps = Math.ceil(deltaTime / this.physicsTick);
         const dt = deltaTime / steps;
 
         for (let i = 0; i < steps; i++) {
             this.physicsStep(state, dt);
-        }
-    }
-
-    updateCoinSpeedBoost(state, deltaTime) {
-        if (!state.coinSpeedBoostActive) return;
-        
-        state.coinSpeedBoostTimer -= deltaTime;
-        if (state.coinSpeedBoostTimer <= 0) {
-            state.coinSpeedBoostActive = false;
-            state.coinSpeedBoostTimer = 0;
         }
     }
 
@@ -153,11 +146,6 @@ export class Physics {
         const damping = state.frictionBoost ? 0.9999 : 0.9997;
         stone.vx *= damping;
         stone.vy *= damping;
-        
-        // Coin speed boost
-        if (state.coinSpeedBoostActive) {
-            stone.vy *= 1.001;
-        }
         
         const effectiveRadius = this.getEffectiveRadius(state);
         stone.x += stone.vx * dt * 60;
@@ -297,6 +285,12 @@ checkPowerUps(state, effectiveRadius) {
             if (dy < collisionDistance && dx < collisionDistance) {
                 superBoostPowerUp.collected = true;
                 
+                state.frictionBoost = {
+                    frictionMultiplier: config.frictionMultiplier,
+                    maxVelocityMultiplier: config.maxVelocityMultiplier || 1.5,
+                    timer: config.duration
+                };
+
                 const speed = Math.sqrt(stone.vx ** 2 + stone.vy ** 2);
                 const maxVel = this.getMaxVelocity(state);
                 if (speed > 0.001) {
@@ -311,11 +305,6 @@ checkPowerUps(state, effectiveRadius) {
                         stone.vy *= scale;
                     }
                 }
-
-                state.frictionBoost = {
-                    frictionMultiplier: config.frictionMultiplier,
-                    timer: config.duration
-                };
 
                 state.superBoostCollected = superBoostPowerUp;
                 state.superBoostImageEffect = {
@@ -449,9 +438,22 @@ checkPowerUps(state, effectiveRadius) {
             state.money += config.money || 1;
             
             // Coin speed boost upgrade
-            if (state.upgrades.coinSpeedBoost?.level > 0 && !state.coinSpeedBoostActive) {
-                state.coinSpeedBoostActive = true;
-                state.coinSpeedBoostTimer = 3; // 3 seconds
+            if (state.upgrades.coinSpeedBoost?.level > 0) {
+                const { stone } = state;
+                const speed = Math.sqrt(stone.vx ** 2 + stone.vy ** 2);
+                const maxVel = this.getMaxVelocity(state);
+                if (speed > 0.001) {
+                    const boost = state.powerUpConfig.speedBoost * 0.5; // Half the power of a regular arrow
+                    stone.vx += (stone.vx / speed) * boost;
+                    stone.vy += (stone.vy / speed) * boost;
+                    
+                    const newSpeed = Math.sqrt(stone.vx ** 2 + stone.vy ** 2);
+                    if (newSpeed > maxVel) {
+                        const scale = maxVel / newSpeed;
+                        stone.vx *= scale;
+                        stone.vy *= scale;
+                    }
+                }
             }
             
             const playArea = state.getPlayArea();
@@ -534,7 +536,8 @@ checkPowerUps(state, effectiveRadius) {
         
         state.frictionBoost = {
             frictionMultiplier: config.frictionMultiplier,
-            timer: config.boostDuration
+            timer: Math.max(state.frictionBoost?.timer || 0, config.boostDuration),
+            maxVelocityMultiplier: state.frictionBoost?.maxVelocityMultiplier
         };
         
         state.powerUpCollected = powerUp;
@@ -704,10 +707,5 @@ checkPowerUps(state, effectiveRadius) {
                 stone.vy = (stone.vy / newSpeed) * maxVel;
             }
         }
-    }
-
-    getMaxVelocity(state) {
-        const bonus = state.upgrades.maxVelocity.level * 5;
-        return this.baseMaxVelocity + bonus;
     }
 }
