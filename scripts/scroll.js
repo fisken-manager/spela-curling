@@ -48,7 +48,7 @@ export class ScrollController {
             : 0;
         
         // Calculate playback rate: 0.25x when slow, up to 2x when fast
-        const maxVelocity = 25;
+        const maxVelocity = 12;
         const rate = Math.max(0.25, Math.min(2, velocity / maxVelocity+ 0.25));
         
         if (isMoving) {
