@@ -7,7 +7,6 @@ export class AudioController {
         this.currentPosition = 0;
         this.playbackRate = 1;
         this.lastStartTime = 0;
-        this.maxVelocity = 12;
         this.playlist = [];
         this.currentIndex = 0;
         this.audioBuffers = [];
@@ -102,8 +101,5 @@ export class AudioController {
         if (this.sourceNode) {
             this.sourceNode.playbackRate.value = rate;
         }
-    }
-
-    playReverse() {
     }
 }

@@ -1,7 +1,8 @@
 export class ScrollController {
-    constructor(state, audioController) {
+    constructor(state, audioController, physics) {
         this.state = state;
         this.audio = audioController;
+        this.physics = physics;
         this.contentElement = document.getElementById('content');
         this.lastProgress = 0;
         this.initialScrollOffset = 0.02;
@@ -48,7 +49,7 @@ export class ScrollController {
             : 0;
         
         // Calculate playback rate: 0.25x when slow, up to 2x when fast
-        const maxVelocity = 12;
+        const maxVelocity = this.physics.baseMaxVelocity;
         const rate = Math.max(0.25, Math.min(2, velocity / maxVelocity+ 0.25));
         
         if (isMoving) {
@@ -72,9 +73,5 @@ export class ScrollController {
                 this.audio.setPosition(state.scrollProgress);
             }
         }
-    }
-
-    getTotalHeight() {
-        return this.state.pageHeight;
     }
 }
