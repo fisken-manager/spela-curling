@@ -47,9 +47,10 @@ export class GameState {
         // Transition progress (0-1: 0=at rest, 1=reached center)
         this.transitionProgress = 0;
         this.inScrollZone = false;  
-        
-        // Screen dimensions
-        this.screenWidth = window.innerWidth;
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        this.isDevMode = isLocalhost && new URLSearchParams(window.location.search).get('dev') === 'true';
+
+        // Screen dimensions        this.screenWidth = window.innerWidth;
         this.screenHeight = window.innerHeight;
         
         // Play area (constrained width, centered)
@@ -324,8 +325,13 @@ this.lifePowerUps = this.generateItems('life', 200, life, 100);
         this.rotationPowerUps = this.generateItems('rotation', 400, rotation, 400);
         this.superBoostPowerUps = [];
         this.growthPowerUps = this.generateItems('growth', 600, growth, 100);
-        this.curlChaosPickups = this.generateItems('curlChaos', 700, curlChaos, 90);
-        this.sizeShrinkPickups = this.generateItems('sizeShrink', 800, sizeShrink, 110);
+        if (this.upgrades.noNegativePickups?.level > 0) {
+            this.curlChaosPickups = [];
+            this.sizeShrinkPickups = [];
+        } else {
+            this.curlChaosPickups = this.generateItems('curlChaos', 700, curlChaos, 90);
+            this.sizeShrinkPickups = this.generateItems('sizeShrink', 800, sizeShrink, 110);
+        }
         
         // Apply coinSpeedBoost tier 2: remove speed pickups, 2x coins
         if (this.upgrades.coinSpeedBoost?.level >= 2) {
@@ -507,7 +513,7 @@ const progressOffset = random(yellowSeed) * 5 * progressOffsetScale;
     }
     
     formatScore(score) {
-        if (score < 100000) return Math.floor(score).toLocaleString();
+        if (score < 1000000000) return Math.floor(score).toString();
         const parts = score.toExponential(3).split('e+');
         return `${parts[0]}e${parts[1]}`;
     }
@@ -552,9 +558,9 @@ const progressOffset = random(yellowSeed) * 5 * progressOffsetScale;
         this.input = { isDragging: false, dragStartX: 0, dragStartYPx: 0, stoneStartX: 0, stoneStartYPx: 0, flickHistory: [], snapBackProgress: 0, isSnapping: false };
         this.stoneYPx = this.screenHeight - this.restOffsetPx;
         this.transitionProgress = 0;
-        this.inScrollZone = false;
-    }
-
+        this.inScrollZone = false;  
+        this.isDevMode = new URLSearchParams(window.location.search).get('dev') === 'true';
+        }
     getPlayArea() {
         const width = Math.min(this.screenWidth, this.playAreaMaxWidth);
         const left = (this.screenWidth - width) / 2;

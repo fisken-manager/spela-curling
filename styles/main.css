@@ -417,6 +417,7 @@ body {
 
 /* ===== PHYSICS CONTROLS ===== */
 #physics-controls {
+    display: none;
     position: fixed;
     top: 20px;
     right: 20px;
@@ -598,6 +599,7 @@ body {
     color: #fff;
     font-size: 3rem;
     font-weight: 800;
+    text-align: center;
     opacity: 0;
     transition: opacity 0.25s ease-in-out;
 }

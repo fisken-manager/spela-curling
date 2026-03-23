@@ -20,6 +20,10 @@ let lastTime = 0;
 function setupControls() {
     const controlsPanel = document.getElementById('physics-controls');
     if (!controlsPanel) return;
+
+    if (state.isDevMode) {
+        controlsPanel.style.display = 'block';
+    }
     
     controlsPanel.addEventListener('mousedown', (e) => e.stopPropagation());
     controlsPanel.addEventListener('touchstart', (e) => e.stopPropagation());

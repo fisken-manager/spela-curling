@@ -224,20 +224,22 @@ drawPowerUps(state) {
         const config = state.powerUpConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
         
-        this.ctx.fillStyle = 'white';
-        this.ctx.font = '12px monospace';
-        this.ctx.textAlign = 'left';
-        this.ctx.fillText(`scroll: ${state.scrollProgress.toFixed(3)} pageH: ${state.pageHeight}`, 10, 20);
-        this.ctx.fillText(`worldY: ${state.stone.worldY.toFixed(0)} maxScroll: ${maxScroll}`, 10, 35);
-        this.ctx.fillText(`lives: ${state.lives}`, 10, 50);
+        if (state.isDevMode) {
+            this.ctx.fillStyle = 'white';
+            this.ctx.font = '12px monospace';
+            this.ctx.textAlign = 'left';
+            this.ctx.fillText(`scroll: ${state.scrollProgress.toFixed(3)} pageH: ${state.pageHeight}`, 10, 20);
+            this.ctx.fillText(`worldY: ${state.stone.worldY.toFixed(0)} maxScroll: ${maxScroll}`, 10, 35);
+            this.ctx.fillText(`lives: ${state.lives}`, 10, 50);
 
-        if (state.frictionBoost) {
-            this.ctx.fillStyle = 'gold';
-            this.ctx.fillText(`BOOST: ${state.frictionBoost.timer.toFixed(1)}s`, 10, 65);
-        }
-        if (state.sweepBoost) {
-            this.ctx.fillStyle = 'lime';
-            this.ctx.fillText(`SWEEP: ${state.sweepBoost.timer.toFixed(1)}s`, 10, 80);
+            if (state.frictionBoost) {
+                this.ctx.fillStyle = 'gold';
+                this.ctx.fillText(`BOOST: ${state.frictionBoost.timer.toFixed(1)}s`, 10, 65);
+            }
+            if (state.sweepBoost) {
+                this.ctx.fillStyle = 'lime';
+                this.ctx.fillText(`SWEEP: ${state.sweepBoost.timer.toFixed(1)}s`, 10, 80);
+            }
         }
         
         // Show combo if active
@@ -1214,7 +1216,7 @@ drawScoreText(state) {
         const imageWidth = 60;
         const imageHeight = 120;
         const x = stoneX - imageWidth / 2;
-        const y = effect.y - imageHeight;
+        const y = effect.y;
 
         const progress = Math.min(effect.timer / effect.duration, 1);
         const alpha = Math.sin(progress * Math.PI);
