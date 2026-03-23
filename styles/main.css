@@ -76,6 +76,35 @@ body {
     line-height: 1.7;
 }
 
+.hero-sub-container {
+    margin: 0 auto;
+    text-align: center;
+}
+
+.hero-sub-container .hero-sub {
+    margin-bottom: 0.5em;
+}
+
+.hero-sub-container .hero-sub:last-child {
+    margin-bottom: 0;
+}
+
+.snake-char {
+    transition: color 0.08s ease;
+}
+
+.snake-grey {
+    color: rgba(255,255,255,0.6);
+}
+
+.snake-fisken {
+    color: #66b3ff;
+}
+
+.snake-westenerz {
+    color: #ff99cc;
+}
+
 /* ===== VICTIM FULL ===== */
 .victim-full {
     position: relative;
@@ -556,18 +585,28 @@ body {
     transform: scale(1.05);
 }
 
-.buy-life-btn {
-    padding: 12px 30px;
+#buy-life-btn {
+    padding: 15px 40px;
     font-size: 1rem;
-    background: #fff;
-    color: #0a0a0a;
+    background: #4caf50;
+    color: #fff;
     border: none;
     cursor: pointer;
     font-weight: 600;
+    transition: transform 0.2s, background 0.2s;
+    margin-bottom: 15px;
 }
 
-.buy-life-btn:hover {
-    background: #ddd;
+#buy-life-btn:hover:not(:disabled) {
+    transform: scale(1.05);
+    background: #45a049;
+}
+
+#buy-life-btn:disabled {
+    background: #333;
+    color: #666;
+    cursor: not-allowed;
+    transform: none;
 }
 
 .buy-life-btn.hidden {
