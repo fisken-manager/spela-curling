@@ -529,15 +529,6 @@ drawBackground(ctx, width, height, time) {
         if (selectedCard) {
             this.renderArchCards(ctx, screenWidth, padding, available, selectedCard.id, time);
             this.renderSelectedCard(ctx, screenWidth, screenHeight, selectedCard, largeCardWidth, largeCardHeight, time);
-            
-            const continueY = screenHeight - 180;
-            this.continueButtonBounds = {
-                x: screenWidth / 2 - 80,
-                y: continueY,
-                width: 160,
-                height: 40
-            };
-            this.drawContinueButton(ctx, screenWidth / 2 - 80, continueY, 160, 40);
         } else {
             this.renderArchCards(ctx, screenWidth, padding, available, null, time);
 
