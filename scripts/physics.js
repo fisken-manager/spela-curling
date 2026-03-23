@@ -1,7 +1,7 @@
 export class Physics {
     constructor() {
         this.physicsTick = 0.001;
-        this.baseMaxVelocity = 22;
+        this.baseMaxVelocity = 20;
         this.wallBounceEnergy = 0.8;
         this.sweepBoost = 1.5;
         this.stopThreshold = 0.1;
@@ -22,18 +22,20 @@ export class Physics {
         }
         
         const loopCount = state.loopCount || 1;
-        const halvingFactor = Math.pow(0.5, Math.floor(loopCount / 5));
-        maxVel *= halvingFactor;
+        const velocityReductionFactor = Math.pow(0.90, Math.max(0, loopCount - 1));
+        maxVel *= velocityReductionFactor;
 
         return maxVel;
     }
 
     getEffectiveFriction(state) {
+        const loopCount = state.loopCount || 1;
+        const loopFrictionMultiplier = Math.pow(1.05, Math.max(0, loopCount - 1));
         const reduction = state.upgrades.frictionReduction.level * 0.05;
-        return this.baseFriction * (1 - reduction);
+        return this.baseFriction * (1 - reduction) * loopFrictionMultiplier;
     }
 
-    getEffectiveCurl(state) {
+    getEffectiveCurl(state, dt = 0) {
         let curl = this.baseCurlStrength;
         
         // Random curl upgrade - adds random spin every 10 seconds
@@ -41,7 +43,7 @@ export class Physics {
             const interval = 10; // seconds
             const strength = state.upgrades.randomCurl.level * 2;
             
-            state.randomCurlTimer += deltaTime || 0;
+            state.randomCurlTimer += dt;
             
             if (state.randomCurlTimer >= interval) {
                 state.randomCurlTimer = 0;
@@ -137,7 +139,7 @@ export class Physics {
         const decelY = (stone.vy / speedNorm) * frictionDecel;
         
         const forwardVelocity = stone.vy;
-        const curlStrength = this.getEffectiveCurl(state);
+        const curlStrength = this.getEffectiveCurl(state, dt);
         const curlAcceleration = curlStrength * stone.angularVelocity * Math.abs(forwardVelocity) / speedNorm;
         
         stone.vx += curlAcceleration * dt - decelX * dt;
@@ -312,7 +314,7 @@ checkPowerUps(state, effectiveRadius) {
                 state.superBoostCollected = superBoostPowerUp;
                 state.superBoostImageEffect = {
                     y: state.screenHeight,
-                    targetYPx: state.stoneYPx - 60,
+                    targetYPx: state.stoneYPx - 90,
                     timer: 0,
                     duration: 1.33,
                     peaked: false
@@ -632,7 +634,7 @@ checkPowerUps(state, effectiveRadius) {
                     const loopText = document.getElementById('loop-text');
                     
                     if (loopOverlay && loopText) {
-                        loopText.textContent = `Loop #${state.loopCount}`;
+                        loopText.innerHTML = `Loop #${state.loopCount}<br><span style="font-size: 0.5em; color: #ff5555; display: block; margin-top: 10px;">-10% max hastighet<br>+5% friktion</span>`;
                         loopOverlay.classList.add('active');
                         
                         setTimeout(() => {
