@@ -6,6 +6,7 @@ import { Renderer } from './renderer.js';
 import { ScrollController } from './scroll.js';
 import { TransitionController } from './transition.js';
 import { CardMenu } from './cardMenu.js';
+import { SnakeTextAnimation } from './snake-text.js';
 
 const audio = new AudioController();
 const state = new GameState();
@@ -15,6 +16,7 @@ let input = null;
 let renderer = null;
 let scrollController = null;
 let cardMenu = null;
+let snakeText = null;
 let lastTime = 0;
 
 function setupControls() {
@@ -123,6 +125,18 @@ function setupGameOverUI() {
         state.initScoringOrbs();
         gameOverOverlay.classList.add('hidden');
     });
+
+    if (buyLifeBtn && gameOverOverlay) buyLifeBtn.addEventListener('click', () => {
+        if (state.money >= state.lifeCost) {
+            state.money -= state.lifeCost;
+            state.lifeCost *= 2;
+            state.lives = 1;
+            state.gameOver = false;
+            state.phase = 'resting';
+            state.showBuyMenu = true;
+            gameOverOverlay.classList.add('hidden');
+        }
+    });
     
     if (renderer && gameOverOverlay && finalScoreEl && moneyEl) {
         const originalRender = renderer.render.bind(renderer);
@@ -145,13 +159,32 @@ function checkGameOver(state, overlay, scoreEl, moneyEl) {
         overlay.classList.remove('hidden');
         scoreEl.textContent = state.formatScore(state.score);
         moneyEl.textContent = `$${state.money}`;
+        
+        const buyLifeBtn = document.getElementById('buy-life-btn');
+        if (buyLifeBtn) {
+            buyLifeBtn.textContent = `Köp Liv ($${state.lifeCost})`;
+            if (state.money >= state.lifeCost) {
+                buyLifeBtn.disabled = false;
+                buyLifeBtn.classList.remove('disabled');
+            } else {
+                buyLifeBtn.disabled = true;
+                buyLifeBtn.classList.add('disabled');
+            }
+        }
     }
-
-    
 }
 
 async function init() {
     console.log('Curling Scroll initialized');
+    
+    // Start snake text animation immediately (doesn't need assets)
+    snakeText = new SnakeTextAnimation('hero-sub-snake', {
+        snakeLength: 7,
+        speed: 18
+    });
+    snakeText.init();
+    snakeText.start();
+    
     state.updateScreenDimensions();
     
     const canvas = document.getElementById('game-canvas');
@@ -201,6 +234,12 @@ async function init() {
     window.addEventListener('focus', () => {
         state.isPaused = false;
         lastTime = performance.now(); // prevent huge deltaTime
+    });
+
+    window.addEventListener('resize', () => {
+        if (snakeText) {
+            snakeText.handleResize();
+        }
     });
 
     console.log('All systems ready');

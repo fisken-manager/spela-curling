@@ -78,6 +78,7 @@ export class GameState {
         
         // Lives
         this.lives = 1;
+        this.lifeCost = 10;
         this.lifePowerUps = [];
         this.lifePowerUpConfig = {
             radius: 25
@@ -177,7 +178,6 @@ export class GameState {
         const maxScroll = Math.max(1, this.pageHeight - this.screenHeight);
         if (maxScroll <= 0 || pixelSpacing <= 0) return items;
         
-        // Start placing items after the first 800px to avoid crowding the start
         const startOffsetPx = 10;
         const availableScroll = Math.max(0, maxScroll - startOffsetPx);
         let targetCount = Math.floor(availableScroll / pixelSpacing);
@@ -520,6 +520,7 @@ const progressOffset = random(yellowSeed) * 5 * progressOffsetScale;
 
     resetGame() {
         this.lives = 1;
+        this.lifeCost = 10;
         this.frictionBoost = null;
         this.sweepBoost = null;
         this.growthBoost = null;
