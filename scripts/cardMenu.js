@@ -14,13 +14,154 @@ export class CardMenu {
             selectAnimation: null,
             purchasedCardId: null
         };
+        this.noisePattern = null;
+        this.generateNoisePattern();
+    }
+
+    hashCardId(str) {
+        let hash = 0;
+        for (let c of str) {
+            hash = ((hash << 5) - hash + c.charCodeAt(0)) | 0;
+        }
+        return Math.abs(hash) / 2147483647;
+    }
+
+    getCardFloatOffset(cardId, time, isLarge = false) {
+        const hash = this.hashCardId(cardId);
+        const phase = hash * Math.PI * 2;
+        const yFreq = 0.6 + hash * 0.4;
+        const rotFreq = 0.3 + ((hash * 13) % 7) * 0.1;
+        const amp = isLarge ? 1 : 1.5;
+        return {
+            y: Math.sin(time * yFreq + phase) * amp,
+            rotation: Math.sin(time * rotFreq + phase * 1.7) * 0.007,
+            x: Math.sin(time * 0.4 + phase * 2.3) * 0.75
+        };
+    }
+
+    generateNoisePattern() {
+        const size = 128;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        const imageData = ctx.createImageData(size, size);
+        for (let i = 0; i < imageData.data.length; i += 4) {
+            const v = Math.random() * 255;
+            imageData.data[i] = v;
+            imageData.data[i + 1] = v;
+            imageData.data[i + 2] = v;
+            imageData.data[i + 3] = 255;
+        }
+        ctx.putImageData(imageData, 0, 0);
+        this.noisePattern = canvas;
+    }
+
+    drawFilmGrain(ctx, width, height, time) {
+        if (!this.noisePattern) return;
+        ctx.save();
+        ctx.globalAlpha = 0.03;
+        ctx.globalCompositeOperation = 'overlay';
+        const offset = (time * 15) % 128;
+        const patternSize = 128;
+        for (let x = -patternSize; x < width + patternSize; x += patternSize) {
+            for (let y = -patternSize; y < height + patternSize; y += patternSize) {
+                const offsetX = x + offset;
+                const offsetY = y + offset * 0.7;
+                ctx.drawImage(this.noisePattern, offsetX, offsetY);
+            }
+        }
+        ctx.restore();
+    }
+
+drawBackground(ctx, width, height, time) {
+        const gradient = ctx.createLinearGradient(0, 0, width, height);
+        gradient.addColorStop(0, '#2a2a38');
+        gradient.addColorStop(0.2, '#353548');
+        gradient.addColorStop(0.4, '#2d2d40');
+        gradient.addColorStop(0.6, '#3a3a52');
+        gradient.addColorStop(0.8, '#28283a');
+        gradient.addColorStop(1, '#323248');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, width, height);
+
+        ctx.save();
+        ctx.globalCompositeOperation = 'soft-light';
+        
+        for (let layer = 0; layer < 3; layer++) {
+            const frequency = 0.008 + layer * 0.004;
+            const speed = 0.3 + layer * 0.15;
+            const amplitude = 40 + layer * 20;
+            const alpha = 0.08 - layer * 0.02;
+            
+            ctx.globalAlpha = alpha;
+            ctx.beginPath();
+            ctx.moveTo(0, height);
+            
+            for (let x = 0; x <= width; x += 4) {
+                const noise1 = Math.sin(x * frequency + time * speed) * amplitude;
+                const noise2 = Math.sin(x * frequency * 1.5 + time * speed * 0.7 + layer) * amplitude * 0.6;
+                const noise3 = Math.cos(x * frequency * 0.8 + time * speed * 1.3) * amplitude * 0.4;
+                const y = height * (0.6 + layer * 0.15) + noise1 + noise2 + noise3;
+                ctx.lineTo(x, y);
+            }
+            
+            ctx.lineTo(width, height);
+            ctx.closePath();
+            
+            const layerGradient = ctx.createLinearGradient(0, height * 0.3, 0, height);
+            layerGradient.addColorStop(0, `rgba(100, 100, 130, 0.5)`);
+            layerGradient.addColorStop(0.5, `rgba(80, 80, 110, 0.3)`);
+            layerGradient.addColorStop(1, `rgba(60, 60, 90, 0)`);
+            ctx.fillStyle = layerGradient;
+            ctx.fill();
+        }
+        
+        ctx.restore();
+
+        ctx.save();
+        ctx.globalCompositeOperation = 'soft-light';
+        ctx.globalAlpha = 0.12;
+        
+        for (let i = 0; i < 6; i++) {
+            const x = (Math.sin(time * 0.2 + i * 1.2) * 0.3 + 0.5) * width;
+            const y = (Math.cos(time * 0.15 + i * 0.9) * 0.3+ 0.5) * height;
+            const size = 150 + i * 40;
+            const blobSize = size + Math.sin(time * 0.4 + i) * 30;
+            
+            ctx.beginPath();
+            ctx.ellipse(x, y, blobSize, blobSize * 0.7, time * 0.1 + i, 0, Math.PI * 2);
+            const blobGradient = ctx.createRadialGradient(x, y, 0, x, y, blobSize);
+            blobGradient.addColorStop(0, i % 2 === 0 ? 'rgba(120, 120, 150, 0.6)' : 'rgba(90, 90, 125, 0.5)');
+            blobGradient.addColorStop(1, 'rgba(70, 70, 100, 0)');
+            ctx.fillStyle = blobGradient;
+            ctx.fill();
+        }
+        
+        ctx.restore();
+
+        ctx.save();
+        ctx.globalAlpha = 0.04;
+        ctx.globalCompositeOperation = 'overlay';
+        const waveOffset = time * 12;
+        for (let i = 0; i < 3; i++) {
+            const y = (height * 0.3 * i + waveOffset * (0.3 + i * 0.2)) % (height + 200) - 100;
+            const gradient = ctx.createLinearGradient(0, y - 100, 0, y + 100);
+            gradient.addColorStop(0, 'rgba(140, 140, 170, 0)');
+            gradient.addColorStop(0.5, 'rgba(160, 160, 190, 0.8)');
+            gradient.addColorStop(1, 'rgba(140, 140, 170, 0)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, y - 100, width, 200);
+        }
+        ctx.restore();
     }
 
     initializeCards() {
         return [
             {
                 id: 'maxVelocity',
-                name: 'Maxhastighet',
+                name: 'Hastig Leda',
+                proverb: 'Ät int gul snö om du inte har bråttom.',
                 tiers: [
                     { level: 1, cost: 1, effect: '+15% hastighet', image: 'waifu-speed.jpg' },
                     { level: 2, cost: 5, effect: '+30% hastighet', image: 'maxVelocity-tier2.jpg' },
@@ -31,7 +172,8 @@ export class CardMenu {
             },
             {
                 id: 'frictionReduction',
-                name: 'Minska Friktion',
+                name: 'Glatt Misär',
+                proverb: 'Även en blind matta kan flyga.',
                 tiers: [
                     { level: 1, cost: 1, effect: '-15% friktion', image: 'waifu-friction.jpg' },
                     { level: 2, cost: 5, effect: '-30% friktion', image: 'frictionReduction-tier2.jpg' },
@@ -42,7 +184,8 @@ export class CardMenu {
             },
             {
                 id: 'stoneSize',
-                name: 'Stenstorlek',
+                name: 'Tung Börda',
+                proverb: 'Bygg int en struts av sand.',
                 tiers: [
                     { level: 1, cost: 1, effect: '+25% storlek', image: 'waifu-size.jpg' },
                     { level: 2, cost: 5, effect: '+50% storlek', image: 'stoneSize-tier2.jpg' },
@@ -53,7 +196,8 @@ export class CardMenu {
             },
             {
                 id: 'randomCurl',
-                name: 'Random Curl',
+                name: 'Vilsen Skruv',
+                proverb: 'Kasta int bävern i sågverket.',
                 tiers: [
                     { level: 1, cost: 10, effect: 'Random snurr/10s', image: 'waifu-curl.jpg' },
                     { level: 2, cost: 20, effect: 'Random snurr/5s', image: 'randomCurl-tier2.jpg' },
@@ -61,14 +205,16 @@ export class CardMenu {
             },
             {
                 id: 'noNegativePickups',
-                name: 'Inga Negativa',
+                name: 'Falsk Trygghet',
+                proverb: 'Måla int kycklingen blå.',
                 tiers: [
                     { level: 1, cost: 10, effect: 'Ta bort negativa pickups', image: 'waifu-shield.jpg' },
                 ]
             },
             {
                 id: 'coinSpeedBoost',
-                name: 'Mynt Acceleration',
+                name: 'Blodspengar',
+                proverb: 'Alla hattar, ingen boskap, men mycke sås.',
                 tiers: [
                     { level: 1, cost: 10, effect: 'Mynt ger hastighetsboost', image: 'coinSpeedBoost-tier1.jpg' },
                     { level: 2, cost: 25, effect: '2x mynt, inga hastighetspickup', image: 'coinSpeedBoost-tier2.jpg' },
@@ -121,6 +267,12 @@ export class CardMenu {
 
         this.state.money -= cost;
         this.state.upgrades[cardId] = { level: currentLevel + 1 };
+
+        // Special handling for noNegativePickups
+        if (cardId === 'noNegativePickups' && currentLevel + 1 > 0) {
+            this.state.curlChaosPickups = [];
+            this.state.sizeShrinkPickups = [];
+        }
 
         // Special handling for coinSpeedBoost tier 2
         if (cardId === 'coinSpeedBoost' && currentLevel + 1 === 2) {
@@ -353,10 +505,10 @@ export class CardMenu {
         this.buyButtonBounds = null;
         this.continueButtonBounds = null;
 
-        ctx.fillStyle = '#000000';
-        ctx.fillRect(0, 0, screenWidth, screenHeight);
+        const time = performance.now() / 1000;
 
-        // Draw money at top right
+        this.drawBackground(ctx, screenWidth, screenHeight, time);
+
         ctx.font = 'bold 16px "Space Mono", monospace';
         ctx.textAlign = 'right';
         ctx.textBaseline = 'top';
@@ -375,10 +527,9 @@ export class CardMenu {
         const largeCardWidth = largeCardHeight * 0.65;
 
         if (selectedCard) {
-            this.renderArchCards(ctx, screenWidth, padding, available, selectedCard.id);
-            this.renderSelectedCard(ctx, screenWidth, screenHeight, selectedCard, largeCardWidth, largeCardHeight);
+            this.renderArchCards(ctx, screenWidth, padding, available, selectedCard.id, time);
+            this.renderSelectedCard(ctx, screenWidth, screenHeight, selectedCard, largeCardWidth, largeCardHeight, time);
             
-            // Draw continue button BEFORE owned cards
             const continueY = screenHeight - 180;
             this.continueButtonBounds = {
                 x: screenWidth / 2 - 80,
@@ -388,9 +539,8 @@ export class CardMenu {
             };
             this.drawContinueButton(ctx, screenWidth / 2 - 80, continueY, 160, 40);
         } else {
-            this.renderArchCards(ctx, screenWidth, padding, available, null);
+            this.renderArchCards(ctx, screenWidth, padding, available, null, time);
 
-            // Draw continue button BEFORE owned cards
             const continueY = screenHeight - 180;
             this.continueButtonBounds = {
                 x: screenWidth / 2 - 100,
@@ -401,10 +551,12 @@ export class CardMenu {
             this.drawContinueButton(ctx, screenWidth / 2 - 100, continueY, 200, 40);
         }
 
-        this.renderCollectionZone(ctx, screenWidth, screenHeight, owned, padding);
+        this.renderCollectionZone(ctx, screenWidth, screenHeight, owned, padding, time);
+
+        this.drawFilmGrain(ctx, screenWidth, screenHeight, time);
     }
 
-    renderArchCards(ctx, screenWidth, startY, available, selectedId) {
+    renderArchCards(ctx, screenWidth, startY, available, selectedId, time) {
         const cardHeight = 105;
         const cardWidth = 75;
         const spacing = -10;
@@ -425,12 +577,14 @@ export class CardMenu {
             const angle = normalizedPos * 0.35;
             const archY = startY + Math.abs(normalizedPos) * archHeight;
             
+            const floatOffset = this.getCardFloatOffset(card.id, time);
+
             const x = startX + i * (cardWidth + spacing);
-            const y = archY;
+            const y = archY + floatOffset.y;
 
             ctx.save();
             ctx.translate(x + cardWidth / 2, y + cardHeight / 2);
-            ctx.rotate(angle);
+            ctx.rotate(angle + floatOffset.rotation);
             ctx.translate(-(x + cardWidth / 2), -(y + cardHeight / 2));
 
             const bounds = this.drawCard(ctx, x, y, cardWidth, cardHeight, card, card.currentTier, false, false, 0);
@@ -461,7 +615,7 @@ export class CardMenu {
         };
     }
 
-    renderSelectedCard(ctx, screenWidth, screenHeight, card, cardWidth, cardHeight) {
+    renderSelectedCard(ctx, screenWidth, screenHeight, card, cardWidth, cardHeight, time) {
         const currentLevel = this.state.upgrades[card.id]?.level || 0;
         const tier = card.tiers[currentLevel];
         if (!tier) return;
@@ -482,13 +636,18 @@ export class CardMenu {
             cardY = 60 + ease * 60;
         }
 
-        const x = centerX - (cardWidth * scale) / 2;
-        const y = cardY;
+        const floatOffset = this.getCardFloatOffset(card.id, time, true);
+
+        const x = centerX - (cardWidth * scale) / 2 + floatOffset.x;
+        const y = cardY + floatOffset.y;
         const w = cardWidth * scale;
         const h = cardHeight * scale;
 
         ctx.save();
         ctx.globalAlpha = alpha;
+        ctx.translate(x + w / 2, y + h / 2);
+        ctx.rotate(floatOffset.rotation);
+        ctx.translate(-(x + w / 2), -(y + h / 2));
         
         this.drawCard(ctx, x, y, w, h, card, card.currentTier, false, true, 0);
         
@@ -525,11 +684,17 @@ export class CardMenu {
         ctx.fillStyle = '#94a3b8';
         ctx.fillText(tier.effect, centerX, textY + 28);
 
+        if (card.proverb) {
+            ctx.font = 'italic 14px "Space Mono", monospace';
+            ctx.fillStyle = '#64748b';
+            ctx.fillText(`"${card.proverb}"`, centerX, textY + 52);
+        }
+
         ctx.font = 'bold 18px "Space Mono", monospace';
         ctx.fillStyle = canBuy ? '#ffd700' : '#718096';
-        ctx.fillText(`$${tier.cost}`, centerX, textY + 52);
+        ctx.fillText(`$${tier.cost}`, centerX, textY + 80);
 
-        const buyY = textY + 80;
+        const buyY = textY + 110;
         this.buyButtonBounds = {
             x: centerX - 80,
             y: buyY,
@@ -573,7 +738,7 @@ export class CardMenu {
         ctx.fillText('FORTSÄTT', x + width / 2, y + height / 2);
     }
 
-    renderCollectionZone(ctx, screenWidth, screenHeight, owned, padding) {
+    renderCollectionZone(ctx, screenWidth, screenHeight, owned, padding, time) {
         if (owned.length === 0) return;
 
         const cardWidth = 50;
@@ -585,17 +750,20 @@ export class CardMenu {
 
         for (let i = 0; i < owned.length; i++) {
             const card = owned[i];
-            const x = startX + i * (cardWidth + spacing);
+            const baseX = startX + i * (cardWidth + spacing);
+            const baseY = cardY;
 
-            // Seeded random angle based on card id for consistency
+            const ownedId = `${card.id}-${card.tierLevel}`;
+            const floatOffset = this.getCardFloatOffset(ownedId, time);
+
             const seed = card.id.charCodeAt(card.id.length - 1) + card.tierLevel;
-            const angle = ((seed * 7) % 11 - 5) * 0.02;
+            const angle = ((seed *7) % 11 - 5) * 0.02;
 
             const anim = this.animationState.enteringCards.find(
                 a => a.cardId === card.id && a.tierLevel === card.tierLevel
             );
 
-            this.drawCardWithAnimation(ctx, x, cardY, cardWidth, cardHeight, card, card.tier, true, false, anim, angle);
+            this.drawCardWithAnimation(ctx, baseX + floatOffset.x, baseY + floatOffset.y, cardWidth, cardHeight, card, card.tier, true, false, anim, angle + floatOffset.rotation);
         }
     }
 
