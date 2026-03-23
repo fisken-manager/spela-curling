@@ -5,7 +5,7 @@ export class ScrollController {
         this.physics = physics;
         this.contentElement = document.getElementById('content');
         this.lastProgress = 0;
-        this.initialScrollOffset = 0.02;
+        this.initialScrollOffsetPx = 700;
         
         if (this.contentElement) {
             this.calculatePageHeight();
@@ -30,8 +30,8 @@ export class ScrollController {
         
         if (scrollableDistance <= 0) return;
         
-        const effectiveProgress = Math.min(1, state.scrollProgress + this.initialScrollOffset);
-        const scrollOffset = effectiveProgress * scrollableDistance;
+        const progressOffset = state.scrollProgress * scrollableDistance;
+        const scrollOffset = Math.min(progressOffset + this.initialScrollOffsetPx, scrollableDistance);
         this.contentElement.style.transform = `translateY(${-scrollableDistance + scrollOffset}px)`;
         
         this.syncAudio(state);
