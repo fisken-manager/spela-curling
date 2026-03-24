@@ -26,6 +26,22 @@ export class CardMenu {
         this.noiseOffset = 0;
         this.noiseCanvas = null;
         this.initializeStars();
+
+        // Entrance animation
+        this.isEntering = false;
+        this.enterProgress = 1;
+        this.shopTransition = null;
+    }
+
+    setShopTransition(shopTransition) {
+        this.shopTransition = shopTransition;
+    }
+
+    resetEntrance() {
+        this.isEntering = true;
+        this.enterProgress = 0;
+        this.skipLogoEntrance = this.state.skipLogoEntrance;
+        this.state.skipLogoEntrance = false;
     }
 
     loadLogo() {
@@ -412,6 +428,14 @@ export class CardMenu {
     }
 
     update(deltaTime) {
+        if (this.isEntering) {
+            this.enterProgress += deltaTime * 2;
+            if (this.enterProgress >= 1) {
+                this.enterProgress = 1;
+                this.isEntering = false;
+            }
+        }
+
         if (this.animationState.purchaseAnimation) {
             this.animationState.purchaseAnimation.progress += deltaTime * 3;
             if (this.animationState.purchaseAnimation.progress >= 1) {
@@ -544,22 +568,71 @@ export class CardMenu {
 
         const time = performance.now() / 1000;
 
-        this.drawBackground(ctx, screenWidth, screenHeight, time);
+        const playArea = this.state.getPlayArea();
+        const areaWidth = playArea.width;
+        const areaLeft = playArea.left;
 
-        // Draw Shop Logo
-        if (this.logoImage && this.logoImage.complete) {
-            const logoWidth = Math.min(screenWidth * 0.7, 300);
-            const logoHeight = logoWidth * (300 / 600); // 2:1 ratio
-            ctx.drawImage(this.logoImage, 15, 10, logoWidth, logoHeight);
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(areaLeft, 0, areaWidth, screenHeight);
+        ctx.clip();
+
+        this.drawBackground(ctx, areaWidth, screenHeight, time);
+
+        const waifuX = areaLeft + 70;
+        if (this.shopTransition) {
+            this.shopTransition.renderChibi(ctx, waifuX, time, this.selectedCardId !== null);
         }
 
+        let logoScale = 1;
+        let logoAlpha = 1;
+        
+        if (!this.skipLogoEntrance) {
+            const logoProgress = Math.min(1, this.enterProgress * 1.5);
+            logoScale = 0.5 + logoProgress * 0.5;
+            logoAlpha = logoProgress;
+        }
+
+        if (this.logoImage && this.logoImage.complete) {
+            const logoWidth = Math.min(areaWidth * 0.75, 450);
+            const logoHeight = logoWidth * 0.5;
+            const logoX = areaLeft + (areaWidth - logoWidth) / 2;
+            
+            const pulse = Math.sin(time * 4) * 0.15 + 0.85;
+            let flicker = 1.0;
+            if (Math.random() < 0.05) {
+                flicker = Math.random() > 0.5 ? 0.4 : 0.7;
+            }
+
+            ctx.save();
+            ctx.globalAlpha = logoAlpha * pulse * flicker;
+            ctx.translate(areaLeft + areaWidth / 2, -30 + logoHeight / 2);
+            ctx.scale(logoScale, logoScale);
+            ctx.translate(-(areaLeft + areaWidth / 2), -(-30 + logoHeight / 2));
+            
+            ctx.shadowColor = 'rgba(0, 191, 255, 0.8)';
+            ctx.shadowBlur = 15;
+            
+            ctx.drawImage(this.logoImage, logoX, -30, logoWidth, logoHeight);
+            ctx.restore();
+        }
+
+        const moneyProgress = Math.min(1, (this.enterProgress - 0.1) / 0.9);
+        const moneyScale = 0.8 + moneyProgress * 0.2;
+        const moneyAlpha = moneyProgress;
+
+        ctx.save();
+        ctx.globalAlpha = moneyAlpha;
+        ctx.translate(areaLeft + areaWidth - 15, 15);
+        ctx.scale(moneyScale, moneyScale);
         ctx.font = 'bold 16px "Space Mono", monospace';
         ctx.textAlign = 'right';
         ctx.textBaseline = 'top';
         ctx.fillStyle = '#ffd700';
-        ctx.fillText(`$${Math.floor(this.state.money)}`, screenWidth - 15, 15);
+        ctx.fillText(`$${Math.floor(this.state.money)}`, 0, 0);
+        ctx.restore();
 
-        const padding = 160; // Increased padding to avoid overlap with two-row logo
+        const padding = 130;
         const available = this.getAvailableUpgrades();
         const owned = this.getOwnedUpgrades();
 
@@ -571,42 +644,56 @@ export class CardMenu {
         const largeCardWidth = largeCardHeight;
 
         if (selectedCard) {
-            this.renderArchCards(ctx, screenWidth, padding, available, selectedCard.id, time);
-            this.renderSelectedCard(ctx, screenWidth, screenHeight, selectedCard, largeCardWidth, largeCardHeight, time);
+            this.renderArchCards(ctx, areaLeft, areaWidth, padding, available, selectedCard.id, time);
+            this.renderSelectedCard(ctx, areaLeft, areaWidth, screenHeight, selectedCard, largeCardWidth, largeCardHeight, time);
         } else {
-            this.renderArchCards(ctx, screenWidth, padding, available, null, time);
+            this.renderArchCards(ctx, areaLeft, areaWidth, padding, available, null, time);
 
-            const continueY = screenHeight - 180;
+            const buttonProgress = Math.max(0, (this.enterProgress - 0.3) / 0.7);
+            const buttonAlpha = Math.min(1, buttonProgress);
+            const buttonSlide = (1 - Math.min(1, buttonProgress)) * 50;
+
+            ctx.save();
+            ctx.globalAlpha = buttonAlpha;
+
+            const continueY = screenHeight - 180 + buttonSlide;
+            const centerX = areaLeft + areaWidth / 2;
             this.continueButtonBounds = {
-                x: screenWidth / 2 - 100,
+                x: centerX - 100,
                 y: continueY,
                 width: 200,
                 height: 40
             };
-            this.drawContinueButton(ctx, screenWidth / 2 - 100, continueY, 200, 40);
+            this.drawContinueButton(ctx, centerX - 100, continueY, 200, 40);
+
+            this.drawTicker(ctx, areaLeft, areaWidth, time, continueY - 180);
 
             const rerollCost = this.state.rerollCost || 1;
             const canAffordReroll = this.state.money >= rerollCost;
             this.rerollButtonBounds = {
-                x: screenWidth / 2 - 60,
+                x: centerX - 60,
                 y: continueY - 50,
                 width: 120,
                 height: 35
             };
-            this.drawRerollButton(ctx, screenWidth / 2 - 60, continueY - 50, 120, 35, canAffordReroll, rerollCost);
+            this.drawRerollButton(ctx, centerX - 60, continueY - 50, 120, 35, canAffordReroll, rerollCost);
+
+            ctx.restore();
         }
 
-        this.renderCollectionZone(ctx, screenWidth, screenHeight, owned, time);
+        this.renderCollectionZone(ctx, areaLeft, areaWidth, screenHeight, owned, time);
+        
+        ctx.restore();
     }
 
-    renderArchCards(ctx, screenWidth, startY, available, selectedId, time) {
+    renderArchCards(ctx, areaLeft, areaWidth, startY, available, selectedId, time) {
         const cardHeight = 120;
         const cardWidth = 120;
         const spacing = -10;
         const archHeight = 35;
 
         const totalWidth = available.length * cardWidth + (available.length - 1) * spacing;
-        const startX = (screenWidth - totalWidth) / 2;
+        const startX = areaLeft + (areaWidth - totalWidth) / 2;
 
         this.cardBounds = [];
 
@@ -622,12 +709,36 @@ export class CardMenu {
             
             const floatOffset = this.getCardFloatOffset(card.id, time);
 
+            // Staggered entrance animation
+            const cardDelay = i * 0.08;
+            let cardProgress = 1;
+            let cardScale = 1;
+            let cardAlpha = 1;
+            
+            if (this.isEntering) {
+                cardProgress = Math.max(0, (this.enterProgress - cardDelay) / (1 - cardDelay));
+                cardProgress = Math.min(1, cardProgress);
+                // ease-out-back for bouncy entrance
+                const c1 = 1.70158;
+                const c3 = c1 + 1;
+                cardScale = 1 + (c3 * cardProgress * cardProgress * cardProgress - c1 * cardProgress * cardProgress) * 0.3;
+                if (cardProgress < 1) {
+                    cardScale = cardProgress < 0.5 
+                        ? cardProgress * cardProgress * 2 
+                        : 1 - Math.pow(-2 * cardProgress + 2, 2) / 2;
+                    cardScale = 0.3 + cardScale * 0.7;
+                }
+                cardAlpha = Math.min(1, cardProgress * 2);
+            }
+
             const x = startX + i * (cardWidth + spacing);
             const y = archY + floatOffset.y;
 
             ctx.save();
+            ctx.globalAlpha = cardAlpha;
             ctx.translate(x + cardWidth / 2, y + cardHeight / 2);
             ctx.rotate(angle + floatOffset.rotation);
+            ctx.scale(cardScale, cardScale);
             ctx.translate(-(x + cardWidth / 2), -(y + cardHeight / 2));
 
             const bounds = this.drawCard(ctx, x, y, cardWidth, cardHeight, card, card.currentTier, false, false, 0);
@@ -658,13 +769,52 @@ export class CardMenu {
         };
     }
 
-    renderSelectedCard(ctx, screenWidth, screenHeight, card, cardWidth, cardHeight, time) {
+    wrapText(ctx, text, maxWidth) {
+        const words = text.split(' ');
+        const lines = [];
+        let currentLine = '';
+
+        for (const word of words) {
+            const testLine = currentLine ? `${currentLine} ${word}` : word;
+            const metrics = ctx.measureText(testLine);
+            
+            if (metrics.width > maxWidth && currentLine) {
+                lines.push(currentLine);
+                currentLine = word;
+            } else {
+                currentLine = testLine;
+            }
+        }
+        
+        if (currentLine) {
+            lines.push(currentLine);
+        }
+        
+        return lines;
+    }
+
+    drawWrappedText(ctx, lines, x, startY, lineHeight, font, color, textAlign) {
+        ctx.font = font;
+        ctx.fillStyle = color;
+        ctx.textAlign = textAlign || 'center';
+        ctx.textBaseline = 'top';
+
+        let y = startY;
+        for (const line of lines) {
+            ctx.fillText(line, x, y);
+            y += lineHeight;
+        }
+        
+        return y;
+    }
+
+    renderSelectedCard(ctx, areaLeft, areaWidth, screenHeight, card, cardWidth, cardHeight, time) {
         const currentLevel = this.state.upgrades[card.id]?.level || 0;
         const tier = card.tiers[currentLevel];
         if (!tier) return;
 
         const canBuy = this.canAfford(card.id);
-        const centerX = screenWidth / 2;
+        const centerX = areaLeft + areaWidth / 2;
         
         const anim = this.animationState.selectAnimation;
         let cardY = 200;
@@ -717,34 +867,40 @@ export class CardMenu {
         const tierNumeral = romanNumerals[tier.level - 1] || 'I';
 
         const textY = y + h + 16;
+        const maxTextWidth = Math.min(areaWidth * 0.85, 350);
+
+        let currentY = textY;
+
         ctx.font = 'bold 20px "Work Sans", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
         ctx.fillStyle = '#ffd700';
-        ctx.fillText(`${card.name} ${tierNumeral}`, centerX, textY);
+        ctx.fillText(`${card.name} ${tierNumeral}`, centerX, currentY);
+        currentY += 28;
 
         ctx.font = '16px "Work Sans", sans-serif';
-        ctx.fillStyle = '#94a3b8';
-        ctx.fillText(tier.effect, centerX, textY + 28);
+        const effectLines = this.wrapText(ctx, tier.effect, maxTextWidth);
+        currentY = this.drawWrappedText(ctx, effectLines, centerX, currentY, 20, '16px "Work Sans", sans-serif', '#94a3b8', 'center');
+        currentY += 12;
 
         if (card.proverb) {
-            ctx.font = 'italic 14px "Space Mono", monospace';
-            ctx.fillStyle = '#64748b';
-            ctx.fillText(`"${card.proverb}"`, centerX, textY + 52);
+            const proverbLines = this.wrapText(ctx, `"${card.proverb}"`, maxTextWidth);
+            currentY = this.drawWrappedText(ctx, proverbLines, centerX, currentY, 18, 'italic 14px "Space Mono", monospace', '#64748b', 'center');
+            currentY += 12;
         }
 
         ctx.font = 'bold 18px "Space Mono", monospace';
         ctx.fillStyle = canBuy ? '#ffd700' : '#718096';
-        ctx.fillText(`$${tier.cost}`, centerX, textY + 80);
+        ctx.fillText(`$${tier.cost}`, centerX, currentY);
+        currentY += 30;
 
-        const buyY = textY + 110;
         this.buyButtonBounds = {
             x: centerX - 80,
-            y: buyY,
+            y: currentY,
             width: 160,
             height: 45
         };
-        this.drawBuyButton(ctx, centerX - 80, buyY, 160, 45, canBuy);
+        this.drawBuyButton(ctx, centerX - 80, currentY, 160, 45, canBuy);
     }
 
     drawBuyButton(ctx, x, y, width, height, canBuy) {
@@ -781,6 +937,64 @@ export class CardMenu {
         ctx.fillText('LÄMNA', x + width / 2, y + height / 2);
     }
 
+    drawTicker(ctx, areaLeft, areaWidth, time, y) {
+        if (!this.tickerText) {
+            const quotes = [
+                "Att födas är en olycka. Att curla är en till.",
+                "Den eviga vintern väntar på ingen man. Men banan är bokad till 21:00.",
+                "Sömn är för de omedvetna. Sopa istället.",
+                "Isen bryr sig inte om era ambitioner. Den väntar bara på att tina bort.",
+                "Ni ska spela samma match i evighet. Det är namnet på spelet.",
+                "Måla inte kycklingen blå innan hon värpt.",
+                "Även en blind matta kan flyga om vinden är stark nog.",
+                "Gräv inte där du står, stå där du gräver.",
+                "Huvva. Kroppen är ett kroppsskrälle, skrangligt som en gammal kärra.",
+                "Det är inte raketkirurgi. Det är bara livet som smular.",
+                "Skogen ser allt. Särskilt dina svaga kast.",
+                "Mörkret samlas vid hog line. Välkomna.",
+                "Skadedjuren har vaknat. Sätt på skorna.",
+                "Sadeln skaver bara om hästen är död. Er vilja lever än.",
+                "Kasta inte bävern i sågverket — sågen är redan rostig.",
+                "Nu har vi salladen i sörjan, och det är lunchdags.",
+                "Alla hattar, ingen boskap, men mycket sås.",
+                "Man kan inte göra omelett utan att knäcka ägg. Eller hur?",
+                "Tystnad är guld. Sopa är silver.",
+                "Lidandet är konstant. Isen är kall.",
+                "Viljan har fått råtta. Spela ändå.",
+                "Du kastar geväret i kornfältet. Jag ser dig."
+            ];
+            
+            const shuffled = quotes.sort(() => 0.5 - Math.random());
+            this.tickerText = shuffled.join("   ✦   ") + "   ✦   ";
+        }
+        
+        const tickerHeight = 45;
+        
+        ctx.save();
+        
+        ctx.fillStyle = '#ff69b4';
+        ctx.fillRect(areaLeft, y, areaWidth, tickerHeight);
+        
+        ctx.font = '24px "DotGothic16", monospace';
+        ctx.fillStyle = '#000000';
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'left';
+        
+        const textWidth = ctx.measureText(this.tickerText).width;
+        
+        const speed = 50;
+        let offset = -((time * speed) % textWidth);
+        if (offset > 0) offset -= textWidth;
+        
+        let currentX = areaLeft + offset;
+        while (currentX < areaLeft + areaWidth) {
+            ctx.fillText(this.tickerText, currentX, y + tickerHeight / 2 + 1);
+            currentX += textWidth;
+        }
+        
+        ctx.restore();
+    }
+
     drawRerollButton(ctx, x, y, width, height, canAfford, cost) {
         ctx.beginPath();
         ctx.roundRect(x, y, width, height, 10);
@@ -798,15 +1012,19 @@ export class CardMenu {
         ctx.fillText(`REROLL ($${cost})`, x + width / 2, y + height / 2);
     }
 
-    renderCollectionZone(ctx, screenWidth, screenHeight, owned, time) {
+    renderCollectionZone(ctx, areaLeft, areaWidth, screenHeight, owned, time) {
         if (owned.length === 0) return;
 
         const cardWidth = 60;
         const cardHeight = 60;
         const spacing = 8;
         const totalWidth = owned.length * cardWidth + (owned.length - 1) * spacing;
-        const startX = (screenWidth - totalWidth) / 2;
+        const startX = areaLeft + (areaWidth - totalWidth) / 2;
         const cardY = screenHeight - cardHeight - 15;
+
+        // Collection zone entrance animation (delayed)
+        const collectionDelay = 0.5;
+        const collectionProgress = Math.max(0, (this.enterProgress - collectionDelay) / (1 - collectionDelay));
 
         for (let i = 0; i < owned.length; i++) {
             const card = owned[i];
@@ -823,7 +1041,21 @@ export class CardMenu {
                 a => a.cardId === card.id && a.tierLevel === card.tierLevel
             );
 
-            this.drawCardWithAnimation(ctx, baseX + floatOffset.x, baseY + floatOffset.y, cardWidth, cardHeight, card, card.tier, true, false, anim, angle + floatOffset.rotation);
+            // Staggered entrance for owned cards
+            const cardDelay = i * 0.05;
+            let cardProgress = Math.min(1, Math.max(0, (collectionProgress - cardDelay) / 0.3));
+            let cardAlpha = Math.min(1, cardProgress * 2);
+            let cardScale = 0.5 + cardProgress * 0.5;
+
+            ctx.save();
+            ctx.globalAlpha = cardAlpha;
+            ctx.translate(baseX + floatOffset.x + cardWidth / 2, baseY + floatOffset.y + cardHeight / 2);
+            ctx.scale(cardScale, cardScale);
+            ctx.translate(-(baseX + floatOffset.x + cardWidth / 2), -(baseY + floatOffset.y + cardHeight / 2));
+
+            this.drawCard(ctx, baseX + floatOffset.x, baseY + floatOffset.y, cardWidth, cardHeight, card, card.tier, true, false, angle + floatOffset.rotation);
+
+            ctx.restore();
         }
     }
 

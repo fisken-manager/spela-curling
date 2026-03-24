@@ -389,9 +389,9 @@ this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
                 screenX, screenY, 0,
                 screenX, screenY, config.radius
             );
-            gradient.addColorStop(0, 'rgba(255, 215, 0, 1)');
-            gradient.addColorStop(0.7, 'rgba(218, 165, 32, 0.9)');
-            gradient.addColorStop(1, 'rgba(184, 134, 11, 0.4)');
+            gradient.addColorStop(0, 'rgba(0, 191, 255, 1)');
+            gradient.addColorStop(0.7, 'rgba(30, 144, 255, 0.9)');
+            gradient.addColorStop(1, 'rgba(65, 105, 225, 0.4)');
             
             this.ctx.fillStyle = gradient;
             this.ctx.fill();
@@ -428,7 +428,7 @@ this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
                 screenY,
                 Math.cos(angle) * speed,
                 Math.sin(angle) * speed,
-                '255, 215, 0',
+                '0, 191, 255',
                 1.0
             );
         }

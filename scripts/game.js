@@ -8,6 +8,7 @@ import { TransitionController } from './transition.js';
 import { CardMenu } from './cardMenu.js';
 import { SnakeTextAnimation } from './snake-text.js';
 import { WebGLFisheye } from './webgl-fisheye.js';
+import { ShopTransition } from './shopTransition.js';
 
 const audio = new AudioController();
 const state = new GameState();
@@ -19,7 +20,10 @@ let scrollController = null;
 let cardMenu = null;
 let snakeText = null;
 let webglFisheye = null;
+let shopTransition = null;
 let lastTime = 0;
+let prevShowBuyMenu = false;
+let prevShopTransition = null;
 
 function setupControls() {
     const controlsPanel = document.getElementById('physics-controls');
@@ -88,7 +92,19 @@ function setupControls() {
 
     const openShopBtn = document.getElementById('open-shop-btn');
     if (openShopBtn) openShopBtn.addEventListener('click', () => {
-        state.showBuyMenu = true;
+        // Trigger shop transition animation
+        state.shopTransition = 'fishZoom';
+        state.shopTransitionStartTime = performance.now();
+        state.shopTransitionProgress = 0;
+        // Set fish position to center of screen for dev menu
+        state.shopTransitionFishX = state.screenWidth / 2;
+        state.shopTransitionFishY = state.screenHeight / 2;
+        state.shopUpgradeSelection = null;
+        state.rerollCost = 1;
+        // Fade out game music
+        if (audio.isPlaying) {
+            audio.fadeOutAndStop(0.5);
+        }
     });
 
     const reInitPowerupsBtn = document.getElementById('re-init-powerups');
@@ -244,6 +260,11 @@ async function init() {
     renderer = new Renderer(canvas);
     cardMenu = new CardMenu(state);
     
+    // Initialize shop transition
+    shopTransition = new ShopTransition(state);
+    shopTransition.loadWaifuSprite();
+    cardMenu.setShopTransition(shopTransition);
+    
     // Initialize WebGL fisheye overlay
     const fisheyeCanvas = document.getElementById('fisheye-canvas');
     if (fisheyeCanvas) {
@@ -279,6 +300,9 @@ async function init() {
         'assets/song_4.mp3',
         'assets/song_5.mp3'
     ]);
+    
+    // Load shop song
+    await audio.loadShopSong('assets/shop_song.mp3');
     
     window.addEventListener('blur', () => {
         state.isPaused = true;
@@ -331,6 +355,32 @@ function gameLoop(timestamp) {
         requestAnimationFrame(gameLoop);
         return;
     }
+    
+    // Handle shop transition animation
+    if (state.shopTransition) {
+        // Fade out game music when transition starts
+        if (!prevShopTransition && audio.isPlaying) {
+            audio.fadeOutAndStop(0.5);
+        }
+        prevShopTransition = state.shopTransition;
+        
+        renderer.render(state, deltaTime);
+        shopTransition.update(deltaTime);
+        shopTransition.render(renderer.ctx, state.screenWidth, state.screenHeight);
+        applyFisheyeEffect();
+        requestAnimationFrame(gameLoop);
+        return;
+    }
+    prevShopTransition = null;
+    
+    // Play/stop shop music
+    if (state.showBuyMenu && !prevShowBuyMenu) {
+        cardMenu.resetEntrance();
+        audio.playShopSong();
+    } else if (!state.showBuyMenu && prevShowBuyMenu) {
+        audio.stopShopSong();
+    }
+    prevShowBuyMenu = state.showBuyMenu;
     
     if (state.isPaused) {
         if (state.showBuyMenu) {

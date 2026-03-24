@@ -369,20 +369,21 @@ checkPowerUps(state, effectiveRadius) {
             
             if (dy < collisionDistance && dx < collisionDistance) {
                 shopPowerUp.collected = true;
-                state.shopPowerUpCollected = shopPowerUp;
                 state.shopUpgradeSelection = null;
                 state.rerollCost = 1;
-                state.showBuyMenu = true;
-                state.isPaused = true;
                 state.lives++;
-                
-                this.addPowerUpText(state, shopPowerUp.x, 'BUTIK!', '255, 215, 0');
-                
+
+                // Start shop transition animation
+                state.shopTransition = 'fishZoom';
+                state.shopTransitionStartTime = performance.now();
+                state.shopTransitionProgress = 0;
+
+                // Storefish position for animation
                 const playArea = state.getPlayArea();
-                const screenX = playArea.left + playArea.width / 2 + shopPowerUp.x;
-                const screenY = state.screenHeight * 0.5;
-                state.triggerRingFlash(screenX, screenY, '255, 215, 0');
-            }
+                state.shopTransitionFishX = playArea.left + playArea.width / 2 + shopPowerUp.x;
+                state.shopTransitionFishY = state.screenHeight * 0.5;
+
+                state.triggerRingFlash(state.shopTransitionFishX, state.shopTransitionFishY, '0, 191, 255');            }
         }
     }
 

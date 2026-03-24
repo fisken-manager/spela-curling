@@ -144,6 +144,13 @@ export class GameState {
         this.shopUpgradeSelection = null;
         this.rerollCost = 1;
 
+        // Shop transition animation
+        this.shopTransition = null;              // 'fishZoom' | 'waifuAppear' | 'shopFade' | null
+        this.shopTransitionProgress = 0;         // 0-1
+        this.shopTransitionStartTime = 0;
+        this.shopTransitionFishX = 0;            // Screen X where fish was collected
+        this.shopTransitionFishY = 0;            // Screen Y where fish was collected
+
         // Upgrades (all reset on new game)
         this.upgrades = {
             // Basic
@@ -615,6 +622,8 @@ const progressOffset = random(yellowSeed) * 5 * progressOffsetScale;
         this.showBuyMenu = false;
         this.shopUpgradeSelection = null;
         this.rerollCost = 1;
+        this.shopTransition = null;
+        this.shopTransitionProgress = 0;
 
         // Reset upgrades
         for (const key of Object.keys(this.upgrades)) {
