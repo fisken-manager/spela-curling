@@ -1,7 +1,7 @@
 export class Physics {
     constructor() {
         this.physicsTick = 0.001;
-        this.baseMaxVelocity = 22;
+        this.baseMaxVelocity = 21;
         this.wallBounceEnergy = 0.8;
         this.sweepBoost = 1.5;
         this.stopThreshold = 0.1;
