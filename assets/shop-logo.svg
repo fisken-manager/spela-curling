@@ -46,6 +46,23 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Bungee+Outline&amp;display=swap');
     
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    @keyframes flicker {
+      0%, 19.99%, 22%, 62.99%, 64%, 64.99%, 70%, 100% { opacity: 1; }
+      20%, 21.99%, 63%, 63.99%, 65%, 69.99% { opacity: 0.1; }
+    }
+
+    .pulse-fast { animation: pulse 2s ease-in-out infinite; }
+    .pulse-medium { animation: pulse 3s ease-in-out infinite; }
+    .pulse-slow { animation: pulse 4s ease-in-out infinite; }
+    
+    .flicker-fast { animation: flicker 5.3s infinite; }
+    .flicker-slow { animation: flicker 8.7s infinite; }
+
     .logo-container {
       transform: perspective(800px) rotateY(-35deg) rotateX(25deg) translateY(20px);
       transform-origin: center;
@@ -87,27 +104,39 @@
   <g class="logo-container">
     <!-- Centered Text Group -->
     <g transform="translate(250, 0)">
-      <g filter="url(#blue-reflection)">
-        <text x="0" y="100" class="text-base fiskens">FISKENS</text>
+      <g class="pulse-slow">
+        <g filter="url(#blue-reflection)">
+          <text x="0" y="100" class="text-base fiskens">FISKENS</text>
+        </g>
       </g>
       
-      <g filter="url(#red-reflection)">
-        <text x="0" y="175" class="text-base shop">SHOP</text>
+      <g class="flicker-fast">
+        <g class="pulse-medium">
+          <g filter="url(#red-reflection)">
+            <text x="0" y="175" class="text-base shop">SHOP</text>
+          </g>
+        </g>
       </g>
     </g>
 
-    <!-- Hollow Stylized Fish Icon - Half Size (scale 0.55) -->
-    <g transform="translate(420, 115) scale(0.55)" filter="url(#blue-reflection)">
-      <!-- Sleek hollow fish outline -->
-      <path class="fish-icon" d="M0,40 Q40,0 100,40 Q40,80 0,40 M100,40 L130,10 L130,70 Z" />
-      
-      <!-- Smiley Face Features on the head (left side) -->
-      <!-- Two Eyes -->
-      <circle class="smiley-feature" cx="25" cy="30" r="3" />
-      <circle class="smiley-feature" cx="45" cy="30" r="3" />
-      
-      <!-- Happy Mouth -->
-      <path class="smiley-feature" d="M25,50 Q35,60 45,50" />
+    <!-- Hollow Stylized Fish Icon (scale 0.825) -->
+    <g transform="translate(420, 100) scale(0.825)">
+      <g class="flicker-slow">
+        <g class="pulse-fast">
+          <g filter="url(#blue-reflection)">
+            <!-- Sleek hollow fish outline -->
+            <path class="fish-icon" d="M0,40 Q40,0 100,40 Q40,80 0,40 M100,40 L130,10 L130,70 Z" />
+            
+            <!-- Smiley Face Features on the head (left side) -->
+            <!-- Two Eyes -->
+            <circle class="smiley-feature" cx="25" cy="30" r="3" />
+            <circle class="smiley-feature" cx="45" cy="30" r="3" />
+            
+            <!-- Happy Mouth -->
+            <path class="smiley-feature" d="M25,50 Q35,60 45,50" />
+          </g>
+        </g>
+      </g>
     </g>
   </g>
 </svg>
