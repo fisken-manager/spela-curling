@@ -7,6 +7,7 @@ import { ScrollController } from './scroll.js';
 import { TransitionController } from './transition.js';
 import { CardMenu } from './cardMenu.js';
 import { SnakeTextAnimation } from './snake-text.js';
+import { WebGLFisheye } from './webgl-fisheye.js';
 
 const audio = new AudioController();
 const state = new GameState();
@@ -17,6 +18,7 @@ let renderer = null;
 let scrollController = null;
 let cardMenu = null;
 let snakeText = null;
+let webglFisheye = null;
 let lastTime = 0;
 
 function setupControls() {
@@ -116,30 +118,28 @@ function setupControls() {
         });
     }
 
-    // Fisheye effect controls (CSS transform based)
+    // Fisheye effect controls (WebGL based)
     const fisheyeTypeSelect = document.getElementById('fisheye-type');
     const fisheyeTypeVal = document.getElementById('fisheye-type-val');
     const fisheyeStrengthSlider = document.getElementById('fisheye-strength');
     const fisheyeStrengthVal = document.getElementById('fisheye-strength-val');
-    const gameWrapper = document.getElementById('game-wrapper');
 
     function updateFisheyeEffect() {
-        if (!gameWrapper) return;
-        
         const type = fisheyeTypeSelect?.value || 'none';
         const strength = parseInt(fisheyeStrengthSlider?.value || 30);
         
-        // Remove all fisheye classes
-        gameWrapper.classList.remove('fisheye-barrel', 'fisheye-perspective', 'fisheye-strong');
-        
-        // Set CSS custom property for strength
-        gameWrapper.style.setProperty('--barrel-strength', strength);
-        gameWrapper.style.setProperty('--persp-strength', strength);
-        gameWrapper.style.setProperty('--strong-strength', strength);
-        
-        // Add the appropriate class
-        if (type !== 'none') {
-            gameWrapper.classList.add(`fisheye-${type}`);
+        // Try WebGL first
+        if (webglFisheye && webglFisheye.enabled && webglFisheye.initialized) {
+            webglFisheye.setEffect(type, strength);
+            
+            // Show/hide fisheye canvas
+            const fisheyeCanvas = document.getElementById('fisheye-canvas');
+            const gameCanvas = document.getElementById('game-canvas');
+            
+            if (type === 'none') {
+                if (fisheyeCanvas) fisheyeCanvas.classList.remove('active');
+                if (gameCanvas) gameCanvas.classList.remove('hidden-for-fisheye');
+            }
         }
         
         if (fisheyeStrengthVal) fisheyeStrengthVal.textContent = strength;
@@ -244,6 +244,23 @@ async function init() {
     
     renderer = new Renderer(canvas);
     cardMenu = new CardMenu(state);
+    
+    // Initialize WebGL fisheye overlay
+    const fisheyeCanvas = document.getElementById('fisheye-canvas');
+    if (fisheyeCanvas) {
+        try {
+            webglFisheye = new WebGLFisheye(fisheyeCanvas);
+            if (webglFisheye.enabled) {
+                console.log('WebGL fisheye initialized successfully');
+            } else {
+                console.log('WebGL fisheye disabled (WebGL not available)');
+            }
+        } catch (e) {
+            console.warn('WebGL fisheye initialization failed:', e);
+            webglFisheye = null;
+        }
+    }
+    
     input = new InputHandler(canvas, state, physics, audio);
     input.setCardMenu(cardMenu);
     scrollController = new ScrollController(state, audio, physics);
@@ -293,6 +310,20 @@ async function init() {
     requestAnimationFrame(gameLoop);
 }
 
+function applyFisheyeEffect() {
+        if (!webglFisheye || !webglFisheye.enabled || !webglFisheye.initialized || webglFisheye.currentEffect === 'none') {
+            return;
+        }
+        
+        const fisheyeCanvas = document.getElementById('fisheye-canvas');
+        const gameCanvas = document.getElementById('game-canvas');
+        
+        if (fisheyeCanvas && gameCanvas && webglFisheye.render(gameCanvas)) {
+            gameCanvas.classList.add('hidden-for-fisheye');
+            fisheyeCanvas.classList.add('active');
+        }
+    }
+
 function gameLoop(timestamp) {
     const deltaTime = Math.min((timestamp - lastTime) / 1000, 0.1);
     lastTime = timestamp;
@@ -309,6 +340,7 @@ function gameLoop(timestamp) {
         } else {
             renderer.render(state, 0);
         }
+        applyFisheyeEffect();
         requestAnimationFrame(gameLoop);
         return;
     }
@@ -323,6 +355,7 @@ function gameLoop(timestamp) {
         scrollController.update(state);
     }
     
+    applyFisheyeEffect();
     requestAnimationFrame(gameLoop);
 }
 
