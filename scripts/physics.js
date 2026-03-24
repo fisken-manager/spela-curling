@@ -14,9 +14,54 @@ export class Physics {
         this.maxAngularVelocity = 10;
     }
 
-    getMaxVelocity(state) {
-        const bonusMultiplier = 1 + (state.upgrades.maxVelocity.level * 0.15);
-        let maxVel = this.baseMaxVelocity * bonusMultiplier;
+getMaxVelocity(state) {
+        // Basic speed upgrade
+        const speedLevel = state.upgrades.speed?.level || 0;
+        const speedBonus = 1 + (speedLevel * 0.15);
+        
+        // Legacy support
+        const legacyLevel = state.upgrades.maxVelocity?.level || 0;
+        const legacyBonus = 1 + (legacyLevel * 0.15);
+        
+        let maxVel = this.baseMaxVelocity * Math.max(speedBonus, legacyBonus);
+        
+        // Tung Börda - size penalty to max velocity
+        const sizeLevel = state.upgrades.size?.level || 0;
+        if (sizeLevel > 0) {
+            maxVel *= (1 - sizeLevel * 0.1);
+        }
+        
+        // Friction forge permanent speed bonus
+        const frictionForgeLevel = state.upgrades.friction_forge?.level || 0;
+        maxVel *= (1 + (state.permanentSpeedBonus || 0));
+        
+        // Glass cannon bonus
+        const glassCannonLevel = state.upgrades.glass_cannon?.level || 0;
+        if (glassCannonLevel > 0) {
+            maxVel *= (1 + glassCannonLevel * 0.5);
+        }
+        
+        // Tar launch boost
+        if (state.tarBoostActive && state.tarBoostTimer > 0) {
+            const tarLevel = state.upgrades.tar_launch?.level || 0;
+            maxVel *= (1 + tarLevel);
+        }
+        
+        // Spin_win penalty based on items collected
+        const spinWinLevel = state.upgrades.spin_win?.level || 0;
+        if (spinWinLevel > 0 && state.items_collected_this_throw > 0) {
+            const penalty = 1 - (spinWinLevel * 0.05 * state.items_collected_this_throw);
+            maxVel *= Math.max(0.3, penalty);
+        }
+        
+        // Gold_grift loop penalty
+        const goldGriftLevel = state.upgrades.gold_grift?.level || 0;
+        if (goldGriftLevel > 0) {
+            const loopCount = state.loopCount || 1;
+            const penalty = Math.pow(0.9 - goldGriftLevel * 0.05, Math.max(0, loopCount - 1));
+            maxVel *= penalty;
+        }
+        
         if (state.frictionBoost && state.frictionBoost.maxVelocityMultiplier) {
             maxVel *= state.frictionBoost.maxVelocityMultiplier;
         }
@@ -31,8 +76,32 @@ export class Physics {
     getEffectiveFriction(state) {
         const loopCount = state.loopCount || 1;
         const loopFrictionMultiplier = Math.pow(1.05, Math.max(0, loopCount - 1));
-        const reduction = state.upgrades.frictionReduction.level * 0.05;
-        return this.baseFriction * (1 - reduction) * loopFrictionMultiplier;
+        
+        // Basic friction reduction
+        const frictionLevel = state.upgrades.friction?.level || 0;
+        const legacyLevel = state.upgrades.frictionReduction?.level || 0;
+        const reduction = Math.max(frictionLevel, legacyLevel) * 0.05;
+        
+        // Size penalty for Vattnad Väg (larger stones = more friction)
+        const sizeLevel = state.upgrades.size?.level || 0;
+        const sizePenalty = sizeLevel > 0 ? 0 : sizeLevel * 0.02;
+        
+        let friction = this.baseFriction * (1 - reduction + sizePenalty) * loopFrictionMultiplier;
+        
+        // needle_eye upgrade - friction decreases when stone is smaller
+        const needleEyeLevel = state.upgrades.needle_eye?.level || 0;
+        if (needleEyeLevel > 0) {
+            const currentRadius = this.getEffectiveRadius(state);
+            const baseRadius = 30;
+            const sizeRatio = currentRadius / baseRadius;
+            // Smaller stone = lower fraction of friction
+            if (sizeRatio < 1) {
+                const frictionReduction = (1 - sizeRatio) * needleEyeLevel * 0.15;
+                friction *= (1 - frictionReduction);
+            }
+        }
+        
+        return friction;
     }
 
     getEffectiveCurl(state, dt = 0) {
@@ -58,9 +127,21 @@ export class Physics {
 
     getEffectiveRadius(state) {
         const baseRadius = 30;
-        const sizeBonus = state.upgrades.stoneSize.level * 8; // Increased bonus
+        
+        // Basic size upgrade
+        const sizeLevel = state.upgrades.size?.level || 0;
+        const legacyLevel = state.upgrades.stoneSize?.level || 0;
+        const sizeBonus = Math.max(sizeLevel, legacyLevel) * 8;
+        
+        // Size penalty from speed upgrade (Hastig Leda)
+        const speedLevel = state.upgrades.speed?.level || 0;
+        const speedSizePenalty = speedLevel * 3; // -3 radius per level = -10% per level
+        
+        // Size penalty from sizeShrink pickups
+        const sizePenalty = state.sizeShrinkPenalty || 0;
+        
         const growthMultiplier = state.growthBoost ? state.growthPowerUpConfig.growthMultiplier : 1;
-        return Math.max(1, (baseRadius + sizeBonus) * growthMultiplier);
+        return Math.max(10, (baseRadius + sizeBonus - speedSizePenalty - sizePenalty) * growthMultiplier);
     }
 
     getEffectiveOrbRadius(state, orbType) {
@@ -73,12 +154,57 @@ export class Physics {
         this.updateFrictionBoost(state, deltaTime);
         this.updateSweepBoost(state, deltaTime);
         this.updateGrowthBoost(state, deltaTime);
+        this.updateTarBoost(state, deltaTime);
+        this.updateRailRider(state, deltaTime);
+        this.detectCurlSnap(state, deltaTime);
 
         const steps = Math.ceil(deltaTime / this.physicsTick);
         const dt = deltaTime / steps;
 
         for (let i = 0; i < steps; i++) {
             this.physicsStep(state, dt);
+        }
+    }
+
+    updateTarBoost(state, deltaTime) {
+        if (state.tarBoostActive && state.tarBoostTimer > 0) {
+            state.tarBoostTimer -= deltaTime;
+            if (state.tarBoostTimer <= 0) {
+                state.tarBoostActive = false;
+                state.tarBoostTimer = 0;
+            }
+        }
+    }
+
+    updateRailRider(state, deltaTime) {
+        if (state.rail_rider_cooldown > 0) {
+            state.rail_rider_cooldown -= deltaTime;
+        }
+        if (state.rail_rider_timer > 0) {
+            state.rail_rider_timer -= deltaTime;
+            if (state.rail_rider_timer <= 0) {
+                // Throw stone off wall when rail_rider ends
+                if (state.rail_rider_wall && state.phase === 'moving') {
+                    const throwSpeed = 8;
+                    state.stone.vx = state.rail_rider_wall === 'left' ? throwSpeed : -throwSpeed;
+                    state.triggerScreenShake(5, 0.1);
+                }
+                state.rail_rider_active = false;
+                state.rail_rider_wall = null;
+            }
+        }
+    }
+
+    detectCurlSnap(state, deltaTime) {
+        const snapCurlLevel = state.upgrades.snap_curl?.level || 0;
+        if (snapCurlLevel > 0) {
+            const currentDirection = Math.sign(state.stone.angularVelocity);
+            if (state.last_rotation_direction !== 0 && currentDirection !== 0 && currentDirection !== state.last_rotation_direction) {
+                // Direction changed - apply snap curl bonus
+                const curlBonus = 1 + snapCurlLevel;
+                state.stone.angularVelocity *= curlBonus;
+            }
+            state.last_rotation_direction = currentDirection;
         }
     }
 
@@ -105,7 +231,14 @@ export class Physics {
         
         state.sweepBoost.timer -= deltaTime;
         if (state.sweepBoost.timer <= 0) {
+            // frozen_broom - award bonus if not swept during boost
+            if (state.frozen_broom_boost_active && !state.frozen_broom_forfeited && state.upgrades.frozen_broom?.level > 0) {
+                state.money += state.frozen_broom_bonus || 0;
+                this.addPowerUpText(state, 0, `+$${state.frozen_broom_bonus}!`, '255, 215, 0');
+            }
             state.sweepBoost = null;
+            state.frozen_broom_boost_active = false;
+            state.frozen_broom_bonus = 0;
         }
     }
 
@@ -181,6 +314,7 @@ checkPowerUps(state, effectiveRadius) {
         }
         
         this.checkLifePowerUps(state, effectiveRadius);
+        this.checkShopPowerUps(state, effectiveRadius);
         this.checkSweepPowerUps(state, effectiveRadius);
         this.checkRotationPowerUps(state, effectiveRadius);
         this.checkSuperBoostPowerUps(state, effectiveRadius);
@@ -219,10 +353,46 @@ checkPowerUps(state, effectiveRadius) {
         }
     }
 
+    checkShopPowerUps(state, effectiveRadius) {
+        const { stone } = state;
+        const config = state.shopPowerUpConfig;
+        const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
+        
+        for (const shopPowerUp of state.shopPowerUps) {
+            if (shopPowerUp.collected) continue;
+            
+            const powerUpWorldY = shopPowerUp.scrollProgress * maxScroll;
+            const dy = Math.abs(stone.worldY - powerUpWorldY);
+            const dx = Math.abs(stone.x - shopPowerUp.x);
+            
+            const collisionDistance = config.radius + effectiveRadius;
+            
+            if (dy < collisionDistance && dx < collisionDistance) {
+                shopPowerUp.collected = true;
+                state.shopPowerUpCollected = shopPowerUp;
+                state.shopUpgradeSelection = null;
+                state.rerollCost = 1;
+                state.showBuyMenu = true;
+                state.isPaused = true;
+                state.lives++;
+                
+                this.addPowerUpText(state, shopPowerUp.x, 'BUTIK!', '255, 215, 0');
+                
+                const playArea = state.getPlayArea();
+                const screenX = playArea.left + playArea.width / 2 + shopPowerUp.x;
+                const screenY = state.screenHeight * 0.5;
+                state.triggerRingFlash(screenX, screenY, '255, 215, 0');
+            }
+        }
+    }
+
     checkSweepPowerUps(state, effectiveRadius) {
         const { stone } = state;
         const config = state.sweepPowerUpConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
+        
+        // Sweep_life upgrade - convert sweep pickups to lives
+        const sweepLifeLevel = state.upgrades.sweep_life?.level || 0;
         
         for (const sweepPowerUp of state.sweepPowerUps) {
             if (sweepPowerUp.collected) continue;
@@ -235,12 +405,30 @@ checkPowerUps(state, effectiveRadius) {
             
             if (dy < collisionDistance && dx < collisionDistance) {
                 sweepPowerUp.collected = true;
-                state.sweepBoost = {
-                    timer: config.duration
-                };
+                
+                if (sweepLifeLevel > 0) {
+                    // Sweep life upgrade - gives extra life instead of sweep
+                    state.lives++;
+                    this.addPowerUpText(state, sweepPowerUp.x, '+1 LIV!', '50, 255, 50');
+                } else {
+                    // Normal sweep boost
+                    state.sweepBoost = {
+                        timer: config.duration
+                    };
+                    
+                    // frozen_broom - reset tracking when sweep boost starts
+                    if (state.upgrades.frozen_broom?.level > 0) {
+                        state.frozen_broom_boost_active = true;
+                        const bonusAmount = state.upgrades.frozen_broom.level * 5;
+                        state.frozen_broom_bonus = bonusAmount;
+                        state.frozen_broom_forfeited = false;
+                    }
+                    
+                    this.addPowerUpText(state, sweepPowerUp.x, 'SOPA!', '50, 255, 50');
+                }
+                
                 state.sweepPowerUpCollected = sweepPowerUp;
                 state.triggerScreenShake(8, 0.15);
-                this.addPowerUpText(state, sweepPowerUp.x, 'SOPA!', '50, 255, 50');
             }
         }
     }
@@ -361,6 +549,10 @@ checkPowerUps(state, effectiveRadius) {
         const config = state.curlChaosConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
         
+        // cursed_harvest upgrade - increases negative effect
+        const cursedHarvestLevel = state.upgrades.cursed_harvest?.level || 0;
+        const effectMultiplier = 1 + cursedHarvestLevel;
+        
         for (const pickup of state.curlChaosPickups) {
             if (pickup.collected) continue;
             
@@ -372,9 +564,10 @@ checkPowerUps(state, effectiveRadius) {
             
             if (dy < collisionDistance && dx < collisionDistance) {
                 pickup.collected = true;
-                state.curlChaosStrength += 0.1;
+                const chaosIncrease = 0.1 * effectMultiplier;
+                state.curlChaosStrength += chaosIncrease;
                 state.curlChaosCollected = pickup;
-                this.addPowerUpText(state, pickup.x, '+CURL!', '255, 50, 50');
+                this.addPowerUpText(state, pickup.x, `+CURL! x${effectMultiplier}`, '255, 50, 50');
                 state.triggerRingFlash(
                     state.getPlayArea().left + state.getPlayArea().width / 2 + pickup.x,
                     state.screenHeight * 0.5,
@@ -389,6 +582,10 @@ checkPowerUps(state, effectiveRadius) {
         const config = state.sizeShrinkConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
         
+        // cursed_harvest upgrade - increases negative effect
+        const cursedHarvestLevel = state.upgrades.cursed_harvest?.level || 0;
+        const effectMultiplier = 1 + cursedHarvestLevel;
+        
         for (const pickup of state.sizeShrinkPickups) {
             if (pickup.collected) continue;
             
@@ -400,9 +597,10 @@ checkPowerUps(state, effectiveRadius) {
             
             if (dy < collisionDistance && dx < collisionDistance) {
                 pickup.collected = true;
-                state.sizeShrinkPenalty += 3;
+                const shrinkAmount = 3 * effectMultiplier;
+                state.sizeShrinkPenalty += shrinkAmount;
                 state.sizeShrinkCollected = pickup;
-                this.addPowerUpText(state, pickup.x, '-STORLEK!', '200, 50, 255');
+                this.addPowerUpText(state, pickup.x, `-STORLEK! x${effectMultiplier}`, '200, 50, 255');
                 state.triggerRingFlash(
                     state.getPlayArea().left + state.getPlayArea().width / 2 + pickup.x,
                     state.screenHeight * 0.5,
@@ -416,18 +614,66 @@ checkPowerUps(state, effectiveRadius) {
         const { stone } = state;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
         
+        // Basic magnetism upgrade
+        const magnetismLevel = state.upgrades.magnetism?.level || 0;
+        const sizeBonusFactor = 1 + ((state.upgrades.size?.level || 0) * 0.2);
+        const baseMagnetismRadius = magnetismLevel > 0 ? (100 + magnetismLevel * 100) * sizeBonusFactor : 0;
+        
+        // Spin_win upgrade - magnetism scales with rotation
+        const spinWinLevel = state.upgrades.spin_win?.level || 0;
+        const rotationBonus = spinWinLevel > 0 ? Math.abs(stone.angularVelocity) * spinWinLevel * 10 : 0;
+        const magnetismRadius = baseMagnetismRadius + rotationBonus;
+        
+        // Event_horizon upgrade - passive attraction for all pickups
+        const eventHorizonLevel = state.upgrades.event_horizon?.level || 0;
+        const eventHorizonRadius = eventHorizonLevel > 0 ? 50 + eventHorizonLevel * 75 : 0;
+        
+        // Combined magnetism strength
+        const combinedMagnetism = magnetismLevel > 0 ? (0.05 + magnetismLevel * 0.05) : 0;
+        const eventHorizonStrength = eventHorizonLevel > 0 ? (0.02 + eventHorizonLevel * 0.02) : 0;
+
         for (const orb of state.scoringOrbs) {
             if (orb.collected) continue;
             
             const orbWorldY = orb.scrollProgress * maxScroll;
-            const dy = Math.abs(stone.worldY - orbWorldY);
-            const dx = Math.abs(stone.x - orb.x);
+            const dy = stone.worldY - orbWorldY;
+            const dx = stone.x - orb.x;
+            const dist = Math.sqrt(dx * dx + dy * dy);
             
             const orbRadius = this.getEffectiveOrbRadius(state, orb.type);
             const collisionDistance = orbRadius + effectiveRadius;
             
-            if (dy < collisionDistance && dx < collisionDistance) {
+            if (dist < collisionDistance) {
                 this.collectScoringOrb(state, orb);
+            } else {
+                // Apply magnetism
+                let effectiveRadius2 = magnetismRadius;
+                let strength = combinedMagnetism;
+                
+                // Spin_win uses rotation-scaled magnetism
+                if (spinWinLevel > 0 && dist < magnetismRadius) {
+                    strength = combinedMagnetism * (1 + Math.abs(stone.angularVelocity) * 0.1);
+                }
+                
+                // Coin speed boost increases yellow orb magnetism
+                if (orb.type === 'yellow' && state.upgrades.coinSpeedBoost?.level > 0) {
+                    strength *= 2;
+                }
+                
+                if (dist < effectiveRadius2 && strength > 0) {
+                    const pullX = (dx / dist) * strength * 60;
+                    const pullY = (dy / dist) * strength * 60;
+                    orb.x += pullX;
+                    orb.scrollProgress += pullY / maxScroll;
+                }
+                
+                // Event horizon passive attraction
+                if (eventHorizonLevel > 0 && dist < eventHorizonRadius) {
+                    const pullX = (dx / dist) * eventHorizonStrength * 60;
+                    const pullY = (dy / dist) * eventHorizonStrength * 60;
+                    orb.x += pullX;
+                    orb.scrollProgress += pullY / maxScroll;
+                }
             }
         }
     }
@@ -435,9 +681,78 @@ checkPowerUps(state, effectiveRadius) {
     collectScoringOrb(state, orb) {
         orb.collected = true;
         
+        // Track items collected for spin_win penalty
+        state.items_collected_this_throw = (state.items_collected_this_throw || 0) + 1;
+        
         const now = Date.now();
         const config = state.scoringOrbConfig[orb.type];
         
+        // Gold_grift upgrade - convert orbs to money
+        const goldGriftLevel = state.upgrades.gold_grift?.level || 0;
+        const conversionRate = 0.8 + goldGriftLevel * 0.1;
+        
+        if (goldGriftLevel > 0 && Math.random() < conversionRate && orb.type !== 'yellow') {
+            // Convert to money instead of score
+            const moneyValue = orb.type === 'purple' ? 3 : 1;
+            state.money += moneyValue;
+            
+            const playArea = state.getPlayArea();
+            const screenX = playArea.left + playArea.width / 2 + orb.x;
+            const screenY = state.screenHeight * 0.5;
+            
+            state.scoreAnimations.push({
+                x: screenX,
+                y: screenY,
+                text: `$${moneyValue}`,
+                startTime: now,
+                duration: 800,
+                scale: 1.5,
+                isCombo: false,
+                isMoney: true
+            });
+            
+            state.scoringOrbCollected = orb;
+            state.triggerRingFlash(screenX, screenY, '255, 215, 0');
+            return;
+        }
+
+        // Explosive Collection Upgrade
+        const explosiveLevel = state.upgrades.explosiveCollection?.level || 0;
+        if (explosiveLevel > 0 && orb.type === 'purple') {
+            // Synergy: Magnetism increases explosion radius
+            const magBonus = (state.upgrades.magnetism?.level || 0) * 50;
+            const explosionRadius = 150 + explosiveLevel * 100 + magBonus;
+            
+            state.triggerScreenShake(10, 0.2);
+            const playArea = state.getPlayArea();
+            state.triggerRingFlash(playArea.left + playArea.width / 2 + orb.x, state.screenHeight * 0.5, '255, 255, 255');
+            
+            const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
+            const orbWorldY = orb.scrollProgress * maxScroll;
+
+            for (const otherOrb of state.scoringOrbs) {
+                if (otherOrb.collected) continue;
+                const otherWorldY = otherOrb.scrollProgress * maxScroll;
+                const dx = orb.x - otherOrb.x;
+                const dy = orbWorldY - otherWorldY;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                if (dist < explosionRadius) {
+                    this.collectScoringOrb(state, otherOrb);
+                }
+            }
+        }
+
+        // Chain Reaction Upgrade
+        const chainLevel = state.upgrades.chainReaction?.level || 0;
+        if (chainLevel > 0 && Math.random() < (0.05 + chainLevel * 0.1)) {
+            const uncollected = state.scoringOrbs.filter(o => !o.collected);
+            if (uncollected.length > 0) {
+                const randomOrb = uncollected[Math.floor(Math.random() * uncollected.length)];
+                this.collectScoringOrb(state, randomOrb);
+            }
+        }
+
         // Yellow orbs give money only
         if (orb.type === 'yellow') {
             state.money += config.money || 1;
@@ -448,7 +763,7 @@ checkPowerUps(state, effectiveRadius) {
                 const speed = Math.sqrt(stone.vx ** 2 + stone.vy ** 2);
                 const maxVel = this.getMaxVelocity(state);
                 if (speed > 0.001) {
-                    const boost = state.powerUpConfig.speedBoost * 0.5; // Half the power of a regular arrow
+                    const boost = state.powerUpConfig.speedBoost * 0.5;
                     stone.vx += (stone.vx / speed) * boost;
                     stone.vy += (stone.vy / speed) * boost;
                     
@@ -483,7 +798,7 @@ checkPowerUps(state, effectiveRadius) {
         
         const timeSinceLastOrb = now - state.lastOrbTime;
         
-        // Combo system: increase multiplier if collected within 500ms
+        // Combo system
         if (timeSinceLastOrb < state.comboTimeout && state.lastOrbTime > 0) {
             state.comboMultiplier = Math.min(state.comboMultiplier + 1, 100);
         } else {
@@ -492,13 +807,16 @@ checkPowerUps(state, effectiveRadius) {
         
         state.lastOrbTime = now;
         
+        // Tar launch multiplier for orb value
+        const tarMultiplier = state.tarBoostActive ? (1 + (state.upgrades.tar_launch?.level || 0)) : 1;
+        
         const loopMultiplier = state.loopCount || 1;
-        const basePoints = config.points * loopMultiplier;
+        const basePoints = config.points * loopMultiplier * tarMultiplier;
         const multipliedPoints = basePoints * state.comboMultiplier;
         state.score += multipliedPoints;
         state.recentScore += multipliedPoints;
         
-        // Create score animation
+        // Score animation
         const playArea = state.getPlayArea();
         const screenX = playArea.left + playArea.width / 2 + orb.x;
         const screenY = state.screenHeight * 0.5;
@@ -575,14 +893,184 @@ checkPowerUps(state, effectiveRadius) {
         const leftBound = effectiveRadius - playArea.width / 2;
         const rightBound = playArea.width / 2 - effectiveRadius;
         
+        const bounceUpgrade = state.upgrades.bouncyWalls?.level || 0;
+        const wallSpeedLevel = state.upgrades.wall_speed?.level || 0;
+        const wallPingCoinLevel = state.upgrades.wall_ping_coin?.level || 0;
+        const frictionForgeLevel = state.upgrades.friction_forge?.level || 0;
+        const spinToSpeedLevel = state.upgrades.spin_to_speed?.level || 0;
+        const echoWoodsLevel = state.upgrades.echo_woods?.level || 0;
+        const railRiderLevel = state.upgrades.rail_rider?.level || 0;
+        const frictionLevel = state.upgrades.friction?.level || 0;
+        
+        // Glatt Misär - wall bounce speed penalty
+        const frictionBouncePenalty = frictionLevel > 0 ? (1 - frictionLevel * 0.1) : 1;
+        
+        let bounceEnergy = this.wallBounceEnergy;
+        
+        // BouncyWalls upgrade (legacy)
+        if (bounceUpgrade >= 1) {
+            bounceEnergy = 1.0;
+        }
+        if (bounceUpgrade >= 2) {
+            bounceEnergy = 1.15;
+        }
+        
+        // Wall_speed upgrade
+        if (wallSpeedLevel > 0) {
+            bounceEnergy = 1.0 + wallSpeedLevel * 0.1;
+        }
+        
+        // Apply Glatt Misär penalty to bounce energy
+        bounceEnergy *= frictionBouncePenalty;
+
+        // Check if rail_rider can activate (cooldown ready and upgrade owned)
+        const canRailRide = railRiderLevel > 0 && state.rail_rider_cooldown <= 0 && !state.rail_rider_active;
+        
         if (stone.x < leftBound) {
             stone.x = leftBound;
-            stone.vx = -stone.vx * this.wallBounceEnergy;
-            stone.angularVelocity *= 0.5;
+            
+            // Rail_rider: glide along wall instead of bouncing
+            if (canRailRide) {
+                state.rail_rider_active = true;
+                state.rail_rider_timer = 2 + (railRiderLevel - 1);
+                state.rail_rider_cooldown = 10;
+                state.rail_rider_wall = 'left';
+                stone.vx = 0;
+                this.addPowerUpText(state, stone.x, 'TIMMERMANNENS GREPP!', '100, 200, 255');
+            } else {
+                stone.vx = -stone.vx * bounceEnergy;
+                stone.angularVelocity *= 0.5;
+            }
         } else if (stone.x > rightBound) {
             stone.x = rightBound;
-            stone.vx = -stone.vx * this.wallBounceEnergy;
-            stone.angularVelocity *= 0.5;
+            
+            // Rail_rider: glide along wall instead of bouncing
+            if (canRailRide) {
+                state.rail_rider_active = true;
+                state.rail_rider_timer = 2 + (railRiderLevel - 1);
+                state.rail_rider_cooldown = 10;
+                state.rail_rider_wall = 'right';
+                stone.vx = 0;
+                this.addPowerUpText(state, stone.x, 'TIMMERMANNENS GREPP!', '100, 200, 255');
+            } else {
+                stone.vx = -stone.vx * bounceEnergy;
+                stone.angularVelocity *= 0.5;
+            }
+        }
+        
+        // Keep stone on wall during rail_rider glide
+        if (state.rail_rider_active) {
+            if (state.rail_rider_wall === 'left') {
+                stone.x = leftBound;
+            } else if (state.rail_rider_wall === 'right') {
+                stone.x = rightBound;
+            }
+            // No x-velocity during glide, stone continues forward with vy only
+            stone.vx = 0;
+        }
+        
+        const bounced = !state.rail_rider_active && (stone.x <= leftBound || stone.x >= rightBound);
+        
+        if (bounced) {
+            // Wall_ping_coin upgrade - earn money on bounces
+            if (wallPingCoinLevel > 0) {
+                state.wall_bounces_since_coin = (state.wall_bounces_since_coin || 0) + 1;
+                const coinThreshold = wallPingCoinLevel === 1 ? 10 : (wallPingCoinLevel === 2 ? 8 : 6);
+                
+                if (state.wall_bounces_since_coin >= coinThreshold) {
+                    state.money += 1;
+                    state.wall_bounces_since_coin = 0;
+                    this.addPowerUpText(state, stone.x, `+$1`, '255, 215, 0');
+                }
+            }
+            
+            // Friction_forge upgrade - permanent speed bonus but current speed penalty
+            if (frictionForgeLevel > 0) {
+                const permBonus = frictionForgeLevel * 0.03;
+                state.permanentSpeedBonus = (state.permanentSpeedBonus || 0) + permBonus;
+                
+                const currentPenalty = 0.2 + frictionForgeLevel * 0.05;
+                const speed = Math.sqrt(stone.vx ** 2 + stone.vy ** 2);
+                if (speed > 0.1) {
+                    stone.vx *= (1 - currentPenalty);
+                    stone.vy *= (1 - currentPenalty);
+                }
+            }
+            
+            // Spin_to_speed upgrade - convert spin to velocity
+            if (spinToSpeedLevel > 0) {
+                const conversionRate = 0.3 + spinToSpeedLevel * 0.25;
+                const spinMagnitude = Math.abs(stone.angularVelocity);
+                const speed = Math.sqrt(stone.vx ** 2 + stone.vy ** 2);
+                
+                if (spinMagnitude > 0.1 && speed > 0.1) {
+                    const boost = spinMagnitude * conversionRate;
+                    stone.vx += (stone.vx / speed) * boost;
+                    stone.vy += (stone.vy / speed) * boost;
+                    
+                    // Clear or reduce spin based on tier
+                    if (spinToSpeedLevel < 3) {
+                        stone.angularVelocity = 0;
+                    } else {
+                        stone.angularVelocity *= 0.3;
+                    }
+                }
+            }
+            
+            // Echo_woods upgrade - spawn speed pickups on wall hit
+            if (echoWoodsLevel > 0) {
+                if (Math.random() < 0.5 + echoWoodsLevel * 0.15) {
+                    this.spawnEchoPickup(state, stone.x);
+                }
+            }
+            
+            // Wall_speed random direction penalty
+            if (wallSpeedLevel > 0 && wallSpeedLevel < 3) {
+                const randomAngle = (Math.random() - 0.5) * (0.3 - wallSpeedLevel * 0.1);
+                const speed = Math.sqrt(stone.vx ** 2 + stone.vy ** 2);
+                const angle = Math.atan2(stone.vx, stone.vy) + randomAngle;
+                stone.vx = Math.sin(angle) * speed;
+                stone.vy = Math.cos(angle) * speed;
+            }
+            
+            // Visual effects
+            if (bounceUpgrade >= 2 || wallSpeedLevel > 0) {
+                state.triggerScreenShake(5, 0.1);
+                state.triggerRingFlash(
+                    stone.x < leftBound ? playArea.left : playArea.right,
+                    state.screenHeight * 0.5,
+                    '255, 215, 0'
+                );
+            }
+        }
+    }
+    
+    spawnEchoPickup(state, x) {
+        const echoWoodsLevel = state.upgrades.echo_woods?.level || 0;
+        const playArea = state.getPlayArea();
+        const pickupRadius = 25;
+        
+        const leftBound = pickupRadius - playArea.width / 2;
+        const rightBound = playArea.width / 2 - pickupRadius;
+        
+        const randomOffset = (Math.random() - 0.5) * 50;
+        const clampedX = Math.max(leftBound, Math.min(rightBound, x + randomOffset));
+        
+        const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
+        const forwardOffset = 500 / maxScroll;
+        
+        const pickup = {
+            id: `echo-${Date.now()}`,
+            x: clampedX,
+            scrollProgress: Math.max(0, state.scrollProgress - forwardOffset),
+            collected: false,
+            type: echoWoodsLevel >= 3 ? 'super' : (echoWoodsLevel >= 2 ? 'super' : 'speed')
+        };
+        
+        if (pickup.type === 'super') {
+            state.superBoostPowerUps.push(pickup);
+        } else {
+            state.powerUps.push(pickup);
         }
     }
 
@@ -649,10 +1137,18 @@ checkPowerUps(state, effectiveRadius) {
                         setTimeout(() => {
                             loopOverlay.classList.remove('active');
                             state.isLoopTransitioning = false;
+                            state.shopUpgradeSelection = null;
+                            state.rerollCost = 1;
+                            state.showBuyMenu = true;
+                            state.isPaused = true;
                         }, 1250);
                     } else {
                         performReset();
                         state.isLoopTransitioning = false;
+                        state.shopUpgradeSelection = null;
+                        state.rerollCost = 1;
+                        state.showBuyMenu = true;
+                        state.isPaused = true;
                     }
                 }
             }
@@ -666,8 +1162,25 @@ checkPowerUps(state, effectiveRadius) {
         
         state.lives--;
         
+        // Reset throw-specific counters
+        state.items_collected_this_throw = 0;
+        state.wall_bounces_since_coin = state.wall_bounces_since_coin || 0;
+        
+        // Glass cannon launch power bonus
+        const glassCannonLevel = state.upgrades.glass_cannon?.level || 0;
+        let launchMultiplier = 1 + (glassCannonLevel * 0.5);
+        
+        // Tar launch boost (one-time use per throw)
+        const tarLevel = state.upgrades.tar_launch?.level || 0;
+        if (tarLevel > 0 && !state.tar_launchUsed) {
+            launchMultiplier += (1 + tarLevel);
+            state.tarBoostActive = true;
+            state.tarBoostTimer = 10 + tarLevel * 5;
+            state.tar_launchUsed = true;
+        }
+        
         const maxVel = this.getMaxVelocity(state);
-        const speed = (flickPower / 100) * maxVel;
+        const speed = (flickPower / 100) * maxVel * launchMultiplier;
         
         stone.vx = Math.sin(state.aimAngle) * speed;
         stone.vy = Math.cos(state.aimAngle) * speed;
@@ -692,6 +1205,15 @@ checkPowerUps(state, effectiveRadius) {
         state.input.stoneStartX = state.stone.x;
         state.input.stoneStartYPx = state.stoneYPx;
         state.input.flickHistory = [];
+        
+        // Reset throw-specific upgrades
+        state.tar_launchUsed = false;
+        state.tarBoostActive = false;
+        state.tarBoostTimer = 0;
+        state.items_collected_this_throw = 0;
+        
+        // Friction_forge permanent bonus carries across throws but resets on gameover
+        // (permanentSpeedBonus resets in state.resetGame())
     }
 
     applySweepBoost(state, intensity) {
@@ -701,8 +1223,17 @@ checkPowerUps(state, effectiveRadius) {
         const currentSpeed = Math.sqrt(stone.vx * stone.vx + stone.vy * stone.vy);
         const maxVel = this.getMaxVelocity(state);
         
+        // frozen_broom - mark as forfeited if sweeping during frozen_broom boost
+        if (state.frozen_broom_boost_active && state.upgrades.frozen_broom?.level > 0) {
+            state.frozen_broom_forfeited = true;
+        }
+        
+        // sweep_life upgrade - reduce sweep effectiveness
+        const sweepLifeLevel = state.upgrades.sweep_life?.level || 0;
+        const effectivenessMultiplier = 1 - (sweepLifeLevel * 0.25);
+        
         if (currentSpeed > this.stopThreshold) {
-            const boost = this.sweepBoost * intensity;
+            const boost = this.sweepBoost * intensity * effectivenessMultiplier;
             stone.vx *= (1 + boost * 0.01);
             stone.vy *= (1 + boost * 0.01);
             stone.angularVelocity *= 0.98;

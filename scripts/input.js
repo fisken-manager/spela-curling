@@ -62,6 +62,23 @@ bindEvents() {
             const result = this.cardMenu.handleClick(pointerX, pointerY);
             if (result && result.action === 'continue') {
                 this.state.showBuyMenu = false;
+                this.state.isPaused = false;
+                this.state.phase = 'resting';
+                this.state.stone.x = 0;
+                this.state.stone.vx = 0;
+                this.state.stone.vy = 0;
+                this.state.stone.angularVelocity = 0;
+                this.state.stone.rotation = 0;
+                this.state.stone.worldY = 0;
+                this.state.scrollProgress = 0;
+                this.state.stoneYPx = this.state.screenHeight - this.state.restOffsetPx;
+                this.state.transitionProgress = 0;
+                this.state.inScrollZone = false;
+                this.state.input.isDragging = false;
+                this.state.input.isSnapping = false;
+                this.state.input.snapBackProgress = 0;
+                this.state.input.flickHistory = [];
+                this.state.resetForNewThrow();
             }
             return;
         }
