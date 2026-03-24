@@ -43,7 +43,7 @@ export class ScrollController {
         if (!this.audio || !this.audio.audioBuffer) return;
         
         // Calculate velocity for playback rate
-        const isMoving = state.phase === 'moving' || state.phase === 'returning';
+        const isMoving = (state.phase === 'moving' || state.phase === 'returning') && !state.showBuyMenu;
         const velocity = isMoving 
             ? Math.sqrt(state.stone.vx ** 2 + state.stone.vy ** 2)
             : 0;

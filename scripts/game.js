@@ -93,7 +93,7 @@ function setupControls() {
 
     const reInitPowerupsBtn = document.getElementById('re-init-powerups');
     if (reInitPowerupsBtn) {
-        const itemTypes = ['powerup', 'life', 'sweep', 'rotation', 'super', 'growth', 'curlChaos', 'sizeShrink'];
+        const itemTypes = ['powerup', 'life', 'shop', 'sweep', 'rotation', 'super', 'growth', 'curlChaos', 'sizeShrink'];
         
         reInitPowerupsBtn.addEventListener('click', () => {
             state.debugGenTuning = {};
@@ -180,7 +180,6 @@ function setupGameOverUI() {
             state.lives = 1;
             state.gameOver = false;
             state.phase = 'resting';
-            state.showBuyMenu = true;
             gameOverOverlay.classList.add('hidden');
         }
     });

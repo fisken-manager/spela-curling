@@ -361,8 +361,76 @@ addPowerUpParticles(state, powerUp) {
         }
         
         if (state.lifePowerUpCollected) {
-            this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
+this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
             state.lifePowerUpCollected = null;
+        }
+    }
+
+    drawShopPowerUps(state) {
+        const playArea = state.getPlayArea();
+        const config = state.shopPowerUpConfig;
+        const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
+        
+        for (const shopPowerUp of state.shopPowerUps) {
+            if (shopPowerUp.collected) continue;
+            
+            const powerUpWorldY = shopPowerUp.scrollProgress * maxScroll;
+            const worldDY = powerUpWorldY - state.stone.worldY;
+            const screenY = state.screenHeight * 0.5 - worldDY;
+            const screenX = playArea.left + playArea.width / 2 + shopPowerUp.x;
+            
+            if (screenY < -config.radius || screenY > state.screenHeight + config.radius) continue;
+            
+            this.ctx.save();
+            this.ctx.beginPath();
+            this.ctx.arc(screenX, screenY, config.radius, 0, Math.PI * 2);
+            
+            const gradient = this.ctx.createRadialGradient(
+                screenX, screenY, 0,
+                screenX, screenY, config.radius
+            );
+            gradient.addColorStop(0, 'rgba(255, 215, 0, 1)');
+            gradient.addColorStop(0.7, 'rgba(218, 165, 32, 0.9)');
+            gradient.addColorStop(1, 'rgba(184, 134, 11, 0.4)');
+            
+            this.ctx.fillStyle = gradient;
+            this.ctx.fill();
+            
+            this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+            this.ctx.lineWidth = 2;
+            this.ctx.stroke();
+            
+            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            this.ctx.font = 'bold 16px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            this.ctx.fillText('🐟', screenX, screenY);
+            
+            this.ctx.restore();
+        }
+        
+        if (state.shopPowerUpCollected) {
+            this.addShopPowerUpParticles(state, state.shopPowerUpCollected);
+            state.shopPowerUpCollected = null;
+        }
+    }
+
+    addShopPowerUpParticles(state, shopPowerUp) {
+        const playArea = state.getPlayArea();
+        const screenX = playArea.left + playArea.width / 2 + shopPowerUp.x;
+        const screenY = state.screenHeight * 0.5;
+        
+        for (let i = 0; i < 25; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 10 + 4;
+            this.addParticle(
+                screenX,
+                screenY,
+                Math.cos(angle) * speed,
+                Math.sin(angle) * speed,
+                '255, 215, 0',
+                1.0
+            );
         }
     }
 
@@ -1229,6 +1297,43 @@ drawScoreText(state) {
         this.ctx.restore();
     }
 
+    drawMagnetism(state) {
+        const magnetismLevel = state.upgrades.magnetism?.level || 0;
+        if (magnetismLevel === 0) return;
+
+        const stonePos = this.getStoneScreenPosition(state);
+        const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
+        const playArea = state.getPlayArea();
+        
+        const sizeBonusFactor = 1 + (state.upgrades.stoneSize.level * 0.2);
+        const magnetismRadius = (100 + magnetismLevel * 100) * sizeBonusFactor;
+
+        this.ctx.save();
+        for (const orb of state.scoringOrbs) {
+            if (orb.collected) continue;
+
+            const orbWorldY = orb.scrollProgress * maxScroll;
+            const worldDY = orbWorldY - state.stone.worldY;
+            const screenY = state.screenHeight * 0.5 - worldDY;
+            const screenX = playArea.left + playArea.width / 2 + orb.x;
+
+            const dx = screenX - stonePos.x;
+            const dy = screenY - stonePos.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist < magnetismRadius) {
+                const alpha = (1 - dist / magnetismRadius) * 0.4 * (0.7 + Math.sin(Date.now() / 100) * 0.3);
+                this.ctx.beginPath();
+                this.ctx.moveTo(stonePos.x, stonePos.y);
+                this.ctx.lineTo(screenX, screenY);
+                this.ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
+                this.ctx.lineWidth = 1;
+                this.ctx.stroke();
+            }
+        }
+        this.ctx.restore();
+    }
+
     render(state, deltaTime = 0.016) {
         // Check game over status
         const overlay = document.getElementById('game-over');
@@ -1252,6 +1357,7 @@ drawScoreText(state) {
         this.drawSweepZone(state);
         this.drawPowerUps(state);
         this.drawLifePowerUps(state);
+        this.drawShopPowerUps(state);
         this.drawSweepPowerUps(state);
         this.drawRotationPowerUps(state);
         this.drawSuperBoostPowerUps(state);
@@ -1259,6 +1365,7 @@ drawScoreText(state) {
         this.drawCurlChaosPickups(state);
         this.drawSizeShrinkPickups(state);
         this.drawScoringOrbs(state);
+        this.drawMagnetism(state);
         this.drawStone(state);
         this.drawSopaText(state);
         this.drawSuperBoostImageEffect(state);

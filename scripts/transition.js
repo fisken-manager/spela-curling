@@ -59,6 +59,7 @@ export class TransitionController {
             state.inScrollZone = false;
             state.powerUpCollected = null;
             state.lifePowerUpCollected = null;
+            state.shopPowerUpCollected = null;
             state.resetForNewThrow();
             
             if (state.lives <= 0) {
@@ -66,7 +67,6 @@ export class TransitionController {
                 state.phase = 'returning';
                 state.stoneYPx = state.screenHeight - state.restOffsetPx;
             } else {
-                state.showBuyMenu = true;
                 state.phase = 'resting';
                 state.stoneYPx = state.screenHeight - state.restOffsetPx;
             }

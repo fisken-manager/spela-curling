@@ -84,6 +84,13 @@ export class GameState {
             radius: 25
         };
         
+        // Shop power-ups
+        this.shopPowerUps = [];
+        this.shopPowerUpCollected = null;
+        this.shopPowerUpConfig = {
+            radius: 28
+        };
+        
         // Sweep power-ups
         this.sweepPowerUps = [];
         this.sweepPowerUpConfig = {
@@ -114,7 +121,7 @@ export class GameState {
         
         // Scoring system
         this.score = 0;
-        this.money = 0;
+        this.money = 5;
         this.gameOver = false;
         this.scoringOrbs = [];
         this.scoringOrbConfig = {
@@ -134,16 +141,65 @@ export class GameState {
 
         // Buy menu
         this.showBuyMenu = false;
+        this.shopUpgradeSelection = null;
+        this.rerollCost = 1;
 
         // Upgrades (all reset on new game)
         this.upgrades = {
+            // Basic
+            speed: { level: 0 },
+            friction: { level: 0 },
+            size: { level: 0 },
+            magnetism: { level: 0 },
+            // Corrupted
+            spin_win: { level: 0 },
+            gold_grift: { level: 0 },
+            glass_cannon: { level: 0 },
+            wall_speed: { level: 0 },
+            friction_forge: { level: 0 },
+            spin_to_speed: { level: 0 },
+            // Technical
+            rail_rider: { level: 0 },
+            echo_woods: { level: 0 },
+            event_horizon: { level: 0 },
+            snap_curl: { level: 0 },
+            wall_ping_coin: { level: 0 },
+            double_shops: { level: 0 },
+            // High Risk
+            tar_launch: { level: 0 },
+            sweep_life: { level: 0 },
+            frozen_broom: { level: 0 },
+            cursed_harvest: { level: 0 },
+            // Technical - New
+            needle_eye: { level: 0 },
+            // Deprecated (kept for saves)
             maxVelocity: { level: 0 },
             frictionReduction: { level: 0 },
             stoneSize: { level: 0 },
             randomCurl: { level: 0 },
             noNegativePickups: { level: 0 },
             coinSpeedBoost: { level: 0 },
+            explosiveCollection: { level: 0 },
+            bouncyWalls: { level: 0 },
+            chainReaction: { level: 0 },
         };
+
+        // Upgrade effect tracking
+        this.permanentSpeedBonus = 0;
+        this.tar_launchUsed = false;
+        this.tarBoostActive = false;
+        this.tarBoostTimer = 0;
+        this.items_collected_this_throw = 0;
+        this.wall_bounces_since_coin = 0;
+        this.last_rotation_direction = 0;
+        this.rail_rider_cooldown = 0;
+        this.rail_rider_active = false;
+        this.rail_rider_timer = 0;
+        this.rail_rider_wall = null;
+        // frozen_broom tracking
+        this.frozen_broom_boost_active = false;
+        this.frozen_broom_bonus = 0;
+        this.frozen_broom_forfeited = false;
 
         // Coin speed boost
         this.coinSpeedBoostActive = false;
@@ -173,12 +229,12 @@ export class GameState {
         };
     }
     
-    generateItems(type, baseSeed, pixelSpacing, xRange) {
+    generateItems(type, baseSeed, pixelSpacing, xRange, minPixelOffset = 0) {
         const items = [];
         const maxScroll = Math.max(1, this.pageHeight - this.screenHeight);
         if (maxScroll <= 0 || pixelSpacing <= 0) return items;
         
-        const startOffsetPx = 10;
+        const startOffsetPx = Math.max(10, minPixelOffset);
         const availableScroll = Math.max(0, maxScroll - startOffsetPx);
         let targetCount = Math.floor(availableScroll / pixelSpacing);
         
@@ -269,8 +325,9 @@ export class GameState {
         const pickupTypes = [
             { items: this.powerUps, xRange: 160 },
             { items: this.lifePowerUps, xRange: 100 },
+            { items: this.shopPowerUps, xRange: 100 },
             { items: this.sweepPowerUps, xRange: 120 },
-            { items: this.rotationPowerUps, xRange: 400 },
+            { items: this.rotationPowerUps, xRange: 370 },
             { items: this.superBoostPowerUps, xRange: 100 },
             { items: this.growthPowerUps, xRange: 100 },
             // Only include negative pickups if noNegativePickups is NOT purchased
@@ -311,20 +368,38 @@ export class GameState {
         }
     }
 
-    initPowerUps() {
+initPowerUps() {
         const tuning = this.debugGenTuning || {};
-        const powerup = tuning.powerup ?? 1400;
+        let powerup = tuning.powerup ?? 1400;
         const life = tuning.life ?? 40000;
+        let shop = tuning.shop ?? 80000;
         const rotation = tuning.rotation ?? 3000;
         const growth = tuning.growth ?? 8000;
         const curlChaos = tuning.curlChaos ?? 13500;
         const sizeShrink = tuning.sizeShrink ?? 19000;
 
-        this.powerUps = this.generateItems('powerup', 100, powerup, 160);
-this.lifePowerUps = this.generateItems('life', 200, life, 100);
+        // glass_cannon upgrade reduces speed pickups
+        const glassCannonLevel = this.upgrades.glass_cannon?.level || 0;
+        const speedReduction = glassCannonLevel > 0 ? 1 / (1.25 + glassCannonLevel * 0.25) : 1;
+        powerup = Math.floor(powerup / speedReduction);
+
+        // double_shops upgrade increases shop spawns
+        const doubleShopsLevel = this.upgrades.double_shops?.level || 0;
+        const shopMultiplier = doubleShopsLevel > 0 ? (1 + doubleShopsLevel) : 1;
+        shop = Math.floor(shop / shopMultiplier);
+
+        // spin_to_speed - no speed pickups
+        if (this.upgrades.spin_to_speed?.level > 0) {
+            this.powerUps = [];
+        } else {
+            this.powerUps = this.generateItems('powerup', 100, powerup, 160);
+        }
+        this.lifePowerUps = this.generateItems('life', 200, life, 100);
+        this.shopPowerUps = this.generateItems('shop', 900, shop, 100, 5000);
         this.rotationPowerUps = this.generateItems('rotation', 400, rotation, 400);
         this.superBoostPowerUps = [];
         this.growthPowerUps = this.generateItems('growth', 600, growth, 100);
+        
         if (this.upgrades.noNegativePickups?.level > 0) {
             this.curlChaosPickups = [];
             this.sizeShrinkPickups = [];
@@ -525,7 +600,7 @@ const progressOffset = random(yellowSeed) * 5 * progressOffsetScale;
         this.sweepBoost = null;
         this.growthBoost = null;
         this.score = 0;
-        this.money = 0;
+        this.money = 5;
         this.gameOver = false;
         this.comboMultiplier = 1;
         this.lastOrbTime = 0;
@@ -538,6 +613,8 @@ const progressOffset = random(yellowSeed) * 5 * progressOffsetScale;
 
         // Reset buy menu
         this.showBuyMenu = false;
+        this.shopUpgradeSelection = null;
+        this.rerollCost = 1;
 
         // Reset upgrades
         for (const key of Object.keys(this.upgrades)) {
@@ -547,6 +624,22 @@ const progressOffset = random(yellowSeed) * 5 * progressOffsetScale;
         // Reset powerdown effects
         this.curlChaosStrength = 0;
         this.sizeShrinkPenalty = 0;
+
+        // Reset upgrade tracking
+        this.permanentSpeedBonus = 0;
+        this.tar_launchUsed = false;
+        this.tarBoostActive = false;
+        this.tarBoostTimer = 0;
+        this.items_collected_this_throw = 0;
+        this.wall_bounces_since_coin = 0;
+        this.last_rotation_direction = 0;
+        this.rail_rider_cooldown = 0;
+        this.rail_rider_active = false;
+        this.rail_rider_timer = 0;
+        this.rail_rider_wall = null;
+        this.frozen_broom_boost_active = false;
+        this.frozen_broom_bonus = 0;
+        this.frozen_broom_forfeited = false;
 
         this.phase = 'resting';
         this.stone.x = 0;
