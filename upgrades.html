@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uppgraderingskatalog - Spela Curling</title>
+    <link rel="icon" href="assets/waifu-curl.jpg">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Work+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a12;
+            color: #e0e0e0;
+            font-family: 'Work Sans', sans-serif;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-family: 'Space Mono', monospace;
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 10px;
+            color: #ffd700;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #64748b;
+            font-style: italic;
+            margin-bottom: 40px;
+        }
+
+        .category {
+            margin-bottom: 50px;
+        }
+
+        .category-title {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.5rem;
+            color: #94a3b8;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #2a2a3a;
+        }
+
+        .category-desc {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: linear-gradient(135deg, #1a1a28 0%, #2a2a3a 100%);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.1);
+            border-color: rgba(255, 215, 0, 0.3);
+        }
+
+        .card-image {
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+            background: #1a1a28;
+        }
+
+        .card-content {
+            padding: 15px;
+        }
+
+        .card-name {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.1rem;
+            color: #ffd700;
+            margin-bottom: 5px;
+        }
+
+        .card-id {
+            font-size: 0.75rem;
+            color: #4a5568;
+            margin-bottom: 10px;
+            font-family: 'Space Mono', monospace;
+        }
+
+        .card-proverb {
+            font-style: italic;
+            color: #94a3b8;
+            font-size: 0.85rem;
+            margin-bottom: 15px;
+            padding-left: 10px;
+            border-left: 2px solid #3a3a4a;
+        }
+
+        .tiers {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .tier {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .tier:hover {
+            background: rgba(255, 215, 0, 0.15);
+            transform: translateX(3px);
+        }
+
+        .tier.selected {
+            background: rgba(255, 215, 0, 0.25);
+            border: 1px solid #ffd700;
+        }
+
+        .tier.selected .tier-level {
+            color: #ffd700;
+        }
+
+        .tier-level {
+            font-family: 'Space Mono', monospace;
+            font-weight: bold;
+            color: #94a3b8;
+            min-width: 30px;
+        }
+
+        .tier-effect {
+            flex: 1;
+            margin-left: 10px;
+            font-size: 0.85rem;
+            color: #e0e0e0;
+        }
+
+        .tier-cost {
+            font-family: 'Space Mono', monospace;
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        .tier.owned {
+            background: rgba(255, 215, 0, 0.15);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+
+        .tier.owned .tier-level {
+            color: #ffd700;
+        }
+
+        .card-image {
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+            background: #1a1a28;
+            transition: opacity 0.3s;
+        }
+
+        .card-image.loading {
+            opacity: 0.5;
+        }
+
+        .category-basic .category-title { color: #22c55e; }
+        .category-corrupted .category-title { color: #ef4444; }
+        .category-technical .category-title { color: #3b82f6; }
+        .category-highrisk .category-title { color: #f59e0b; }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-family: 'Space Mono', monospace;
+            margin-left: 8px;
+        }
+
+        .badge-basic { background: #22c55e33; color: #22c55e; }
+        .badge-corrupted { background: #ef444433; color: #ef4444; }
+        .badge-technical { background: #3b82f633; color: #3b82f6; }
+        .badge-highrisk { background: #f59e0b33; color: #f59e0b; }
+
+        @media (max-width: 600px) {
+            h1 { font-size: 1.8rem; }
+            .grid { grid-template-columns: 1fr; }
+            .card-content { padding: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Uppgraderingskatalog</h1>
+        <p class="subtitle">Isen är en fuktig lada, och stenen är mjölnaren som mal din tid till damm.</p>
+
+        <div id="upgrades-container"></div>
+    </div>
+
+    <script type="module">
+        import { UPGRADES as BASE_UPGRADES } from './scripts/upgrade-definitions.js';
+
+        // Support Dev Mode overrides
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const isDevMode = isLocalhost && new URLSearchParams(window.location.search).get('dev') === 'true';
+        
+        let UPGRADES = JSON.parse(JSON.stringify(BASE_UPGRADES));
+        if (isDevMode) {
+            const override = localStorage.getItem('upgrades_override');
+            if (override) {
+                try {
+                    const overrides = JSON.parse(override);
+                    UPGRADES = UPGRADES.map(upgrade => {
+                        if (overrides[upgrade.id]) {
+                            return { ...upgrade, ...overrides[upgrade.id] };
+                        }
+                        return upgrade;
+                    });
+                } catch (e) {
+                    console.error('Failed to parse overrides', e);
+                }
+            }
+        }
+
+
+const CATEGORY_INFO = {
+    basic: { title: 'De Linjära Plågorna', desc: 'Basic Upgrades - Enkla förbättringar utan nackdelar' },
+    corrupted: { title: 'De Fördömda Bytena', desc: 'Corrupted Trade-offs - Varje förbättring har ett pris' },
+    technical: { title: 'Den Högre Mekaniken', desc: 'Technical Upgrades - Ändrar hur spelet fungerar' },
+    highrisk: { title: 'Offerviljans Väg', desc: 'High Risk/High Reward - Stora risker, stora belöningar' }
+};
+
+const ROMAN = ['I', 'II', 'III', 'IV', 'V'];
+
+function createCard(upgrade) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.dataset.upgradeId = upgrade.id;
+    
+    const tierImages = upgrade.tiers.map(tier => 
+        `assets/${tier.image}`
+    );
+    
+    const tierImage = tierImages[0];
+    
+    card.innerHTML = `
+        <img class="card-image" src="${tierImage}" alt="${upgrade.name}" onerror="this.src='assets/waifu-curl.jpg'">
+        <div class="card-content">
+            <div class="card-name">${upgrade.name}<span class="badge badge-${upgrade.category}">${upgrade.category}</span></div>
+            <div class="card-id">${upgrade.id}</div>
+            <div class="card-proverb">"${upgrade.proverb}"</div>
+            <div class="tiers">
+                ${upgrade.tiers.map((tier, index) => `
+                    <div class="tier ${index === 0 ? 'selected' : ''}" data-tier="${tier.level}" data-image="${tierImages[index]}">
+                        <span class="tier-level">${ROMAN[tier.level - 1]}</span>
+                        <span class="tier-effect">${tier.effect}</span>
+                        <span class="tier-cost">$${tier.cost}</span>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+    
+    const tiers = card.querySelectorAll('.tier');
+    const image = card.querySelector('.card-image');
+    
+    tiers.forEach(tier => {
+        tier.addEventListener('click', () => {
+            tiers.forEach(t => t.classList.remove('selected'));
+            tier.classList.add('selected');
+            
+            const newSrc = tier.dataset.image;
+            image.classList.add('loading');
+            image.src = newSrc;
+            image.onload = () => image.classList.remove('loading');
+        });
+    });
+    
+    return card;
+}
+
+function renderUpgrades() {
+    const container = document.getElementById('upgrades-container');
+    const categories = ['basic', 'corrupted', 'technical', 'highrisk'];
+    
+    for (const cat of categories) {
+        const info = CATEGORY_INFO[cat];
+        const upgrades = UPGRADES.filter(u => u.category === cat);
+        
+        if (upgrades.length === 0) continue;
+        
+        const section = document.createElement('div');
+        section.className = `category category-${cat}`;
+        section.innerHTML = `
+            <h2 class="category-title">${info.title}</h2>
+            <p class="category-desc">${info.desc}</p>
+            <div class="grid"></div>
+        `;
+        
+        const grid = section.querySelector('.grid');
+        for (const upgrade of upgrades) {
+            grid.appendChild(createCard(upgrade));
+        }
+        
+        container.appendChild(section);
+    }
+}
+
+renderUpgrades();
+    </script>
+</body>
+</html>
