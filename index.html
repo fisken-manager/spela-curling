@@ -33,17 +33,18 @@
         <button id="add-money-btn">+$100</button>
         <button id="add-life-btn">+Life</button>
         <button id="open-shop-btn">Open Shop</button>
+        <a href="dev-upgrades.html?dev=true" target="_blank" style="display: block; color: #ffd700; text-decoration: none; font-size: 0.8rem; margin-top: 10px; font-family: 'Space Mono', monospace;">Manage Upgrades →</a>
       </div>
       <div class="debug-section" style="margin-top: 10px; border-top: 1px solid #333; padding-top: 10px;">
-        <label style="display: block; margin-bottom: 5px;"><span>Effect: <span id="fisheye-type-val">none</span></span>
+        <label style="display: block; margin-bottom: 5px;"><span>Effect: <span id="fisheye-type-val">barrel</span></span>
           <select id="fisheye-type" style="margin-left: 5px;">
             <option value="none">None</option>
-            <option value="barrel">Barrel</option>
+            <option value="barrel" selected>Barrel</option>
             <option value="perspective">Perspective</option>
             <option value="strong">Strong</option>
           </select>
         </label>
-        <label><span>Strength: <span id="fisheye-strength-val">30</span></span><input type="range" id="fisheye-strength" min="0" max="100" value="30"></label>
+        <label><span>Strength: <span id="fisheye-strength-val">40</span></span><input type="range" id="fisheye-strength" min="0" max="100" value="40"></label>
       </div>
     </div>
   </div>

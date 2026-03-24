@@ -40,7 +40,7 @@ export function applyBarrelDistortion(targetCtx, sourceCanvas, strength) {
         for (let x = 0; x < width; x++) {
             const dx = x - cx;
             const r2 = dx * dx + dy2;
-            const factor = 1 + kMaxR2 * r2;
+            const factor = Math.max(0.1, 1 - kMaxR2 * r2);
             
             const srcX = Math.floor(cx + dx / factor);
             const srcY = Math.floor(cy + dy / factor);

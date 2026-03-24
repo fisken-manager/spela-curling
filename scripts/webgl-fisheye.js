@@ -19,9 +19,9 @@ void main() {
     vec2 uv = v_texCoord - center;
     
     float dist = length(uv);
-    float k = u_strength / 800.0;
+    float k = u_strength /800.0;
     
-    float factor = 1.0 + k * dist * dist;
+    float factor = max(0.1, 1.0 - k * dist * dist);
     vec2 distortedUV = center + uv / factor;
     
     if (distortedUV.x < 0.0 || distortedUV.x > 1.0 || 
@@ -107,8 +107,8 @@ export class WebGLFisheye {
         this.enabled = true;
         this.gl = this.gl;
         this.programs = {};
-        this.currentEffect = 'none';
-        this.strength = 30;
+        this.currentEffect = 'barrel';
+        this.strength = 40;
         this.texture = null;
         this.positionBuffer = null;
         this.texCoordBuffer = null;

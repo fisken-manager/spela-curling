@@ -1,3 +1,6 @@
+import { AudioController } from './audio.js';
+import { UPGRADES } from './upgrade-definitions.js';
+
 export class CardMenu {
     constructor(state) {
         this.state = state;
@@ -9,6 +12,7 @@ export class CardMenu {
         this.cardBounds = [];
         this.buyButtonBounds = null;
         this.continueButtonBounds = null;
+        this.rerollButtonBounds = null;
         this.animationState = {
             enteringCards: [],
             exitingCards: [],
@@ -103,7 +107,7 @@ export class CardMenu {
         }
     }
 
-drawTurbulence(ctx, width, height, time) {
+    drawTurbulence(ctx, width, height, time) {
         ctx.fillStyle = '#0f0f18';
         ctx.fillRect(0, 0, width, height);
     }
@@ -170,7 +174,7 @@ drawTurbulence(ctx, width, height, time) {
         ctx.restore();
     }
 
-drawBackground(ctx, width, height, time) {
+    drawBackground(ctx, width, height, time) {
         this.drawTurbulence(ctx, width, height, time);
         this.drawStars(ctx, width, height, time);
         this.updateFireflies(time, 0.016);
@@ -178,73 +182,35 @@ drawBackground(ctx, width, height, time) {
     }
 
     initializeCards() {
-        return [
-            {
-                id: 'maxVelocity',
-                name: 'Hastig Leda',
-                proverb: 'Ät int gul snö om du inte har bråttom.',
-                tiers: [
-                    { level: 1, cost: 1, effect: '+15% hastighet', image: 'waifu-speed.jpg' },
-                    { level: 2, cost: 5, effect: '+30% hastighet', image: 'maxVelocity-tier2.jpg' },
-                    { level: 3, cost: 20, effect: '+45% hastighet', image: 'maxVelocity-tier3.jpg' },
-                    { level: 4, cost: 40, effect: '+60% hastighet', image: 'maxVelocity-tier4.jpg' },
-                    { level: 5, cost: 65, effect: '+75% hastighet', image: 'maxVelocity-tier5.jpg' },
-                ]
-            },
-            {
-                id: 'frictionReduction',
-                name: 'Glatt Misär',
-                proverb: 'Även en blind matta kan flyga.',
-                tiers: [
-                    { level: 1, cost: 1, effect: '-15% friktion', image: 'waifu-friction.jpg' },
-                    { level: 2, cost: 5, effect: '-30% friktion', image: 'frictionReduction-tier2.jpg' },
-                    { level: 3, cost: 20, effect: '-45% friktion', image: 'frictionReduction-tier3.jpg' },
-                    { level: 4, cost: 40, effect: '-60% friktion', image: 'frictionReduction-tier4.jpg' },
-                    { level: 5, cost: 65, effect: '-75% friktion', image: 'frictionReduction-tier5.jpg' },
-                ]
-            },
-            {
-                id: 'stoneSize',
-                name: 'Tung Börda',
-                proverb: 'Bygg int en struts av sand.',
-                tiers: [
-                    { level: 1, cost: 1, effect: '+25% storlek', image: 'waifu-size.jpg' },
-                    { level: 2, cost: 5, effect: '+50% storlek', image: 'stoneSize-tier2.jpg' },
-                    { level: 3, cost: 20, effect: '+75% storlek', image: 'stoneSize-tier3.jpg' },
-                    { level: 4, cost: 40, effect: '+100% storlek', image: 'stoneSize-tier4.jpg' },
-                    { level: 5, cost: 65, effect: '+125% storlek', image: 'stoneSize-tier5.jpg' },
-                ]
-            },
-            {
-                id: 'randomCurl',
-                name: 'Vilsen Skruv',
-                proverb: 'Kasta int bävern i sågverket.',
-                tiers: [
-                    { level: 1, cost: 10, effect: 'Random snurr/10s', image: 'waifu-curl.jpg' },
-                    { level: 2, cost: 20, effect: 'Random snurr/5s', image: 'randomCurl-tier2.jpg' },
-                ]
-            },
-            {
-                id: 'noNegativePickups',
-                name: 'Falsk Trygghet',
-                proverb: 'Måla int kycklingen blå.',
-                tiers: [
-                    { level: 1, cost: 10, effect: 'Ta bort negativa pickups', image: 'waifu-shield.jpg' },
-                ]
-            },
-            {
-                id: 'coinSpeedBoost',
-                name: 'Blodspengar',
-                proverb: 'Alla hattar, ingen boskap, men mycke sås.',
-                tiers: [
-                    { level: 1, cost: 10, effect: 'Mynt ger hastighetsboost', image: 'coinSpeedBoost-tier1.jpg' },
-                    { level: 2, cost: 25, effect: '2x mynt, inga hastighetspickup', image: 'coinSpeedBoost-tier2.jpg' },
-                ]
+        let baseUpgrades = JSON.parse(JSON.stringify(UPGRADES));
+        
+        // DEV MODE OVERRIDE
+        if (this.state.isDevMode) {
+            const override = localStorage.getItem('upgrades_override');
+            if (override) {
+                try {
+                    const overrides = JSON.parse(override);
+                    baseUpgrades = baseUpgrades.map(upgrade => {
+                        if (overrides[upgrade.id]) {
+                            return { ...upgrade, ...overrides[upgrade.id] };
+                        }
+                        return upgrade;
+                    });
+                    console.log('Dev Mode: Applied upgrade overrides from localStorage');
+                } catch (e) {
+                    console.error('Failed to parse upgrades_override', e);
+                }
             }
-        ];
+        }
+        
+        return baseUpgrades;
     }
 
     getAvailableUpgrades() {
+        if (this.state.shopUpgradeSelection !== undefined && this.state.shopUpgradeSelection !== null) {
+            return this.state.shopUpgradeSelection;
+        }
+        
         const available = [];
         for (const card of this.cards) {
             const currentLevel = this.state.upgrades[card.id]?.level || 0;
@@ -255,7 +221,16 @@ drawBackground(ctx, width, height, time) {
                 });
             }
         }
-        return available;
+        
+        const shuffled = [...available];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        
+        const selection = shuffled.slice(0, 3);
+        this.state.shopUpgradeSelection = selection;
+        return selection;
     }
 
     getOwnedUpgrades() {
@@ -289,23 +264,38 @@ drawBackground(ctx, width, height, time) {
         this.state.money -= cost;
         this.state.upgrades[cardId] = { level: currentLevel + 1 };
 
-        // Special handling for noNegativePickups
-        if (cardId === 'noNegativePickups' && currentLevel + 1 > 0) {
+        // Special handling for specific upgrades
+        const newLevel = currentLevel + 1;
+
+        // noNegativePickups - remove negative pickups
+        if (cardId === 'noNegativePickups' && newLevel > 0) {
             this.state.curlChaosPickups = [];
             this.state.sizeShrinkPickups = [];
         }
 
-        // Special handling for coinSpeedBoost tier 2
-        if (cardId === 'coinSpeedBoost' && currentLevel + 1 === 2) {
-            // Remove speed boost pickups
+        // spin_to_speed - remove speed pickups when purchased
+        if (cardId === 'spin_to_speed' && newLevel > 0) {
+            this.state.powerUps = [];
+        }
+
+        // glass_cannon - reduce speed pickup spawn rate
+        if (cardId === 'glass_cannon') {
+            // Handled in physics/initPowerUps - no immediate action needed
+        }
+
+        // double_shops - double shop pickup spawn rate
+        if (cardId === 'double_shops') {
+            // Handled in state.initPowerUps on next init
+        }
+
+        // Legacy: coinSpeedBoost tier 2
+        if (cardId === 'coinSpeedBoost' && newLevel === 2) {
             this.state.powerUps = [];
             
-            // Remove existing yellow orbs and respawn with 2x frequency
             this.state.scoringOrbs = this.state.scoringOrbs.filter(o => o.type !== 'yellow');
             
-            // Respawn yellow orbs with 2x frequency (smaller segments)
             const maxScroll = Math.max(1, this.state.pageHeight - this.state.screenHeight);
-            const segmentSize = 167; // 2x more frequent than new baseline 333
+            const segmentSize = 167;
             const progressOffsetScale = segmentSize / maxScroll;
             const startOffset = 800;
             let orbId = this.state.scoringOrbs.length;
@@ -342,10 +332,22 @@ drawBackground(ctx, width, height, time) {
 
         this.animationState.enteringCards.push({
             cardId,
-            tierLevel: currentLevel + 1,
+            tierLevel: newLevel,
             progress: 0
         });
 
+        return true;
+    }
+
+    reroll() {
+        const cost = this.state.rerollCost || 1;
+        if (this.state.money < cost) return false;
+        
+        this.state.money -= cost;
+        this.state.rerollCost = cost + 1;
+        this.state.shopUpgradeSelection = null;
+        this.selectedCardId = null;
+        this.animationState.selectAnimation = null;
         return true;
     }
 
@@ -360,16 +362,29 @@ drawBackground(ctx, width, height, time) {
             }
         }
 
+        if (this.rerollButtonBounds) {
+            const rb = this.rerollButtonBounds;
+            if (x >= rb.x && x <= rb.x + rb.width &&
+                y >= rb.y && y <= rb.y + rb.height) {
+                if (this.state.money >= (this.state.rerollCost || 1)) {
+                    this.reroll();
+                    return { action: 'reroll' };
+                }
+            }
+        }
+
         if (this.buyButtonBounds) {
             const bb = this.buyButtonBounds;
             if (x >= bb.x && x <= bb.x + bb.width &&
                 y >= bb.y && y <= bb.y + bb.height) {
                 if (this.selectedCardId && this.canAfford(this.selectedCardId)) {
-                    const card = this.cards.find(c => c.id === this.selectedCardId);
-                    const currentLevel = this.state.upgrades[this.selectedCardId]?.level || 0;
-                    this.animationState.purchasedCardId = this.selectedCardId;
+                    const purchasedCardId = this.selectedCardId;
+                    const card = this.cards.find(c => c.id === purchasedCardId);
+                    const currentLevel = this.state.upgrades[purchasedCardId]?.level || 0;
+                    this.animationState.purchasedCardId = purchasedCardId;
                     this.animationState.purchasedTierLevel = currentLevel + 1;
-                    this.purchase(this.selectedCardId);
+                    this.purchase(purchasedCardId);
+                    this.state.shopUpgradeSelection = this.state.shopUpgradeSelection.filter(c => c.id !== purchasedCardId);
                     this.selectedCardId = null;
                     this.animationState.selectAnimation = null;
                     return { action: 'purchase' };
@@ -525,6 +540,7 @@ drawBackground(ctx, width, height, time) {
     render(ctx, screenWidth, screenHeight) {
         this.buyButtonBounds = null;
         this.continueButtonBounds = null;
+        this.rerollButtonBounds = null;
 
         const time = performance.now() / 1000;
 
@@ -552,7 +568,7 @@ drawBackground(ctx, width, height, time) {
             : null;
 
         const largeCardHeight = screenHeight * 0.40;
-        const largeCardWidth = largeCardHeight * 0.65;
+        const largeCardWidth = largeCardHeight;
 
         if (selectedCard) {
             this.renderArchCards(ctx, screenWidth, padding, available, selectedCard.id, time);
@@ -568,14 +584,24 @@ drawBackground(ctx, width, height, time) {
                 height: 40
             };
             this.drawContinueButton(ctx, screenWidth / 2 - 100, continueY, 200, 40);
+
+            const rerollCost = this.state.rerollCost || 1;
+            const canAffordReroll = this.state.money >= rerollCost;
+            this.rerollButtonBounds = {
+                x: screenWidth / 2 - 60,
+                y: continueY - 50,
+                width: 120,
+                height: 35
+            };
+            this.drawRerollButton(ctx, screenWidth / 2 - 60, continueY - 50, 120, 35, canAffordReroll, rerollCost);
         }
 
-        this.renderCollectionZone(ctx, screenWidth, screenHeight, padding, time);
+        this.renderCollectionZone(ctx, screenWidth, screenHeight, owned, time);
     }
 
     renderArchCards(ctx, screenWidth, startY, available, selectedId, time) {
-        const cardHeight = 105;
-        const cardWidth = 75;
+        const cardHeight = 120;
+        const cardWidth = 120;
         const spacing = -10;
         const archHeight = 35;
 
@@ -591,7 +617,7 @@ drawBackground(ctx, width, height, time) {
 
             const normalizedPos = (i - (available.length - 1) / 2) / (available.length > 1 ? (available.length - 1) / 2 : 1);
             
-            const angle = normalizedPos * 0.35;
+            const angle = normalizedPos * 0.15;
             const archY = startY + Math.abs(normalizedPos) * archHeight;
             
             const floatOffset = this.getCardFloatOffset(card.id, time);
@@ -755,11 +781,28 @@ drawBackground(ctx, width, height, time) {
         ctx.fillText('LÄMNA', x + width / 2, y + height / 2);
     }
 
-    renderCollectionZone(ctx, screenWidth, screenHeight, owned, padding, time) {
+    drawRerollButton(ctx, x, y, width, height, canAfford, cost) {
+        ctx.beginPath();
+        ctx.roundRect(x, y, width, height, 10);
+        ctx.fillStyle = canAfford ? 'rgba(100, 200, 255, 0.15)' : 'rgba(100, 100, 100, 0.2)';
+        ctx.fill();
+
+        ctx.strokeStyle = canAfford ? '#64b5f6' : 'rgba(100, 100, 100, 0.5)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.font = 'bold 14px "Space Mono", monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = canAfford ? '#64b5f6' : '#718096';
+        ctx.fillText(`REROLL ($${cost})`, x + width / 2, y + height / 2);
+    }
+
+    renderCollectionZone(ctx, screenWidth, screenHeight, owned, time) {
         if (owned.length === 0) return;
 
-        const cardWidth = 50;
-        const cardHeight = 70;
+        const cardWidth = 60;
+        const cardHeight = 60;
         const spacing = 8;
         const totalWidth = owned.length * cardWidth + (owned.length - 1) * spacing;
         const startX = (screenWidth - totalWidth) / 2;
