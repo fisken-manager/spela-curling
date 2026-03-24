@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 300" width="100%" height="100%">
+  <defs>
+    <!-- Consistent "Up-Right" Reflection for Blue -->
+    <filter id="blue-reflection" x="-50%" y="-50%" width="200%" height="200%">
+      <feOffset dx="15" dy="-10" in="SourceGraphic" result="displaced"/>
+      <feGaussianBlur in="displaced" stdDeviation="2" result="blurred"/>
+      <feColorMatrix in="blurred" type="matrix" 
+                     values="0 0 0 0 0  
+                             0 0 0 0 0.8  
+                             0 0 0 0 1  
+                             0 0 0 0 0.7 0" result="reflection"/>
+      
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1" result="main-glow1"/>
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="main-glow2"/>
+      
+      <feMerge>
+        <feMergeNode in="reflection"/>
+        <feMergeNode in="main-glow2"/>
+        <feMergeNode in="main-glow1"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Consistent "Up-Right" Reflection for Red -->
+    <filter id="red-reflection" x="-50%" y="-50%" width="200%" height="200%">
+      <feOffset dx="15" dy="-10" in="SourceGraphic" result="displaced"/>
+      <feGaussianBlur in="displaced" stdDeviation="2" result="blurred"/>
+      <feColorMatrix in="blurred" type="matrix" 
+                     values="0 0 0 0 1  
+                             0 0 0 0 0.2  
+                             0 0 0 0 0.2  
+                             0 0 0 0 0.7 0" result="reflection"/>
+      
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1" result="main-glow1"/>
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="main-glow2"/>
+      
+      <feMerge>
+        <feMergeNode in="reflection"/>
+        <feMergeNode in="main-glow2"/>
+        <feMergeNode in="main-glow1"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Bungee+Outline&amp;display=swap');
+    
+    .logo-container {
+      transform: perspective(800px) rotateY(-35deg) rotateX(25deg) translateY(20px);
+      transform-origin: center;
+    }
+    
+    .text-base {
+      font-family: 'Bungee Outline', cursive;
+      font-size: 70px;
+      fill: none;
+      text-anchor: middle;
+    }
+    
+    .fiskens {
+      stroke: #0cf;
+      stroke-width: 3px;
+    }
+    
+    .shop {
+      stroke: #f33;
+      stroke-width: 3px;
+    }
+
+    .fish-icon {
+      fill: none;
+      stroke: #0cf;
+      stroke-width: 3px;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    
+    .smiley-feature {
+      stroke: #0cf;
+      stroke-width: 2px;
+      fill: none;
+      stroke-linecap: round;
+    }
+  </style>
+
+  <g class="logo-container">
+    <!-- Centered Text Group -->
+    <g transform="translate(250, 0)">
+      <g filter="url(#blue-reflection)">
+        <text x="0" y="100" class="text-base fiskens">FISKENS</text>
+      </g>
+      
+      <g filter="url(#red-reflection)">
+        <text x="0" y="175" class="text-base shop">SHOP</text>
+      </g>
+    </g>
+
+    <!-- Hollow Stylized Fish Icon - Half Size (scale 0.55) -->
+    <g transform="translate(420, 115) scale(0.55)" filter="url(#blue-reflection)">
+      <!-- Sleek hollow fish outline -->
+      <path class="fish-icon" d="M0,40 Q40,0 100,40 Q40,80 0,40 M100,40 L130,10 L130,70 Z" />
+      
+      <!-- Smiley Face Features on the head (left side) -->
+      <!-- Two Eyes -->
+      <circle class="smiley-feature" cx="25" cy="30" r="3" />
+      <circle class="smiley-feature" cx="45" cy="30" r="3" />
+      
+      <!-- Happy Mouth -->
+      <path class="smiley-feature" d="M25,50 Q35,60 45,50" />
+    </g>
+  </g>
+</svg>
