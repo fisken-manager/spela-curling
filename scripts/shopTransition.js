@@ -369,8 +369,6 @@ drawWaifu(ctx, x, y, progress) {
     }
 
     renderChibi(ctx, waifuX, time, isCardSelected) {
-        if (isCardSelected) return;
-
         const waifuY = 70;
 
         const floatY = Math.sin(time * 0.8) * 2;
