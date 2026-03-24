@@ -123,36 +123,36 @@ export class CardMenu {
         }
     }
 
-    drawTurbulence(ctx, width, height, time) {
+    drawTurbulence(ctx, x, y, width, height, time) {
         ctx.fillStyle = '#0f0f18';
-        ctx.fillRect(0, 0, width, height);
+        ctx.fillRect(x, y, width, height);
     }
 
-    drawStars(ctx, width, height, time) {
+    drawStars(ctx, x, y, width, height, time) {
         ctx.save();
         
         for (let star of this.stars) {
-            const x = Math.floor(star.x * width);
-            const y = Math.floor(star.y * height);
+            const sx = x + Math.floor(star.x * width);
+            const sy = y + Math.floor(star.y * height);
             
             const twinkle = Math.max(0.1, 0.4 + Math.sin(time * star.twinkleSpeed + star.phase) * 0.3 + Math.sin(time * star.twinkleSpeed * 1.7 + star.phase * 1.3) * 0.15);
             
             const size = Math.max(1, Math.floor(star.size * twinkle * 2));
             
             ctx.fillStyle = `rgba(255,255, 255, ${twinkle})`;
-            ctx.fillRect(x, y, size, size);
+            ctx.fillRect(sx, sy, size, size);
             
             if (twinkle > 0.6) {
                 ctx.fillStyle = `rgba(255, 255, 255, ${(twinkle - 0.6) * 0.5})`;
-                ctx.fillRect(x - 1, y, size + 2, size);
-                ctx.fillRect(x, y - 1, size, size + 2);
+                ctx.fillRect(sx - 1, sy, size + 2, size);
+                ctx.fillRect(sx, sy - 1, size, size + 2);
             }
         }
         
         ctx.restore();
     }
 
-    drawFireflies(ctx, width, height, time) {
+    drawFireflies(ctx, x, y, width, height, time) {
         ctx.save();
         
         for (let f of this.fireflies) {
@@ -167,8 +167,8 @@ export class CardMenu {
             
             const pulse = 0.6 + Math.sin(time * 0.4 + f.glowPhase) * 0.3;
             
-            const x = Math.floor(f.x * width);
-            const y = Math.floor(f.y * height);
+            const fx = x + Math.floor(f.x * width);
+            const fy = y + Math.floor(f.y * height);
             
             const glowRadius = Math.floor(2 + pulse);
             
@@ -178,23 +178,23 @@ export class CardMenu {
                     if (dist <= glowRadius) {
                         const distAlpha = alpha * pulse * (1 - dist / (glowRadius + 1)) * 0.7;
                         ctx.fillStyle = `rgba(255, 200, 50, ${distAlpha})`;
-                        ctx.fillRect(x + dx, y + dy, 1, 1);
+                        ctx.fillRect(fx + dx, fy + dy, 1, 1);
                     }
                 }
             }
             
             ctx.fillStyle = `rgba(255, 220, 100, ${alpha * pulse})`;
-            ctx.fillRect(x, y, 1, 1);
+            ctx.fillRect(fx, fy, 1, 1);
         }
         
         ctx.restore();
     }
 
-    drawBackground(ctx, width, height, time) {
-        this.drawTurbulence(ctx, width, height, time);
-        this.drawStars(ctx, width, height, time);
+    drawBackground(ctx, x, y, width, height, time) {
+        this.drawTurbulence(ctx, x, y, width, height, time);
+        this.drawStars(ctx, x, y, width, height, time);
         this.updateFireflies(time, 0.016);
-        this.drawFireflies(ctx, width, height, time);
+        this.drawFireflies(ctx, x, y, width, height, time);
     }
 
     initializeCards() {
@@ -577,7 +577,7 @@ export class CardMenu {
         ctx.rect(areaLeft, 0, areaWidth, screenHeight);
         ctx.clip();
 
-        this.drawBackground(ctx, areaWidth, screenHeight, time);
+        this.drawBackground(ctx, areaLeft, 0, areaWidth, screenHeight, time);
 
         const waifuX = areaLeft + 70;
         if (this.shopTransition) {
