@@ -69,8 +69,7 @@ bindEvents() {
                 this.state.stone.vy = 0;
                 this.state.stone.angularVelocity = 0;
                 this.state.stone.rotation = 0;
-                this.state.stone.worldY = 0;
-                this.state.scrollProgress = 0;
+                
                 this.state.stoneYPx = this.state.screenHeight - this.state.restOffsetPx;
                 this.state.transitionProgress = 0;
                 this.state.inScrollZone = false;
