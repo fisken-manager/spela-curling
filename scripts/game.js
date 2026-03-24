@@ -84,6 +84,11 @@ function setupControls() {
         state.lives += 1;
     });
 
+    const openShopBtn = document.getElementById('open-shop-btn');
+    if (openShopBtn) openShopBtn.addEventListener('click', () => {
+        state.showBuyMenu = true;
+    });
+
     const reInitPowerupsBtn = document.getElementById('re-init-powerups');
     if (reInitPowerupsBtn) {
         const itemTypes = ['powerup', 'life', 'sweep', 'rotation', 'super', 'growth', 'curlChaos', 'sizeShrink'];
@@ -108,6 +113,48 @@ function setupControls() {
                     valEl.textContent = e.target.value;
                 });
             }
+        });
+    }
+
+    // Fisheye effect controls (CSS transform based)
+    const fisheyeTypeSelect = document.getElementById('fisheye-type');
+    const fisheyeTypeVal = document.getElementById('fisheye-type-val');
+    const fisheyeStrengthSlider = document.getElementById('fisheye-strength');
+    const fisheyeStrengthVal = document.getElementById('fisheye-strength-val');
+    const gameWrapper = document.getElementById('game-wrapper');
+
+    function updateFisheyeEffect() {
+        if (!gameWrapper) return;
+        
+        const type = fisheyeTypeSelect?.value || 'none';
+        const strength = parseInt(fisheyeStrengthSlider?.value || 30);
+        
+        // Remove all fisheye classes
+        gameWrapper.classList.remove('fisheye-barrel', 'fisheye-perspective', 'fisheye-strong');
+        
+        // Set CSS custom property for strength
+        gameWrapper.style.setProperty('--barrel-strength', strength);
+        gameWrapper.style.setProperty('--persp-strength', strength);
+        gameWrapper.style.setProperty('--strong-strength', strength);
+        
+        // Add the appropriate class
+        if (type !== 'none') {
+            gameWrapper.classList.add(`fisheye-${type}`);
+        }
+        
+        if (fisheyeStrengthVal) fisheyeStrengthVal.textContent = strength;
+    }
+
+    if (fisheyeTypeSelect) {
+        fisheyeTypeSelect.addEventListener('change', (e) => {
+            if (fisheyeTypeVal) fisheyeTypeVal.textContent = e.target.value;
+            updateFisheyeEffect();
+        });
+    }
+
+    if (fisheyeStrengthSlider) {
+        fisheyeStrengthSlider.addEventListener('input', (e) => {
+            updateFisheyeEffect();
         });
     }
 }
@@ -257,8 +304,8 @@ function gameLoop(timestamp) {
     
     if (state.isPaused) {
         if (state.showBuyMenu) {
-            const ctx = renderer.ctx;
-            cardMenu.render(ctx, state.screenWidth, state.screenHeight);
+            cardMenu.update(deltaTime);
+            cardMenu.render(renderer.ctx, state.screenWidth, state.screenHeight);
         } else {
             renderer.render(state, 0);
         }
@@ -267,9 +314,8 @@ function gameLoop(timestamp) {
     }
     
     if (state.showBuyMenu) {
-        const ctx = renderer.ctx;
         cardMenu.update(deltaTime);
-        cardMenu.render(ctx, state.screenWidth, state.screenHeight);
+        cardMenu.render(renderer.ctx, state.screenWidth, state.screenHeight);
     } else {
         update(deltaTime);
         renderer.updateParticles(deltaTime);

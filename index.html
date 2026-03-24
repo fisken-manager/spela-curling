@@ -13,7 +13,9 @@
 </head>
 
 <body>
-  <canvas id="game-canvas"></canvas>
+  <div id="game-wrapper">
+    <canvas id="game-canvas"></canvas>
+  </div>
 
   <div id="physics-controls">
     <h3>Physics <span id="toggle-controls" class="toggle-arrow">▼</span></h3>
@@ -31,6 +33,18 @@
       <div class="debug-section">
         <button id="add-money-btn">+$100</button>
         <button id="add-life-btn">+Life</button>
+        <button id="open-shop-btn">Open Shop</button>
+      </div>
+      <div class="debug-section" style="margin-top: 10px; border-top: 1px solid #333; padding-top: 10px;">
+        <label style="display: block; margin-bottom: 5px;"><span>Effect: <span id="fisheye-type-val">none</span></span>
+          <select id="fisheye-type" style="margin-left: 5px;">
+            <option value="none">None</option>
+            <option value="barrel">Barrel</option>
+            <option value="perspective">Perspective</option>
+            <option value="strong">Strong</option>
+          </select>
+        </label>
+        <label><span>Strength: <span id="fisheye-strength-val">30</span></span><input type="range" id="fisheye-strength" min="0" max="100" value="30"></label>
       </div>
     </div>
   </div>

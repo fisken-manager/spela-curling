@@ -3,6 +3,8 @@ export class CardMenu {
         this.state = state;
         this.cards = this.initializeCards();
         this.images = {};
+        this.logoImage = null;
+        this.loadLogo();
         this.selectedCardId = null;
         this.cardBounds = [];
         this.buyButtonBounds = null;
@@ -14,8 +16,17 @@ export class CardMenu {
             selectAnimation: null,
             purchasedCardId: null
         };
-        this.noisePattern = null;
-        this.generateNoisePattern();
+        this.stars = [];
+        this.fireflies = [];
+        this.lastFireflySpawn = 0;
+        this.noiseOffset = 0;
+        this.noiseCanvas = null;
+        this.initializeStars();
+    }
+
+    loadLogo() {
+        this.logoImage = new Image();
+        this.logoImage.src = 'assets/shop-logo.svg';
     }
 
     hashCardId(str) {
@@ -39,121 +50,131 @@ export class CardMenu {
         };
     }
 
-    generateNoisePattern() {
-        const size = 128;
-        const canvas = document.createElement('canvas');
-        canvas.width = size;
-        canvas.height = size;
-        const ctx = canvas.getContext('2d');
-        const imageData = ctx.createImageData(size, size);
-        for (let i = 0; i < imageData.data.length; i += 4) {
-            const v = Math.random() * 255;
-            imageData.data[i] = v;
-            imageData.data[i + 1] = v;
-            imageData.data[i + 2] = v;
-            imageData.data[i + 3] = 255;
+    initializeStars() {
+        const numStars = 8 + Math.floor(Math.random() * 8);
+        for (let i = 0; i < numStars; i++) {
+            this.stars.push({
+                x: Math.random(),
+                y: Math.random(),
+                size: 0.5 + Math.random() * 1,
+                phase: Math.random() * Math.PI * 2,
+                twinkleSpeed: 0.025 + Math.random() * 0.075
+            });
         }
-        ctx.putImageData(imageData, 0, 0);
-        this.noisePattern = canvas;
     }
 
-    drawFilmGrain(ctx, width, height, time) {
-        if (!this.noisePattern) return;
+    spawnFirefly(time) {
+        this.fireflies.push({
+            x: Math.random(),
+            y: 0.1 + Math.random() * 0.8,
+            vx: (Math.random() - 0.5) * 0.002,
+            vy: (Math.random() - 0.5) * 0.0015,
+            birthTime: time,
+            lifespan: 2 + Math.random() * 3,
+            phase: Math.random() * Math.PI * 2,
+            glowPhase: Math.random() * Math.PI * 2
+        });
+    }
+
+    updateFireflies(time, dt) {
+        const maxFireflies = 2;
+        const spawnInterval = 1.5;
+        
+        for (let f of this.fireflies) {
+            f.vx += (Math.random() - 0.5) * 0.0008;
+            f.vy += (Math.random() - 0.5) * 0.0008;
+            f.vx = Math.max(-0.003, Math.min(0.003, f.vx));
+            f.vy = Math.max(-0.0025, Math.min(0.0025, f.vy));
+            
+            f.x += f.vx;
+            f.y += f.vy;
+            
+            if (f.x < 0) { f.x = 0; f.vx *= -0.5; }
+            if (f.x > 1) { f.x = 1; f.vx *= -0.5; }
+            if (f.y < 0.05) { f.y = 0.05; f.vy *= -0.5; }
+            if (f.y > 0.95) { f.y = 0.95; f.vy *= -0.5; }
+        }
+        
+        this.fireflies = this.fireflies.filter(f => (time - f.birthTime) < f.lifespan);
+        
+        if (this.fireflies.length < maxFireflies && time - this.lastFireflySpawn > spawnInterval) {
+            this.spawnFirefly(time);
+            this.lastFireflySpawn = time;
+        }
+    }
+
+drawTurbulence(ctx, width, height, time) {
+        ctx.fillStyle = '#0f0f18';
+        ctx.fillRect(0, 0, width, height);
+    }
+
+    drawStars(ctx, width, height, time) {
         ctx.save();
-        ctx.globalAlpha = 0.03;
-        ctx.globalCompositeOperation = 'overlay';
-        const offset = (time * 15) % 128;
-        const patternSize = 128;
-        for (let x = -patternSize; x < width + patternSize; x += patternSize) {
-            for (let y = -patternSize; y < height + patternSize; y += patternSize) {
-                const offsetX = x + offset;
-                const offsetY = y + offset * 0.7;
-                ctx.drawImage(this.noisePattern, offsetX, offsetY);
+        
+        for (let star of this.stars) {
+            const x = Math.floor(star.x * width);
+            const y = Math.floor(star.y * height);
+            
+            const twinkle = Math.max(0.1, 0.4 + Math.sin(time * star.twinkleSpeed + star.phase) * 0.3 + Math.sin(time * star.twinkleSpeed * 1.7 + star.phase * 1.3) * 0.15);
+            
+            const size = Math.max(1, Math.floor(star.size * twinkle * 2));
+            
+            ctx.fillStyle = `rgba(255,255, 255, ${twinkle})`;
+            ctx.fillRect(x, y, size, size);
+            
+            if (twinkle > 0.6) {
+                ctx.fillStyle = `rgba(255, 255, 255, ${(twinkle - 0.6) * 0.5})`;
+                ctx.fillRect(x - 1, y, size + 2, size);
+                ctx.fillRect(x, y - 1, size, size + 2);
             }
         }
+        
+        ctx.restore();
+    }
+
+    drawFireflies(ctx, width, height, time) {
+        ctx.save();
+        
+        for (let f of this.fireflies) {
+            const age = time - f.birthTime;
+            let alpha = 1;
+            
+            if (age < 0.3) {
+                alpha = age / 0.3;
+            } else if (age > f.lifespan - 0.5) {
+                alpha = (f.lifespan - age) / 0.5;
+            }
+            
+            const pulse = 0.6 + Math.sin(time * 0.4 + f.glowPhase) * 0.3;
+            
+            const x = Math.floor(f.x * width);
+            const y = Math.floor(f.y * height);
+            
+            const glowRadius = Math.floor(2 + pulse);
+            
+            for (let dy = -glowRadius; dy <= glowRadius; dy++) {
+                for (let dx = -glowRadius; dx <= glowRadius; dx++) {
+                    const dist = Math.abs(dx) + Math.abs(dy);
+                    if (dist <= glowRadius) {
+                        const distAlpha = alpha * pulse * (1 - dist / (glowRadius + 1)) * 0.7;
+                        ctx.fillStyle = `rgba(255, 200, 50, ${distAlpha})`;
+                        ctx.fillRect(x + dx, y + dy, 1, 1);
+                    }
+                }
+            }
+            
+            ctx.fillStyle = `rgba(255, 220, 100, ${alpha * pulse})`;
+            ctx.fillRect(x, y, 1, 1);
+        }
+        
         ctx.restore();
     }
 
 drawBackground(ctx, width, height, time) {
-        const gradient = ctx.createLinearGradient(0, 0, width, height);
-        gradient.addColorStop(0, '#2a2a38');
-        gradient.addColorStop(0.2, '#353548');
-        gradient.addColorStop(0.4, '#2d2d40');
-        gradient.addColorStop(0.6, '#3a3a52');
-        gradient.addColorStop(0.8, '#28283a');
-        gradient.addColorStop(1, '#323248');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, width, height);
-
-        ctx.save();
-        ctx.globalCompositeOperation = 'soft-light';
-        
-        for (let layer = 0; layer < 3; layer++) {
-            const frequency = 0.008 + layer * 0.004;
-            const speed = 0.3 + layer * 0.15;
-            const amplitude = 40 + layer * 20;
-            const alpha = 0.08 - layer * 0.02;
-            
-            ctx.globalAlpha = alpha;
-            ctx.beginPath();
-            ctx.moveTo(0, height);
-            
-            for (let x = 0; x <= width; x += 4) {
-                const noise1 = Math.sin(x * frequency + time * speed) * amplitude;
-                const noise2 = Math.sin(x * frequency * 1.5 + time * speed * 0.7 + layer) * amplitude * 0.6;
-                const noise3 = Math.cos(x * frequency * 0.8 + time * speed * 1.3) * amplitude * 0.4;
-                const y = height * (0.6 + layer * 0.15) + noise1 + noise2 + noise3;
-                ctx.lineTo(x, y);
-            }
-            
-            ctx.lineTo(width, height);
-            ctx.closePath();
-            
-            const layerGradient = ctx.createLinearGradient(0, height * 0.3, 0, height);
-            layerGradient.addColorStop(0, `rgba(100, 100, 130, 0.5)`);
-            layerGradient.addColorStop(0.5, `rgba(80, 80, 110, 0.3)`);
-            layerGradient.addColorStop(1, `rgba(60, 60, 90, 0)`);
-            ctx.fillStyle = layerGradient;
-            ctx.fill();
-        }
-        
-        ctx.restore();
-
-        ctx.save();
-        ctx.globalCompositeOperation = 'soft-light';
-        ctx.globalAlpha = 0.12;
-        
-        for (let i = 0; i < 6; i++) {
-            const x = (Math.sin(time * 0.2 + i * 1.2) * 0.3 + 0.5) * width;
-            const y = (Math.cos(time * 0.15 + i * 0.9) * 0.3+ 0.5) * height;
-            const size = 150 + i * 40;
-            const blobSize = size + Math.sin(time * 0.4 + i) * 30;
-            
-            ctx.beginPath();
-            ctx.ellipse(x, y, blobSize, blobSize * 0.7, time * 0.1 + i, 0, Math.PI * 2);
-            const blobGradient = ctx.createRadialGradient(x, y, 0, x, y, blobSize);
-            blobGradient.addColorStop(0, i % 2 === 0 ? 'rgba(120, 120, 150, 0.6)' : 'rgba(90, 90, 125, 0.5)');
-            blobGradient.addColorStop(1, 'rgba(70, 70, 100, 0)');
-            ctx.fillStyle = blobGradient;
-            ctx.fill();
-        }
-        
-        ctx.restore();
-
-        ctx.save();
-        ctx.globalAlpha = 0.04;
-        ctx.globalCompositeOperation = 'overlay';
-        const waveOffset = time * 12;
-        for (let i = 0; i < 3; i++) {
-            const y = (height * 0.3 * i + waveOffset * (0.3 + i * 0.2)) % (height + 200) - 100;
-            const gradient = ctx.createLinearGradient(0, y - 100, 0, y + 100);
-            gradient.addColorStop(0, 'rgba(140, 140, 170, 0)');
-            gradient.addColorStop(0.5, 'rgba(160, 160, 190, 0.8)');
-            gradient.addColorStop(1, 'rgba(140, 140, 170, 0)');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, y - 100, width, 200);
-        }
-        ctx.restore();
+        this.drawTurbulence(ctx, width, height, time);
+        this.drawStars(ctx, width, height, time);
+        this.updateFireflies(time, 0.016);
+        this.drawFireflies(ctx, width, height, time);
     }
 
     initializeCards() {
@@ -509,13 +530,20 @@ drawBackground(ctx, width, height, time) {
 
         this.drawBackground(ctx, screenWidth, screenHeight, time);
 
+        // Draw Shop Logo
+        if (this.logoImage && this.logoImage.complete) {
+            const logoWidth = Math.min(screenWidth * 0.7, 300);
+            const logoHeight = logoWidth * (300 / 600); // 2:1 ratio
+            ctx.drawImage(this.logoImage, 15, 10, logoWidth, logoHeight);
+        }
+
         ctx.font = 'bold 16px "Space Mono", monospace';
         ctx.textAlign = 'right';
         ctx.textBaseline = 'top';
         ctx.fillStyle = '#ffd700';
         ctx.fillText(`$${Math.floor(this.state.money)}`, screenWidth - 15, 15);
 
-        const padding = 20;
+        const padding = 160; // Increased padding to avoid overlap with two-row logo
         const available = this.getAvailableUpgrades();
         const owned = this.getOwnedUpgrades();
 
@@ -542,9 +570,7 @@ drawBackground(ctx, width, height, time) {
             this.drawContinueButton(ctx, screenWidth / 2 - 100, continueY, 200, 40);
         }
 
-        this.renderCollectionZone(ctx, screenWidth, screenHeight, owned, padding, time);
-
-        this.drawFilmGrain(ctx, screenWidth, screenHeight, time);
+        this.renderCollectionZone(ctx, screenWidth, screenHeight, padding, time);
     }
 
     renderArchCards(ctx, screenWidth, startY, available, selectedId, time) {
@@ -615,7 +641,7 @@ drawBackground(ctx, width, height, time) {
         const centerX = screenWidth / 2;
         
         const anim = this.animationState.selectAnimation;
-        let cardY = 120;
+        let cardY = 200;
         let scale = 1;
         let alpha = 1;
 
@@ -624,7 +650,7 @@ drawBackground(ctx, width, height, time) {
             const ease = 1 - Math.pow(1 - t, 3);
             scale = 0.3 + ease * 0.7;
             alpha = ease;
-            cardY = 60 + ease * 60;
+            cardY = 140 + ease * 60;
         }
 
         const floatOffset = this.getCardFloatOffset(card.id, time, true);
@@ -726,7 +752,7 @@ drawBackground(ctx, width, height, time) {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillStyle = '#a0a0a0';
-        ctx.fillText('FORTSÄTT', x + width / 2, y + height / 2);
+        ctx.fillText('LÄMNA', x + width / 2, y + height / 2);
     }
 
     renderCollectionZone(ctx, screenWidth, screenHeight, owned, padding, time) {
@@ -759,6 +785,17 @@ drawBackground(ctx, width, height, time) {
     }
 
     async preloadImages() {
+        // Preload logo
+        if (this.logoImage) {
+            await new Promise(r => {
+                if (this.logoImage.complete) r();
+                else {
+                    this.logoImage.onload = r;
+                    this.logoImage.onerror = r;
+                }
+            });
+        }
+
         for (const card of this.cards) {
             for (const tier of card.tiers) {
                 if (!tier.image) continue;

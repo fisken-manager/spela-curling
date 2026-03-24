@@ -1,3 +1,5 @@
+import { applyEffect } from './effects.js';
+
 export class Renderer {
     constructor(canvas) {
         this.canvas = canvas;

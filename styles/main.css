@@ -27,6 +27,39 @@ body {
     touch-action: none;
 }
 
+#game-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    transform-origin: center center;
+    transition: transform 0.1s ease-out;
+}
+
+#game-wrapper.fisheye-barrel {
+    --barrel-strength: 30;
+    transform: perspective(calc(1200px - var(--barrel-strength) * 5px)) 
+               translateY(calc(var(--barrel-strength) * -0.02%)) 
+               scale(calc(1 + var(--barrel-strength) * 0.0003));
+}
+
+#game-wrapper.fisheye-perspective {
+    --persp-strength: 30;
+    transform: perspective(calc(900px - var(--persp-strength) * 3px)) 
+               rotateX(calc(var(--persp-strength) * 0.04deg))
+               translateY(calc(var(--persp-strength) * -0.01%));
+}
+
+#game-wrapper.fisheye-strong {
+    --strong-strength: 30;
+    transform: perspective(calc(600px - var(--strong-strength) * 2px)) 
+               rotateX(calc(var(--strong-strength) * 0.06deg))
+               scale(calc(1 + var(--strong-strength) * 0.0005))
+               translateY(calc(var(--strong-strength) * -0.03%));
+}
+
 #content {
     position: absolute;
     width: 100%;
