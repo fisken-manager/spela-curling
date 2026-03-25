@@ -956,10 +956,7 @@ getMaxVelocity(state) {
             bounceEnergy = 1.15;
         }
         
-        // Wall_speed upgrade
-        if (wallSpeedLevel > 0) {
-            bounceEnergy = 1.0 + wallSpeedLevel * 0.1;
-        }
+        // Wall_speed handled during bounce below
         
         // Apply Glatt Misär penalty to bounce energy
         bounceEnergy *= frictionBouncePenalty;
@@ -1016,7 +1013,7 @@ getMaxVelocity(state) {
             // Wall_ping_coin upgrade - earn money on bounces
             if (wallPingCoinLevel > 0) {
                 state.wall_bounces_since_coin = (state.wall_bounces_since_coin || 0) + 1;
-                const coinThreshold = wallPingCoinLevel === 1 ? 10 : (wallPingCoinLevel === 2 ? 8 : 6);
+                const coinThreshold = wallPingCoinLevel === 1 ? 6 : (wallPingCoinLevel === 2 ? 5 : 4);
                 
                 if (state.wall_bounces_since_coin >= coinThreshold) {
                     state.money += 1;
@@ -1063,13 +1060,32 @@ getMaxVelocity(state) {
                 this.spawnEchoPickup(state, stone.x);
             }
             
-            // Wall_speed random direction penalty
-            if (wallSpeedLevel > 0 && wallSpeedLevel < 3) {
-                const randomAngle = (Math.random() - 0.5) * (0.3 - wallSpeedLevel * 0.1);
-                const speed = Math.sqrt(stone.vx ** 2 + stone.vy ** 2);
-                const angle = Math.atan2(stone.vx, stone.vy) + randomAngle;
-                stone.vx = Math.sin(angle) * speed;
-                stone.vy = Math.cos(angle) * speed;
+            // Wall_speed effect
+            if (wallSpeedLevel > 0) {
+                // 15%, 25%, 40% speed boost
+                const boostPercent = wallSpeedLevel === 1 ? 0.15 : (wallSpeedLevel === 2 ? 0.25 : 0.40);
+                const speedMultiplier = 1.0 + boostPercent;
+                
+                stone.vx *= speedMultiplier;
+                stone.vy *= speedMultiplier;
+                
+                // Random direction penalty (for tiers 1 & 2)
+                if (wallSpeedLevel < 3) {
+                    const randomAngle = (Math.random() - 0.5) * (0.3 - wallSpeedLevel * 0.1);
+                    const speed = Math.sqrt(stone.vx ** 2 + stone.vy ** 2);
+                    const angle = Math.atan2(stone.vx, stone.vy) + randomAngle;
+                    stone.vx = Math.sin(angle) * speed;
+                    stone.vy = Math.cos(angle) * speed;
+                }
+                
+                // Clamp to max velocity
+                const maxVel = this.getMaxVelocity(state);
+                const newSpeed = Math.sqrt(stone.vx ** 2 + stone.vy ** 2);
+                if (newSpeed > maxVel) {
+                    const scale = maxVel / newSpeed;
+                    stone.vx *= scale;
+                    stone.vy *= scale;
+                }
             }
             
             // Visual effects
