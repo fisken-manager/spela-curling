@@ -35,9 +35,6 @@ jobs:
           cp -r test-folder/. deploy/test/
           rm -rf deploy/test/.git
           
-          # Add test banner
-          sed -i 's|<body>|<body><div style="background: #e67e22; color: white; text-align: center; padding: 8px; font-family: monospace; font-weight: bold;">🧪 TEST VERSION<\/div>|' deploy/test/index.html
-          
       - name: Deploy to gh-pages
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
