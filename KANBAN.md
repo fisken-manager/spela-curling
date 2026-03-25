@@ -11,8 +11,8 @@ Ett enkelt Kanban-system direkt i repot.
 - [x] **Pickup-färger del 2** - Ändra färg på sweep eller big pickup så båda inte är gröna  
   - ✅ Sweep: Cyan (var grön), Growth förblir grön
   - ✅ Size Shrink: Grå (var lila)
-- [ ] **Shop-animering** - Shop vid loop-slut ska använda samma animate-in som power-up shops
-- [ ] **Shop-musik** - Stoppa spelmusik och spela shop-musik i alla shops (konsekvent beteende)
+- [x] **Shop-animering** - Shop vid loop-slut ska använda samma animate-in som power-up shops
+- [x] **Shop-musik** - Stoppa spelmusik och spela shop-musik i alla shops (konsekvent beteende)
 
 ---
 
