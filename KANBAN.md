@@ -15,7 +15,7 @@ Ett enkelt Kanban-system direkt i repot.
 - [x] **Shop-musik** - Stoppa spelmusik och spela shop-musik i alla shops (konsekvent beteende)
 - [x] **Kvastens Vila (frozen_broom)** - Lade till grace period (0.5s) för att undvika att bonus förverkas av finger-rörelse vid upplockning
 - [x] **Grytans Glip** - Ny uppgradering: Pac-Man style vägg-wrapping, $5 (åk genom väggen utan att trigga vägg-effekter), chibi waifu-bild med blått hår och blåvita kläder
-- [x] **Sillens Sista Dans** - Ny uppgradering: 0 liv = +50% maxfart, 1+ liv = -50% maxfart, chibi waifu dansar med sill
+- [x] **Sillens Sista Dans** - Ny uppgradering: 0 liv = +50% maxfart, 1+ liv = -50% maxfart, $5, chibi waifu dansar med sill
 - [x] **Test-version: Gratis rerolls** - På test-versionen är rerolls gratis för enklare testning
 
 ---
