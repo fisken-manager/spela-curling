@@ -101,6 +101,7 @@ function setupControls() {
         state.shopTransitionFishY = state.screenHeight / 2;
         state.shopUpgradeSelection = null;
         state.rerollCost = 1;
+        state.lives++;
         // Fade out game music
         if (audio.isPlaying) {
             audio.fadeOutAndStop(0.5);
