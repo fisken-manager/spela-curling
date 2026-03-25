@@ -10,7 +10,6 @@ Ett enkelt Kanban-system direkt i repot.
 - [ ] **Pickup-färger del 2** - Ändra färg på sweep eller big pickup så båda inte är gröna
 - [ ] **Shop-animering** - Shop vid loop-slut ska använda samma animate-in som power-up shops
 - [ ] **Shop-musik** - Stoppa spelmusik och spela shop-musik i alla shops (konsekvent beteende)
-- [ ] **GitHub Pages miljöer** - Två versioner: main (produktion) + test branch (staging)
 
 ---
 
@@ -22,7 +21,7 @@ Ett enkelt Kanban-system direkt i repot.
 
 ## ✅ DONE
 
-*(tomt just nu)*
+- [x] **GitHub Pages miljöer** - Main (prod) + test (staging). Kräver manual: Settings > Pages > Source = GitHub Actions
 
 ---
 
