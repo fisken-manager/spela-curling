@@ -13,6 +13,7 @@ Ett enkelt Kanban-system direkt i repot.
   - ✅ Size Shrink: Grå (var lila)
 - [x] **Shop-animering** - Shop vid loop-slut ska använda samma animate-in som power-up shops
 - [x] **Shop-musik** - Stoppa spelmusik och spela shop-musik i alla shops (konsekvent beteende)
+- [x] **Kvastens Vila (frozen_broom)** - Lade till grace period (0.5s) för att undvika att bonus förverkas av finger-rörelse vid upplockning
 
 ---
 
