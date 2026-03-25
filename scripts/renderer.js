@@ -478,14 +478,14 @@ this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
                 screenX, screenY, 0,
                 screenX, screenY, config.radius
             );
-            gradient.addColorStop(0, 'rgba(50, 255, 50, 1)');
-            gradient.addColorStop(0.7, 'rgba(0, 200, 0, 0.9)');
-            gradient.addColorStop(1, 'rgba(0, 150, 0, 0.4)');
+            gradient.addColorStop(0, 'rgba(0, 255, 255, 1)');
+            gradient.addColorStop(0.7, 'rgba(0, 200, 200, 0.9)');
+            gradient.addColorStop(1, 'rgba(0, 150, 150, 0.4)');
             
             this.ctx.fillStyle = gradient;
             this.ctx.fill();
             
-            this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+            this.ctx.strokeStyle = 'rgba(200, 255, 255, 0.6)';
             this.ctx.lineWidth = 2;
             this.ctx.stroke();
             
@@ -518,7 +518,7 @@ this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
                 screenY + (Math.random() - 0.5) * 40,
                 Math.sin(angle) * speed,
                 -Math.cos(angle) * speed,
-                '50, 255, 50',
+                '0, 255, 255',
                 0.6
             );
         }
@@ -536,14 +536,14 @@ this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
         
-        this.ctx.shadowColor = 'rgba(0, 255, 0, 0.8)';
+        this.ctx.shadowColor = 'rgba(0, 255, 255, 0.8)';
         this.ctx.shadowBlur = 30;
         
         const alpha = Math.min(1, state.sweepBoost.timer / 5);
-        this.ctx.fillStyle = `rgba(50, 255, 50, ${alpha})`;
+        this.ctx.fillStyle = `rgba(0, 255, 255, ${alpha})`;
         this.ctx.fillText('SOPA!', centerX, centerY);
         
-        this.ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.8})`;
+        this.ctx.strokeStyle = `rgba(200, 255, 255, ${alpha * 0.8})`;
         this.ctx.lineWidth = 4;
         this.ctx.strokeText('SOPA!', centerX, centerY);
         
@@ -811,18 +811,18 @@ this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
                 screenX, screenY, 0,
                 screenX, screenY, config.radius
             );
-            gradient.addColorStop(0, 'rgba(255, 50, 50, 1)');
-            gradient.addColorStop(0.7, 'rgba(200, 0, 0, 0.9)');
-            gradient.addColorStop(1, 'rgba(150, 0, 0, 0.4)');
+            gradient.addColorStop(0, 'rgba(139, 69, 19, 1)');
+            gradient.addColorStop(0.7, 'rgba(160, 82, 45, 0.9)');
+            gradient.addColorStop(1, 'rgba(210, 105, 30, 0.4)');
             
             this.ctx.fillStyle = gradient;
             this.ctx.fill();
             
-            this.ctx.strokeStyle = 'rgba(255, 100, 100, 0.8)';
+            this.ctx.strokeStyle = 'rgba(222, 184, 135, 0.8)';
             this.ctx.lineWidth = 2;
             this.ctx.stroke();
             
-            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            this.ctx.fillStyle = 'rgba(255, 228, 196, 0.9)';
             this.ctx.font = 'bold 14px Arial';
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
@@ -850,7 +850,7 @@ this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
                 screenY,
                 Math.cos(angle) * speed,
                 Math.sin(angle) * speed,
-                '255, 50, 50',
+                '139, 69, 19',
                 0.6
             );
         }
