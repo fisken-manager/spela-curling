@@ -26,16 +26,11 @@
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
-    .header p {
-      color: #a0a0a0;
-      margin-top: 10px;
-      font-style: italic;
-    }
     .board {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
       gap: 20px;
-      max-width: 1400px;
+      max-width: 1200px;
       margin: 0 auto;
     }
     .column {
@@ -51,15 +46,10 @@
       padding: 12px;
       border-radius: 8px;
       margin-bottom: 15px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
     }
     .todo .column-header { background: linear-gradient(135deg, #f39c12, #e67e22); }
     .progress .column-header { background: linear-gradient(135deg, #3498db, #2980b9); }
     .done .column-header { background: linear-gradient(135deg, #27ae60, #2ecc71); }
-    .bugs .column-header { background: linear-gradient(135deg, #e74c3c, #c0392b); }
-    .ideas .column-header { background: linear-gradient(135deg, #9b59b6, #8e44ad); }
     
     .task {
       background: rgba(255,255,255,0.08);
@@ -67,17 +57,10 @@
       padding: 12px;
       margin-bottom: 10px;
       border-left: 3px solid;
-      transition: transform 0.2s, background 0.2s;
-    }
-    .task:hover {
-      transform: translateX(5px);
-      background: rgba(255,255,255,0.12);
     }
     .todo .task { border-left-color: #e67e22; }
     .progress .task { border-left-color: #3498db; }
     .done .task { border-left-color: #27ae60; }
-    .bugs .task { border-left-color: #e74c3c; }
-    .ideas .task { border-left-color: #9b59b6; }
     
     .task-title {
       font-weight: 600;
@@ -89,11 +72,11 @@
       color: #b0b0b0;
       line-height: 1.4;
     }
-    .footer {
-      text-align: center;
-      margin-top: 40px;
+    .empty {
       color: #666;
-      font-size: 0.8rem;
+      font-style: italic;
+      text-align: center;
+      padding: 20px;
     }
     .back-link {
       display: inline-block;
@@ -104,10 +87,6 @@
       text-decoration: none;
       border-radius: 25px;
       font-weight: 600;
-      transition: transform 0.2s;
-    }
-    .back-link:hover {
-      transform: scale(1.05);
     }
     @media (max-width: 768px) {
       .board { grid-template-columns: 1fr; }
@@ -118,9 +97,8 @@
 <body>
   <div class="header">
     <h1>🥌 Spela Curling - Kanban</h1>
-    <p>"Man ska inte måla om båten medan den ligger på isen."</p>
     <a href="index.html" class="back-link">⬅ Tillbaka till spelet</a>
-    <a href="https://github.com/fisken-manager/spela-curling/blob/main/KANBAN.md" class="back-link" style="margin-left: 10px;">📋 Redigera på GitHub</a>
+    <a href="https://github.com/fisken-manager/spela-curling/blob/main/KANBAN.md" class="back-link" style="margin-left: 10px;">📋 Redigera</a>
   </div>
 
   <div class="board">
@@ -147,128 +125,19 @@
         <div class="task-title">GitHub Pages miljöer</div>
         <div class="task-desc">Två versioner: main (produktion) + test branch (staging)</div>
       </div>
-      <div class="task">
-        <div class="task-title">Ljudsystem</div>
-        <div class="task-desc">Ljudeffekter för stenkollisioner, söpande, och poäng</div>
-      </div>
-      <div class="task">
-        <div class="task-title">Highscore-sparande</div>
-        <div class="task-desc">LocalStorage för highscores och statistik</div>
-      </div>
-      <div class="task">
-        <div class="task-title">Fler banor/nivåer</div>
-        <div class="task-desc">Olika isbanor med unika fysikegenskaper</div>
-      </div>
-      <div class="task">
-        <div class="task-title">Tutorial/första start</div>
-        <div class="task-desc">Introsekvens för nya spelare</div>
-      </div>
-      <div class="task">
-        <div class="task-title">Mobil-optimering</div>
-        <div class="task-desc">Touch-kontroller och responsiv layout</div>
-      </div>
-      <div class="task">
-        <div class="task-title">Prestanda-optimering</div>
-        <div class="task-desc">Culling och particle pooling</div>
-      </div>
-      <div class="task">
-        <div class="task-title">Accessibility</div>
-        <div class="task-desc">ARIA-labels, kontrast, tangentbordsnavigering</div>
-      </div>
-      <div class="task">
-        <div class="task-title">CI/CD</div>
-        <div class="task-desc">GitHub Actions för deploy till Pages</div>
-      </div>
     </div>
 
     <!-- IN PROGRESS Column -->
     <div class="column progress">
       <div class="column-header">🚧 IN PROGRESS</div>
-      <div class="task">
-        <div class="task-title">Balansering av ekonomi</div>
-        <div class="task-desc">Justera priser och inkomster från upgrades</div>
-      </div>
+      <div class="empty">(tomt just nu)</div>
     </div>
 
     <!-- DONE Column -->
     <div class="column done">
       <div class="column-header">✅ DONE</div>
-      <div class="task">
-        <div class="task-title">Grundläggande fysikmotor</div>
-        <div class="task-desc">Stenrörelse, kollisioner</div>
-      </div>
-      <div class="task">
-        <div class="task-title">Fisheye-effekter</div>
-        <div class="task-desc">Barrel, perspective</div>
-      </div>
-      <div class="task">
-        <div class="task-title">Upgrades-system</div>
-        <div class="task-desc">Shop med förbättringar</div>
-      </div>
-      <div class="task">
-        <div class="task-title">Dev-tools</div>
-        <div class="task-desc">Debugging-gränssnitt</div>
-      </div>
-      <div class="task">
-        <div class="task-title">GitHub Pages publicering</div>
-        <div class="task-desc">Live demo på GitHub Pages</div>
-      </div>
+      <div class="empty">(tomt just nu)</div>
     </div>
-
-    <!-- BUGS Column -->
-    <div class="column bugs">
-      <div class="column-header">🐛 BUGS</div>
-      <div class="task">
-        <div class="task-title">Stenar fastnar i väggen</div>
-        <div class="task-desc">Vid hög hastighet kan stenar klippa igenom väggen</div>
-      </div>
-      <div class="task">
-        <div class="task-title">Fisheye flackar</div>
-        <div class="task-desc">Effekten flackar på vissa skärmar</div>
-      </div>
-      <div class="task">
-        <div class="task-title">Shop-knappen osynlig</div>
-        <div class="task-desc">Syns inte alltid på mobila enheter</div>
-      </div>
-    </div>
-
-    <!-- IDEAS Column -->
-    <div class="column ideas">
-      <div class="column-header">💡 IDEAS / BACKLOG</div>
-      <div class="task">
-        <div class="task-title">Multiplayer-läge</div>
-        <div class="task-desc">Lokal eller online multiplayer</div>
-      </div>
-      <div class="task">
-        <div class="task-title">AI-motståndare</div>
-        <div class="task-desc">Spela mot datorn</div>
-      </div>
-      <div class="task">
-        <div class="task-title">Custom skins</div>
-        <div class="task-desc">Olika utseenden på stenar</div>
-      </div>
-      <div class="task">
-        <div class="task-title">Säsongsbetonade event</div>
-        <div class="task-desc">Speciella händelser vid högtider</div>
-      </div>
-      <div class="task">
-        <div class="task-title">Integration med curling.db</div>
-        <div class="task-desc">Riktiga lag från databasen</div>
-      </div>
-      <div class="task">
-        <div class="task-title">Export av replay-GIF</div>
-        <div class="task-desc">Dela spektakulära ögonblick</div>
-      </div>
-      <div class="task">
-        <div class="task-title">Suno/ElevenLabs musik</div>
-        <div class="task-desc">AI-genererad musik till spelet</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="footer">
-    <p>"Även en stannad klocka kan sopa rätt två gånger om dagen."</p>
-    <p style="margin-top: 10px;">Uppdaterad: 2026-03-25 | <a href="https://github.com/fisken-manager/spela-curling" style="color: #e94560;">GitHub Repo</a></p>
   </div>
 </body>
 </html>
