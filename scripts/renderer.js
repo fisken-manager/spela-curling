@@ -1128,7 +1128,9 @@ drawScoreText(state) {
             color = '#ffd700';
         }
         
-        const fontSize = Math.floor(24 * scale);
+        // Scale font for small screens
+        const baseFontSize = state.screenWidth < 360 ? 20 : 24;
+        const fontSize = Math.floor(baseFontSize * scale);
         
         this.ctx.save();
         this.ctx.fillStyle = color;
@@ -1152,32 +1154,40 @@ drawScoreText(state) {
         
         const playArea = state.getPlayArea();
         
-        // Draw lives in red at the left edge
+        // Draw lives in red at the left edge (ensure it stays on screen)
         const lives = state.lives || 0;
         this.ctx.save();
         this.ctx.fillStyle = '#ff6b6b';
-        this.ctx.font = 'bold 20px Arial';
+        // Scale font for small screens
+        const livesFontSize = state.screenWidth < 360 ? 16 : 20;
+        this.ctx.font = `bold ${livesFontSize}px Arial`;
         this.ctx.textAlign = 'left';
         this.ctx.textBaseline = 'middle';
         this.ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
         this.ctx.shadowBlur = 4;
         this.ctx.shadowOffsetX = 2;
         this.ctx.shadowOffsetY = 2;
-        this.ctx.fillText(`♥${lives}`, playArea.left + 10, baseY);
+        // Ensure lives text stays within screen bounds
+        const livesX = Math.max(playArea.left + 10, 10);
+        this.ctx.fillText(`♥${lives}`, livesX, baseY);
         this.ctx.restore();
         
-        // Draw money in yellow at the right edge
+        // Draw money in yellow at the right edge (ensure it stays on screen)
         const money = state.money || 0;
         this.ctx.save();
         this.ctx.fillStyle = '#ffd700';
-        this.ctx.font = 'bold 20px Arial';
+        // Scale font for small screens
+        const moneyFontSize = state.screenWidth < 360 ? 16 : 20;
+        this.ctx.font = `bold ${moneyFontSize}px Arial`;
         this.ctx.textAlign = 'right';
         this.ctx.textBaseline = 'middle';
         this.ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
         this.ctx.shadowBlur = 4;
         this.ctx.shadowOffsetX = 2;
         this.ctx.shadowOffsetY = 2;
-        this.ctx.fillText(`$${money}`, playArea.right - 10, baseY);
+        // Ensure money text stays within screen bounds
+        const moneyX = Math.min(playArea.right - 10, state.screenWidth - 10);
+        this.ctx.fillText(`$${money}`, moneyX, baseY);
         this.ctx.restore();
     }
 

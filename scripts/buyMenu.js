@@ -68,9 +68,12 @@ export class BuyMenu {
         const centerX = screenWidth / 2;
         const centerY = screenHeight / 2;
         
-        // Panel dimensions
-        const panelWidth = Math.min(400, screenWidth - 20);
-        const panelHeight = Math.min(580, screenHeight - 20);
+        // Panel dimensions - responsive for mobile
+        const minMargin = 10;
+        const maxPanelWidth = 400;
+        const maxPanelHeight = 580;
+        const panelWidth = Math.min(maxPanelWidth, screenWidth - minMargin * 2);
+        const panelHeight = Math.min(maxPanelHeight, screenHeight - minMargin * 2);
         const panelX = centerX - panelWidth / 2;
         const panelY = centerY - panelHeight / 2;
 
@@ -88,22 +91,25 @@ export class BuyMenu {
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        // Title
+        // Title - scale for small screens
+        const titleFontSize = isSmallScreen ? 22 : 28;
+        const moneyFontSize = isSmallScreen ? 16 : 20;
         ctx.fillStyle = '#ffd700';
-        ctx.font = 'bold 28px "Space Mono", monospace';
+        ctx.font = `bold ${titleFontSize}px "Space Mono", monospace`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
-        ctx.fillText('UPPGRADERINGAR', centerX, panelY + 25);
+        ctx.fillText('UPPGRADERINGAR', centerX, panelY + (isSmallScreen ? 15 : 25));
 
         // Money
         ctx.fillStyle = '#ffd700';
-        ctx.font = 'bold 20px "Space Mono", monospace';
-        ctx.fillText(`$${Math.floor(this.state.money)}`, centerX, panelY + 60);
+        ctx.font = `bold ${moneyFontSize}px "Space Mono", monospace`;
+        ctx.fillText(`$${Math.floor(this.state.money)}`, centerX, panelY + (isSmallScreen ? 42 : 60));
 
-        // Upgrade items
-        const itemStartY = panelY + 95;
-        const itemHeight = 85;
-        const itemPadding = 10;
+        // Upgrade items - scale down for smaller screens
+        const isSmallScreen = screenHeight < 600 || screenWidth < 360;
+        const itemStartY = panelY + (isSmallScreen ? 75 : 95);
+        const itemHeight = isSmallScreen ? 65 : 85;
+        const itemPadding = isSmallScreen ? 6 : 10;
         const itemWidth = panelWidth - 20;
 
         for (let i = 0; i < this.upgrades.length; i++) {
@@ -154,9 +160,9 @@ export class BuyMenu {
                 ctx.stroke();
             }
 
-            // Icon or image
-            const iconSize = 65;
-            const iconX = itemX + 20;
+            // Icon or image - scale for small screens
+            const iconSize = isSmallScreen ? 50 : 65;
+            const iconX = itemX + (isSmallScreen ? 15 : 20);
             const iconY = itemY + (itemHeight - iconSize) / 2;
 
             const hasImage = this.images[upgrade.image];
@@ -171,17 +177,19 @@ export class BuyMenu {
             }
 
             // Name (to the right of icon)
-            const nameX = iconX + iconSize + 10;
-            ctx.font = 'bold 17px "Work Sans", sans-serif';
+            const nameX = iconX + iconSize + (isSmallScreen ? 8 : 10);
+            const nameFontSize = isSmallScreen ? 14 : 17;
+            const effectFontSize = isSmallScreen ? 11 : 13;
+            ctx.font = `bold ${nameFontSize}px "Work Sans", sans-serif`;
             ctx.textAlign = 'left';
             ctx.textBaseline = 'top';
             ctx.fillStyle = canBuy && !isMaxed ? '#e2e8f0' : '#94a3b8';
-            ctx.fillText(upgrade.name, nameX, iconY + 12);
+            ctx.fillText(upgrade.name, nameX, iconY + (isSmallScreen ? 8 : 12));
 
             // Effect
-            ctx.font = '13px "Work Sans", sans-serif';
+            ctx.font = `${effectFontSize}px "Work Sans", sans-serif`;
             ctx.fillStyle = '#94a3b8';
-            ctx.fillText(upgrade.effect, nameX, iconY + 35);
+            ctx.fillText(upgrade.effect, nameX, iconY + (isSmallScreen ? 26 : 35));
 
             // Level dots
             const maxLevels = upgrade.pricing.length;
@@ -210,10 +218,10 @@ export class BuyMenu {
             }
         }
 
-        // Continue button
-        const continueY = panelY + panelHeight - 55;
-        const continueWidth = 160;
-        const continueHeight = 42;
+        // Continue button - scale for small screens
+        const continueY = panelY + panelHeight - (isSmallScreen ? 45 : 55);
+        const continueWidth = isSmallScreen ? 140 : 160;
+        const continueHeight = isSmallScreen ? 36 : 42;
         const continueX = centerX - continueWidth / 2;
 
         this.clickAreas.push({
@@ -236,8 +244,9 @@ export class BuyMenu {
         ctx.lineWidth = 1;
         ctx.stroke();
 
+        const continueFontSize = isSmallScreen ? 14 : 16;
         ctx.fillStyle = '#e2e8f0';
-        ctx.font = 'bold 16px "Work Sans", sans-serif';
+        ctx.font = `bold ${continueFontSize}px "Work Sans", sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('FORTSÄTT', centerX, continueY + continueHeight / 2);
