@@ -4,10 +4,12 @@ Ett enkelt Kanban-system direkt i repot.
 
 ---
 
-## 📋 TODO
+## ✅ DONE
 
-- [ ] **Pickup-färger** - Negativa pickups måste ha egna färger (inte röd - röd är för liv)
-- [ ] **Pickup-färger del 2** - Ändra färg på sweep eller big pickup så båda inte är gröna
+- [x] **Pickup-färger** - Negativa pickups måste ha egna färger (inte röd - röd är för liv)
+  - ✅ Curl Chaos: Brun (var röd)
+- [x] **Pickup-färger del 2** - Ändra färg på sweep eller big pickup så båda inte är gröna  
+  - ✅ Sweep: Cyan (var grön), Growth förblir grön
 - [ ] **Shop-animering** - Shop vid loop-slut ska använda samma animate-in som power-up shops
 - [ ] **Shop-musik** - Stoppa spelmusik och spela shop-musik i alla shops (konsekvent beteende)
 
