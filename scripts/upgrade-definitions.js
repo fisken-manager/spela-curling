@@ -267,7 +267,7 @@ export const UPGRADES = [
         detail: 'portal opening in wall, stone passing through, Pac-Man style, glowing edges',
         category: 'technical',
         tiers: [
-            { level: 1, cost: 5, effect: 'Åk genom väggarna och kom ut på andra sidan', image: 'dimension_door-tier1.jpg' },
+            { level: 1, cost: 5, effect: 'Åk genom väggarna och kom ut på andra sidan', image: 'grytans_glip-tier1.jpg' },
         ]
     },
     {
