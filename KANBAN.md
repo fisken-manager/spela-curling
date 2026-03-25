@@ -14,6 +14,7 @@ Ett enkelt Kanban-system direkt i repot.
 - [x] **Shop-animering** - Shop vid loop-slut ska använda samma animate-in som power-up shops
 - [x] **Shop-musik** - Stoppa spelmusik och spela shop-musik i alla shops (konsekvent beteende)
 - [x] **Kvastens Vila (frozen_broom)** - Lade till grace period (0.5s) för att undvika att bonus förverkas av finger-rörelse vid upplockning
+- [x] **Dimensionsdörren** - Ny uppgradering: Pac-Man style vägg-wrapping (åk genom väggen, kom ut på andra sidan med bibehållen fart)
 
 ---
 
