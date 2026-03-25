@@ -88,7 +88,7 @@ export const UPGRADES = [
         detail: 'coins raining down, golden glow, greedy expression, money bags',
         category: 'corrupted',
         tiers: [
-            { level: 1, cost: 10, effect: '80% av poängorbs blir till mynt, -5% fart per loop', image: 'gold_grift-tier1.jpg' },
+            { level: 1, cost: 5, effect: '80% av poängorbs blir till mynt, -5% fart per loop', image: 'gold_grift-tier1.jpg' },
             { level: 2, cost: 20, effect: '90% av poängorbs blir till mynt, -10% fart per loop', image: 'gold_grift-tier2.jpg' },
             { level: 3, cost: 30, effect: '100% av poängorbs blir till mynt, -15% fart per loop', image: 'gold_grift-tier3.jpg' },
         ]
@@ -174,7 +174,7 @@ export const UPGRADES = [
         detail: 'black hole gravitational pull, swirling vortex, cosmic dread, all-consuming',
         category: 'technical',
         tiers: [
-            { level: 1, cost: 15, effect: 'Passiv dragning av alla pickups (liten radie)', image: 'event_horizon-tier1.jpg' },
+            { level: 1, cost: 5, effect: 'Passiv dragning av alla pickups (liten radie)', image: 'event_horizon-tier1.jpg' },
             { level: 2, cost: 30, effect: 'Passiv dragning (medel radie)', image: 'event_horizon-tier2.jpg' },
             { level: 3, cost: 60, effect: 'Passiv dragning (stor radie)', image: 'event_horizon-tier3.jpg' },
         ]
@@ -210,7 +210,7 @@ export const UPGRADES = [
         detail: 'market stall, multiple vendors, bustling atmosphere, night market',
         category: 'technical',
         tiers: [
-            { level: 1, cost: 10, effect: '2x shop-pickups spawnar', image: 'double_shops-tier1.jpg' },
+            { level: 1, cost: 5, effect: '2x shop-pickups spawnar', image: 'double_shops-tier1.jpg' },
         ]
     },
 
@@ -233,7 +233,7 @@ export const UPGRADES = [
         detail: 'broom becoming ethereal, life essence, desperate sweeping motion, ghostly aura',
         category: 'highrisk',
         tiers: [
-            { level: 1, cost: 10, effect: 'Förvandlar Sweep-pickups till Extra liv, -25% maxhastighet', image: 'sweep_life-tier1.jpg' },
+            { level: 1, cost: 5, effect: 'Förvandlar Sweep-pickups till Extra liv, -25% maxhastighet', image: 'sweep_life-tier1.jpg' },
         ]
     },
 
@@ -245,7 +245,7 @@ export const UPGRADES = [
         detail: 'tiny stone passing through needle eye, shrinking effect, mystical portal',
         category: 'technical',
         tiers: [
-            { level: 1, cost: 15, effect: 'Ju mindre sten ju mindre friktion', image: 'needle_eye-tier1.jpg' },
+            { level: 1, cost: 5, effect: 'Ju mindre sten ju mindre friktion', image: 'needle_eye-tier1.jpg' },
         ]
     },
     {
@@ -277,7 +277,7 @@ export const UPGRADES = [
         detail: 'dark storm clouds, lightning, ominous harvest, supernatural weather',
         category: 'corrupted',
         tiers: [
-            { level: 1, cost: 10, effect: 'Negativa pickups är 2x starkare', image: 'cursed_harvest-tier1.jpg' },
+            { level: 1, cost: 5, effect: 'Negativa pickups är 2x starkare', image: 'cursed_harvest-tier1.jpg' },
         ]
     },
     {
