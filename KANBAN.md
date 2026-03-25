@@ -21,7 +21,9 @@ Ett enkelt Kanban-system direkt i repot.
 
 ## ✅ DONE
 
-- [x] **GitHub Pages miljöer** - Main (prod) + test (staging). Kräver manual: Settings > Pages > Source = GitHub Actions
+- [x] **GitHub Pages miljöer** - Main (prod) + test (staging). ✅ LIVE:
+  - Prod: https://fisken-manager.github.io/spela-curling/
+  - Test: https://fisken-manager.github.io/spela-curling/test/
 
 ---
 
