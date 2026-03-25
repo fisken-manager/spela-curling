@@ -70,6 +70,16 @@ getMaxVelocity(state) {
         const velocityReductionFactor = Math.pow(0.90, Math.max(0, loopCount - 1));
         maxVel *= velocityReductionFactor;
 
+        // Sillens Sista Dans - +50% max velocity at 0 lives, -50% at 1+ lives
+        const herringsDanceLevel = state.upgrades.herrings_last_dance?.level || 0;
+        if (herringsDanceLevel > 0) {
+            if (state.lives === 0) {
+                maxVel *= 1.5; // +50% when at death's door
+            } else {
+                maxVel *= 0.5; // -50% when safe
+            }
+        }
+
         return maxVel;
     }
 

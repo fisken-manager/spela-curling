@@ -177,6 +177,7 @@ export class GameState {
             sweep_life: { level: 0 },
             frozen_broom: { level: 0 },
             cursed_harvest: { level: 0 },
+            herrings_last_dance: { level: 0 },
             // Technical - New
             needle_eye: { level: 0 },
             dimension_door: { level: 0 },
