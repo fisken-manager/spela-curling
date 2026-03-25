@@ -198,9 +198,9 @@ export const UPGRADES = [
         detail: 'coin appearing at wall impact, rhythmic pattern, payment tribute',
         category: 'technical',
         tiers: [
-            { level: 1, cost: 3, effect: 'Du får $1 var 10:e väggstuds', image: 'wall_ping_coin-tier1.jpg' },
-            { level: 2, cost: 10, effect: 'Du får $1 var 8:e väggstuds', image: 'wall_ping_coin-tier2.jpg' },
-            { level: 3, cost: 20, effect: 'Du får $1 var 6:e väggstuds', image: 'wall_ping_coin-tier3.jpg' },
+            { level: 1, cost: 3, effect: 'Du får $1 var 6:e väggstuds', image: 'wall_ping_coin-tier1.jpg' },
+            { level: 2, cost: 10, effect: 'Du får $1 var 5:e väggstuds', image: 'wall_ping_coin-tier2.jpg' },
+            { level: 3, cost: 20, effect: 'Du får $1 var 4:e väggstuds', image: 'wall_ping_coin-tier3.jpg' },
         ]
     },
     {
