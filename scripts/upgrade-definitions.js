@@ -49,11 +49,11 @@ export const UPGRADES = [
         detail: 'magnetic aura, glowing orbs orbiting around, attracting light particles',
         category: 'basic',
         tiers: [
-            { level: 1, cost: 3, effect: '+20% Magnetism-radie', image: 'waifu-curl.jpg' },
-            { level: 2, cost: 10, effect: '+40% Magnetism-radie', image: 'magnetism-tier2.jpg' },
-            { level: 3, cost: 15, effect: '+60% Magnetism-radie', image: 'magnetism-tier3.jpg' },
-            { level: 4, cost: 25, effect: '+80% Magnetism-radie', image: 'magnetism-tier4.jpg' },
-            { level: 5, cost: 35, effect: '+100% Magnetism-radie', image: 'magnetism-tier5.jpg' },
+            { level: 1, cost: 3, effect: '+10% Magnetism-radie', image: 'waifu-curl.jpg' },
+            { level: 2, cost: 10, effect: '+20% Magnetism-radie', image: 'magnetism-tier2.jpg' },
+            { level: 3, cost: 15, effect: '+30% Magnetism-radie', image: 'magnetism-tier3.jpg' },
+            { level: 4, cost: 25, effect: '+40% Magnetism-radie', image: 'magnetism-tier4.jpg' },
+            { level: 5, cost: 35, effect: '+50% Magnetism-radie', image: 'magnetism-tier5.jpg' },
         ]
     },
     {
@@ -174,9 +174,9 @@ export const UPGRADES = [
         detail: 'black hole gravitational pull, swirling vortex, cosmic dread, all-consuming',
         category: 'technical',
         tiers: [
-            { level: 1, cost: 3, effect: 'Passiv dragning av alla pickups (liten radie)', image: 'event_horizon-tier1.jpg' },
-            { level: 2, cost: 15, effect: 'Passiv dragning (medel radie)', image: 'event_horizon-tier2.jpg' },
-            { level: 3, cost: 25, effect: 'Passiv dragning (stor radie)', image: 'event_horizon-tier3.jpg' },
+            { level: 1, cost: 15, effect: 'Passiv dragning av alla pickups (liten radie)', image: 'event_horizon-tier1.jpg' },
+            { level: 2, cost: 30, effect: 'Passiv dragning (medel radie)', image: 'event_horizon-tier2.jpg' },
+            { level: 3, cost: 60, effect: 'Passiv dragning (stor radie)', image: 'event_horizon-tier3.jpg' },
         ]
     },
     {

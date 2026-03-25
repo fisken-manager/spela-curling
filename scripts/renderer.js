@@ -1306,7 +1306,7 @@ drawScoreText(state) {
         const playArea = state.getPlayArea();
         
         const sizeBonusFactor = 1 + (state.upgrades.stoneSize.level * 0.2);
-        const magnetismRadius = (100 + magnetismLevel * 100) * sizeBonusFactor;
+        const magnetismRadius = (50 + magnetismLevel * 50) * sizeBonusFactor;
 
         this.ctx.save();
         for (const orb of state.scoringOrbs) {

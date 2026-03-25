@@ -291,10 +291,50 @@ getMaxVelocity(state) {
         
         this.handleBounds(state, effectiveRadius);
         this.updateWorldPosition(state, dt);
+        this.applyPickupAttraction(state);
         this.checkPowerUps(state, effectiveRadius);
+        }
+
+        applyPickupAttraction(state) {
+        const eventHorizonLevel = state.upgrades.event_horizon?.level || 0;
+        if (eventHorizonLevel === 0) return;
+
+        const eventHorizonRadius = 50 + eventHorizonLevel * 75;
+        const eventHorizonStrength = 0.02 + eventHorizonLevel * 0.02;
+
+        const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
+        const stone = state.stone;
+
+        const allPickups = [
+            ...(state.powerUps || []),
+            ...(state.lifePowerUps || []),
+            ...(state.shopPowerUps || []),
+            ...(state.sweepPowerUps || []),
+            ...(state.rotationPowerUps || []),
+            ...(state.superBoostPowerUps || []),
+            ...(state.growthPowerUps || []),
+            ...(state.curlChaosPickups || []),
+            ...(state.sizeShrinkPickups || [])
+        ];
+
+        for (const pickup of allPickups) {
+            if (pickup.collected) continue;
+
+            const pickupWorldY = pickup.scrollProgress * maxScroll;
+            const dy = stone.worldY - pickupWorldY;
+            const dx = stone.x - pickup.x;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist > 0 && dist < eventHorizonRadius) {
+                const pullX = (dx / dist) * eventHorizonStrength * 60;
+                const pullY = (dy / dist) * eventHorizonStrength * 60;
+                pickup.x += pullX;
+                pickup.scrollProgress += pullY / maxScroll;
+            }
+        }
     }
 
-checkPowerUps(state, effectiveRadius) {
+    checkPowerUps(state, effectiveRadius) {
         const { stone } = state;
         const config = state.powerUpConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
@@ -618,7 +658,7 @@ checkPowerUps(state, effectiveRadius) {
         // Basic magnetism upgrade
         const magnetismLevel = state.upgrades.magnetism?.level || 0;
         const sizeBonusFactor = 1 + ((state.upgrades.size?.level || 0) * 0.2);
-        const baseMagnetismRadius = magnetismLevel > 0 ? (100 + magnetismLevel * 100) * sizeBonusFactor : 0;
+        const baseMagnetismRadius = magnetismLevel > 0 ? (50 + magnetismLevel * 50) * sizeBonusFactor : 0;
         
         // Spin_win upgrade - magnetism scales with rotation
         const spinWinLevel = state.upgrades.spin_win?.level || 0;
@@ -1020,9 +1060,7 @@ checkPowerUps(state, effectiveRadius) {
             
             // Echo_woods upgrade - spawn speed pickups on wall hit
             if (echoWoodsLevel > 0) {
-                if (Math.random() < 0.5 + echoWoodsLevel * 0.15) {
-                    this.spawnEchoPickup(state, stone.x);
-                }
+                this.spawnEchoPickup(state, stone.x);
             }
             
             // Wall_speed random direction penalty
@@ -1046,7 +1084,7 @@ checkPowerUps(state, effectiveRadius) {
         }
     }
     
-    spawnEchoPickup(state, x) {
+    spawnEchoPickup(state, stoneX) {
         const echoWoodsLevel = state.upgrades.echo_woods?.level || 0;
         const playArea = state.getPlayArea();
         const pickupRadius = 25;
@@ -1054,24 +1092,39 @@ checkPowerUps(state, effectiveRadius) {
         const leftBound = pickupRadius - playArea.width / 2;
         const rightBound = playArea.width / 2 - pickupRadius;
         
-        const randomOffset = (Math.random() - 0.5) * 50;
-        const clampedX = Math.max(leftBound, Math.min(rightBound, x + randomOffset));
-        
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
-        const forwardOffset = 500 / maxScroll;
         
-        const pickup = {
-            id: `echo-${Date.now()}`,
-            x: clampedX,
-            scrollProgress: Math.max(0, state.scrollProgress - forwardOffset),
-            collected: false,
-            type: echoWoodsLevel >= 3 ? 'super' : (echoWoodsLevel >= 2 ? 'super' : 'speed')
-        };
+        // Tier 2 spawns 3 pickups, others spawn 1
+        const numPickups = echoWoodsLevel === 2 ? 3 : 1;
         
-        if (pickup.type === 'super') {
-            state.superBoostPowerUps.push(pickup);
-        } else {
-            state.powerUps.push(pickup);
+        for (let i = 0; i < numPickups; i++) {
+            // Random distance ahead (300 to 600 pixels)
+            const distance = 300 + Math.random() * 300;
+            // Random angle ahead (-60 to +60 degrees from straight up)
+            const angle = (Math.random() - 0.5) * Math.PI * (2/3);
+            
+            const dx = Math.sin(angle) * distance;
+            const dy = Math.cos(angle) * distance;
+            
+            // New X is stone X + dx, clamped to bounds
+            const targetX = stoneX + dx;
+            const clampedX = Math.max(leftBound, Math.min(rightBound, targetX));
+            
+            const forwardOffset = dy / maxScroll;
+            
+            const pickup = {
+                id: `echo-${Date.now()}-${i}`,
+                x: clampedX,
+                scrollProgress: Math.min(1, state.scrollProgress + forwardOffset),
+                collected: false,
+                type: echoWoodsLevel >= 3 ? 'super' : 'speed'
+            };
+            
+            if (pickup.type === 'super') {
+                state.superBoostPowerUps.push(pickup);
+            } else {
+                state.powerUps.push(pickup);
+            }
         }
     }
 
@@ -1137,17 +1190,19 @@ checkPowerUps(state, effectiveRadius) {
                         
                         setTimeout(() => {
                             loopOverlay.classList.remove('active');
-                            state.isLoopTransitioning = false;
-                            state.shopUpgradeSelection = null;
-                            state.rerollCost = 1;
-                            state.showBuyMenu = true;
-                            state.isPaused = true;
+                        state.isLoopTransitioning = false;
+                        state.shopUpgradeSelection = null;
+                        state.rerollCost = 1;
+                        state.lives++;
+                        state.showBuyMenu = true;
+                        state.isPaused = true;
                         }, 1250);
                     } else {
                         performReset();
                         state.isLoopTransitioning = false;
                         state.shopUpgradeSelection = null;
                         state.rerollCost = 1;
+                        state.lives++;
                         state.showBuyMenu = true;
                         state.isPaused = true;
                     }
@@ -1158,8 +1213,6 @@ checkPowerUps(state, effectiveRadius) {
 
     launch(state, flickPower = 50) {
         const { stone } = state;
-        
-        if (state.lives <= 0) return;
         
         state.lives--;
         
