@@ -1206,12 +1206,17 @@ getMaxVelocity(state) {
                         
                         setTimeout(() => {
                             loopOverlay.classList.remove('active');
-                        state.isLoopTransitioning = false;
-                        state.shopUpgradeSelection = null;
-                        state.rerollCost = 1;
-                        state.lives++;
-                        state.showBuyMenu = true;
-                        state.isPaused = true;
+                            state.isLoopTransitioning = false;
+                            state.shopUpgradeSelection = null;
+                            state.rerollCost = 1;
+                            state.lives++;
+                            // Start shop transition animation (same as power-up shop)
+                            state.shopTransition = 'fishZoom';
+                            state.shopTransitionStartTime = performance.now();
+                            state.shopTransitionProgress = 0;
+                            const playArea = state.getPlayArea();
+                            state.shopTransitionFishX = playArea.left + playArea.width / 2;
+                            state.shopTransitionFishY = state.screenHeight * 0.5;
                         }, 1250);
                     } else {
                         performReset();
@@ -1219,8 +1224,13 @@ getMaxVelocity(state) {
                         state.shopUpgradeSelection = null;
                         state.rerollCost = 1;
                         state.lives++;
-                        state.showBuyMenu = true;
-                        state.isPaused = true;
+                        // Start shop transition animation (same as power-up shop)
+                        state.shopTransition = 'fishZoom';
+                        state.shopTransitionStartTime = performance.now();
+                        state.shopTransitionProgress = 0;
+                        const playArea = state.getPlayArea();
+                        state.shopTransitionFishX = playArea.left + playArea.width / 2;
+                        state.shopTransitionFishY = state.screenHeight * 0.5;
                     }
                 }
             }
