@@ -16,6 +16,7 @@ export class ShopTransition {
         this.frameHeight = 251;
         this.hGap = 0; // no gap between frames
         this.vGap = 0; // no gap between frames
+        this.transitionJustFinished = false;
     }
 
     async loadWaifuSprite() {
@@ -100,6 +101,7 @@ export class ShopTransition {
             this.state.showBuyMenu = true;
             this.state.isPaused = true;
             this.state.skipLogoEntrance = true;
+            this.transitionJustFinished = true;
         }
     }
 
@@ -134,12 +136,14 @@ export class ShopTransition {
     }
 
     render(ctx, screenWidth, screenHeight) {
-        if (!this.state.shopTransition) {
+        if (!this.state.shopTransition && !this.transitionJustFinished) {
             this.renderParticles(ctx);
             return;
         }
 
-        switch (this.state.shopTransition) {
+        const currentTransition = this.state.shopTransition || 'elementsSlide';
+
+        switch (currentTransition) {
             case 'fishZoom':
                 this.renderFishZoom(ctx, screenWidth, screenHeight);
                 break;
@@ -152,6 +156,7 @@ export class ShopTransition {
         }
 
         this.renderParticles(ctx);
+        this.transitionJustFinished = false;
     }
 
 renderFishZoom(ctx, screenWidth, screenHeight) {
