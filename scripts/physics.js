@@ -976,11 +976,9 @@ getMaxVelocity(state) {
             if (stone.x < leftBound) {
                 // Wrap from left to right
                 stone.x = rightBound;
-                this.addPowerUpText(state, stone.x, 'DIMENSIONSDÖRR!', '255, 100, 200');
             } else if (stone.x > rightBound) {
                 // Wrap from right to left
                 stone.x = leftBound;
-                this.addPowerUpText(state, stone.x, 'DIMENSIONSDÖRR!', '255, 100, 200');
             }
         }
         

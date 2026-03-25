@@ -356,11 +356,12 @@ export class CardMenu {
     }
 
     reroll() {
-        const cost = this.state.rerollCost || 1;
+        const isTestVersion = window.location.pathname.includes('/test/');
+        const cost = isTestVersion ? 0 : (this.state.rerollCost || 1);
         if (this.state.money < cost) return false;
         
         this.state.money -= cost;
-        this.state.rerollCost = cost + 1;
+        this.state.rerollCost = isTestVersion ? 0 : (cost + 1);
         this.state.shopUpgradeSelection = null;
         this.selectedCardId = null;
         this.animationState.selectAnimation = null;
@@ -382,7 +383,9 @@ export class CardMenu {
             const rb = this.rerollButtonBounds;
             if (x >= rb.x && x <= rb.x + rb.width &&
                 y >= rb.y && y <= rb.y + rb.height) {
-                if (this.state.money >= (this.state.rerollCost || 1)) {
+                const isTestVersion = window.location.pathname.includes('/test/');
+                const cost = isTestVersion ? 0 : (this.state.rerollCost || 1);
+                if (this.state.money >= cost) {
                     this.reroll();
                     return { action: 'reroll' };
                 }
@@ -668,7 +671,8 @@ export class CardMenu {
 
             this.drawTicker(ctx, areaLeft, areaWidth, time, continueY - 180);
 
-            const rerollCost = this.state.rerollCost || 1;
+            const isTestVersion = window.location.pathname.includes('/test/');
+            const rerollCost = isTestVersion ? 0 : (this.state.rerollCost || 1);
             const canAffordReroll = this.state.money >= rerollCost;
             this.rerollButtonBounds = {
                 x: centerX - 60,

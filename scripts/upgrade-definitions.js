@@ -262,12 +262,12 @@ export const UPGRADES = [
     },
     {
         id: 'dimension_door',
-        name: 'Dimensionsdörren',
+        name: 'Grytans Glip',
         proverb: 'Väggarna är bara dörrar för den som vet var handtaget sitter.',
         detail: 'portal opening in wall, stone passing through, Pac-Man style, glowing edges',
         category: 'technical',
         tiers: [
-            { level: 1, cost: 20, effect: 'Åk genom väggarna och kom ut på andra sidan', image: 'dimension_door-tier1.jpg' },
+            { level: 1, cost: 5, effect: 'Åk genom väggarna och kom ut på andra sidan', image: 'dimension_door-tier1.jpg' },
         ]
     },
     {
