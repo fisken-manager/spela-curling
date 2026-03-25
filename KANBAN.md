@@ -8,6 +8,11 @@ Ett enkelt Kanban-system direkt i repot. Flytta saker mellan kolumner genom att 
 
 ## 📋 TODO
 
+- [ ] **Pickup-färger** - Negativa pickups måste ha egna färger (inte röd - röd är för liv)
+- [ ] **Pickup-färger del 2** - Ändra färg på sweep eller big pickup så båda inte är gröna
+- [ ] **Shop-animering** - Shop vid loop-slut ska använda samma animate-in som power-up shops
+- [ ] **Shop-musik** - Stoppa spelmusik och spela shop-musik i alla shops (konsekvent beteende)
+- [ ] **GitHub Pages miljöer** - Två versioner: main (produktion) + test branch (staging)
 - [ ] **Ljudsystem** - Lägg till ljudeffekter för stenkollisioner, söpande, och poäng
 - [ ] **Highscore-sparande** - LocalStorage för highscores och statistik
 - [ ] **Fler banor/nivåer** - Olika isbanor med unika fysikegenskaper
