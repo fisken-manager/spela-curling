@@ -261,6 +261,16 @@ export const UPGRADES = [
         ]
     },
     {
+        id: 'dimension_door',
+        name: 'Dimensionsdörren',
+        proverb: 'Väggarna är bara dörrar för den som vet var handtaget sitter.',
+        detail: 'portal opening in wall, stone passing through, Pac-Man style, glowing edges',
+        category: 'technical',
+        tiers: [
+            { level: 1, cost: 20, effect: 'Åk genom väggarna och kom ut på andra sidan', image: 'dimension_door-tier1.jpg' },
+        ]
+    },
+    {
         id: 'cursed_harvest',
         name: 'Oväder i Antåg',
         proverb: 'Man ska int klaga på regnet om man vill ha skörd.',

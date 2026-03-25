@@ -179,6 +179,7 @@ export class GameState {
             cursed_harvest: { level: 0 },
             // Technical - New
             needle_eye: { level: 0 },
+            dimension_door: { level: 0 },
             // Deprecated (kept for saves)
             maxVelocity: { level: 0 },
             frictionReduction: { level: 0 },

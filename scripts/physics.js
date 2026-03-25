@@ -970,6 +970,20 @@ getMaxVelocity(state) {
         bounceEnergy *= frictionBouncePenalty;
 
         // Check if rail_rider can activate (cooldown ready and upgrade owned)
+        // Dimension_door upgrade - Pac-Man style wall wrapping
+        const dimensionDoorLevel = state.upgrades.dimension_door?.level || 0;
+        if (dimensionDoorLevel > 0) {
+            if (stone.x < leftBound) {
+                // Wrap from left to right
+                stone.x = rightBound;
+                this.addPowerUpText(state, stone.x, 'DIMENSIONSDÖRR!', '255, 100, 200');
+            } else if (stone.x > rightBound) {
+                // Wrap from right to left
+                stone.x = leftBound;
+                this.addPowerUpText(state, stone.x, 'DIMENSIONSDÖRR!', '255, 100, 200');
+            }
+        }
+        
         const canRailRide = railRiderLevel > 0 && state.rail_rider_cooldown <= 0 && !state.rail_rider_active;
         
         if (stone.x < leftBound) {
