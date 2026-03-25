@@ -229,6 +229,11 @@ getMaxVelocity(state) {
     updateSweepBoost(state, deltaTime) {
         if (!state.sweepBoost) return;
         
+        // Count down grace period for frozen_broom
+        if (state.frozen_broom_gracePeriod > 0) {
+            state.frozen_broom_gracePeriod -= deltaTime;
+        }
+        
         state.sweepBoost.timer -= deltaTime;
         if (state.sweepBoost.timer <= 0) {
             // frozen_broom - award bonus if not swept during boost
@@ -239,6 +244,7 @@ getMaxVelocity(state) {
             state.sweepBoost = null;
             state.frozen_broom_boost_active = false;
             state.frozen_broom_bonus = 0;
+            state.frozen_broom_gracePeriod = 0;
         }
     }
 
@@ -463,6 +469,8 @@ getMaxVelocity(state) {
                         const bonusAmount = state.upgrades.frozen_broom.level * 5;
                         state.frozen_broom_bonus = bonusAmount;
                         state.frozen_broom_forfeited = false;
+                        // Add grace period to avoid forfeiting from finger movement when collecting
+                        state.frozen_broom_gracePeriod = 0.5; // 0.5 seconds grace period
                     }
                     
                     this.addPowerUpText(state, sweepPowerUp.x, 'SOPA!', '50, 255, 50');
@@ -1303,9 +1311,11 @@ getMaxVelocity(state) {
         const currentSpeed = Math.sqrt(stone.vx * stone.vx + stone.vy * stone.vy);
         const maxVel = this.getMaxVelocity(state);
         
-        // frozen_broom - mark as forfeited if sweeping during frozen_broom boost
+        // frozen_broom - mark as forfeited if sweeping during frozen_broom boost (after grace period)
         if (state.frozen_broom_boost_active && state.upgrades.frozen_broom?.level > 0) {
-            state.frozen_broom_forfeited = true;
+            if (!state.frozen_broom_gracePeriod || state.frozen_broom_gracePeriod <= 0) {
+                state.frozen_broom_forfeited = true;
+            }
         }
         
         // sweep_life upgrade - reduce sweep effectiveness

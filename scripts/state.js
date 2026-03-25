@@ -207,6 +207,7 @@ export class GameState {
         this.frozen_broom_boost_active = false;
         this.frozen_broom_bonus = 0;
         this.frozen_broom_forfeited = false;
+        this.frozen_broom_gracePeriod = 0;
 
         // Coin speed boost
         this.coinSpeedBoostActive = false;
@@ -649,6 +650,7 @@ const progressOffset = random(yellowSeed) * 5 * progressOffsetScale;
         this.frozen_broom_boost_active = false;
         this.frozen_broom_bonus = 0;
         this.frozen_broom_forfeited = false;
+        this.frozen_broom_gracePeriod = 0;
 
         this.phase = 'resting';
         this.stone.x = 0;
