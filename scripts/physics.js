@@ -971,14 +971,17 @@ getMaxVelocity(state) {
 
         // Check if rail_rider can activate (cooldown ready and upgrade owned)
         // Dimension_door upgrade - Pac-Man style wall wrapping
+        // This happens FIRST and skips all other wall interactions
         const dimensionDoorLevel = state.upgrades.dimension_door?.level || 0;
         if (dimensionDoorLevel > 0) {
             if (stone.x < leftBound) {
                 // Wrap from left to right
                 stone.x = rightBound;
+                return; // Skip all other wall handling
             } else if (stone.x > rightBound) {
                 // Wrap from right to left
                 stone.x = leftBound;
+                return; // Skip all other wall handling
             }
         }
         
