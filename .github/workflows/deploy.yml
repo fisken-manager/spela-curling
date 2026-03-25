@@ -39,6 +39,8 @@ jobs:
           sed -i 's|<body>|<body><div style="background: #e67e22; color: white; text-align: center; padding: 8px; font-family: monospace; font-weight: bold;">🧪 TEST VERSION<\/div>|' deploy/test/index.html
           
       - name: Deploy to gh-pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cd deploy
           git init
@@ -46,4 +48,4 @@ jobs:
           git config user.email "actions@github.com"  
           git add .
           git commit -m "Deploy: main + test"
-          git push --force "https://${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:gh-pages
+          git push --force "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git" HEAD:gh-pages
