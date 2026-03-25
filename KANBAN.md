@@ -14,7 +14,7 @@ Ett enkelt Kanban-system direkt i repot.
 - [x] **Shop-animering** - Shop vid loop-slut ska använda samma animate-in som power-up shops
 - [x] **Shop-musik** - Stoppa spelmusik och spela shop-musik i alla shops (konsekvent beteende)
 - [x] **Kvastens Vila (frozen_broom)** - Lade till grace period (0.5s) för att undvika att bonus förverkas av finger-rörelse vid upplockning
-- [x] **Grytans Glip** - Ny uppgradering: Pac-Man style vägg-wrapping, $5 (åk genom väggen utan att trigga vägg-effekter)
+- [x] **Grytans Glip** - Ny uppgradering: Pac-Man style vägg-wrapping, $5 (åk genom väggen utan att trigga vägg-effekter), chibi waifu-bild med blått hår och blåvita kläder
 - [x] **Test-version: Gratis rerolls** - På test-versionen är rerolls gratis för enklare testning
 
 ---
