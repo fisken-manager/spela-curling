@@ -287,7 +287,7 @@ export const UPGRADES = [
         detail: 'herring fish dancing, last breath, final burst of energy, ethereal glow, desperation',
         category: 'highrisk',
         tiers: [
-            { level: 1, cost: 8, effect: '0 liv: +50% fart, 1+ liv: -50% fart', image: 'herrings_last_dance-tier1.jpg' },
+            { level: 1, cost: 5, effect: '0 liv: +50% fart, 1+ liv: -50% fart', image: 'herrings_last_dance-tier1.jpg' },
         ]
     },
 ];
