@@ -151,7 +151,19 @@ function checkGameOver(state, overlay, scoreEl, moneyEl) {
 async function init() {
     console.log('Curling Scroll initialized');
     state.updateScreenDimensions();
-    
+
+    // Handle splash screen
+    const splashScreen = document.getElementById('splash-screen');
+    if (splashScreen) {
+        splashScreen.addEventListener('click', () => {
+            splashScreen.classList.add('hidden');
+            // Resume audio context on user interaction
+            if (audio && audio.audioContext) {
+                audio.resumeContext();
+            }
+        });
+    }
+
     const canvas = document.getElementById('game-canvas');
     if (!canvas) {
         console.error('Canvas not found');
