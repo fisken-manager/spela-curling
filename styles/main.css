@@ -49,12 +49,40 @@ body {
 
 #content {
     position: absolute;
-    width: 100%;
-    max-width: 480px;
-    margin: 0 auto;
+    top: 0;
     left: 0;
     right: 0;
     will-change: transform;
+}
+
+@media (max-width: 480px) {
+    .hero-sub {
+        max-width: 90%;
+    }
+    
+    .hero {
+        padding: 12vw 6vw;
+    }
+    
+    .proverb, .text-block {
+        padding: 16vw 10vw;
+    }
+    
+    .lyrics {
+        padding: 20vw 8vw;
+    }
+    
+    .manifest {
+        padding: 20vw 10vw;
+    }
+    
+    .victim-text {
+        padding: 12vw 8vw;
+    }
+    
+    .caption {
+        padding: 10vw 8vw;
+    }
 }
 
 @media (max-width: 480px) {
