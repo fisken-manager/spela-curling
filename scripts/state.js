@@ -55,7 +55,7 @@ export class GameState {
         this.screenHeight = window.innerHeight;
         
         // Play area (constrained width, centered)
-        this.playAreaMaxWidth = 480;
+        this.playAreaMaxWidth = 400;
 
         // Initialize pixel-based positions
         this.updateScreenDimensions();
