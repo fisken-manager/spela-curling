@@ -1154,7 +1154,7 @@ drawScoreText(state) {
         
         const playArea = state.getPlayArea();
         
-        // Draw lives in red near center-left (closer to middle for mobile)
+        // Draw lives in red at the left edge (ensure it stays on screen)
         const lives = state.lives || 0;
         this.ctx.save();
         this.ctx.fillStyle = '#ff6b6b';
@@ -1167,13 +1167,12 @@ drawScoreText(state) {
         this.ctx.shadowBlur = 4;
         this.ctx.shadowOffsetX = 2;
         this.ctx.shadowOffsetY = 2;
-        // Position closer to center on mobile to ensure visibility
-        const livesOffset = state.screenWidth < 480 ? 80 : 140;
-        const livesX = Math.max(centerX - livesOffset, 10);
+        // Ensure lives text stays within screen bounds
+        const livesX = Math.max(playArea.left + 10, 10);
         this.ctx.fillText(`♥${lives}`, livesX, baseY);
         this.ctx.restore();
         
-        // Draw money in yellow near center-right (closer to middle for mobile)
+        // Draw money in yellow at the right edge (ensure it stays on screen)
         const money = state.money || 0;
         this.ctx.save();
         this.ctx.fillStyle = '#ffd700';
@@ -1186,9 +1185,8 @@ drawScoreText(state) {
         this.ctx.shadowBlur = 4;
         this.ctx.shadowOffsetX = 2;
         this.ctx.shadowOffsetY = 2;
-        // Position closer to center on mobile to ensure visibility
-        const moneyOffset = state.screenWidth < 480 ? 80 : 140;
-        const moneyX = Math.min(centerX + moneyOffset, state.screenWidth - 10);
+        // Ensure money text stays within screen bounds
+        const moneyX = Math.min(playArea.right - 10, state.screenWidth - 10);
         this.ctx.fillText(`$${money}`, moneyX, baseY);
         this.ctx.restore();
     }
