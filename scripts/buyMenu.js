@@ -69,9 +69,9 @@ export class BuyMenu {
         const centerY = screenHeight / 2;
         
         // Panel dimensions - responsive for mobile
-        const minMargin = 10;
-        const maxPanelWidth = 400;
-        const maxPanelHeight = 580;
+        const minMargin = 8;
+        const maxPanelWidth = isSmallScreen ? 340 : 400;
+        const maxPanelHeight = isSmallScreen ? 520 : 580;
         const panelWidth = Math.min(maxPanelWidth, screenWidth - minMargin * 2);
         const panelHeight = Math.min(maxPanelHeight, screenHeight - minMargin * 2);
         const panelX = centerX - panelWidth / 2;
@@ -91,26 +91,26 @@ export class BuyMenu {
         ctx.lineWidth = 2;
         ctx.stroke();
 
+        // Upgrade items - scale down for smaller screens
+        const isSmallScreen = screenHeight < 700 || screenWidth < 400;
+        
         // Title - scale for small screens
-        const titleFontSize = isSmallScreen ? 22 : 28;
-        const moneyFontSize = isSmallScreen ? 16 : 20;
+        const titleFontSize = isSmallScreen ? 18 : 28;
+        const moneyFontSize = isSmallScreen ? 14 : 20;
         ctx.fillStyle = '#ffd700';
         ctx.font = `bold ${titleFontSize}px "Space Mono", monospace`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
-        ctx.fillText('UPPGRADERINGAR', centerX, panelY + (isSmallScreen ? 15 : 25));
+        ctx.fillText('UPPGRADERINGAR', centerX, panelY + (isSmallScreen ? 10 : 25));
 
         // Money
         ctx.fillStyle = '#ffd700';
         ctx.font = `bold ${moneyFontSize}px "Space Mono", monospace`;
-        ctx.fillText(`$${Math.floor(this.state.money)}`, centerX, panelY + (isSmallScreen ? 42 : 60));
-
-        // Upgrade items - scale down for smaller screens
-        const isSmallScreen = screenHeight < 600 || screenWidth < 360;
-        const itemStartY = panelY + (isSmallScreen ? 75 : 95);
-        const itemHeight = isSmallScreen ? 65 : 85;
-        const itemPadding = isSmallScreen ? 6 : 10;
-        const itemWidth = panelWidth - 20;
+        ctx.fillText(`$${Math.floor(this.state.money)}`, centerX, panelY + (isSmallScreen ? 32 : 60));
+        const itemStartY = panelY + (isSmallScreen ? 55 : 95);
+        const itemHeight = isSmallScreen ? 52 : 85;
+        const itemPadding = isSmallScreen ? 4 : 10;
+        const itemWidth = panelWidth - 16;
 
         for (let i = 0; i < this.upgrades.length; i++) {
             const upgrade = this.upgrades[i];
