@@ -3,6 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <script>
+        // Force proper zoom level for mobile
+        (function() {
+            const designWidth = 480; // Game is designed for 480px width
+            const screenWidth = window.screen.width;
+            const scale = Math.min(1, screenWidth / designWidth);
+            const viewport = document.querySelector('meta[name="viewport"]');
+            if (viewport && scale < 1) {
+                viewport.setAttribute('content', 
+                    'width=' + designWidth + ', ' +
+                    'initial-scale=' + scale + ', ' +
+                    'maximum-scale=' + scale + ', ' +
+                    'user-scalable=no, viewport-fit=cover'
+                );
+            }
+        })();
+    </script>
     <title>Spela Curling</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥌</text></svg>">
     <link rel="stylesheet" href="styles/main.css">
