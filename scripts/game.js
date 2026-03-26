@@ -157,30 +157,10 @@ async function init() {
         console.error('Canvas not found');
         return;
     }
-    
-    // Set canvas size with device pixel ratio for crisp rendering on mobile
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width = state.screenWidth * dpr;
-    canvas.height = state.screenHeight * dpr;
-    canvas.style.width = state.screenWidth + 'px';
-    canvas.style.height = state.screenHeight + 'px';
-    
-    // Handle window resize
-    window.addEventListener('resize', () => {
-        state.updateScreenDimensions();
-        canvas.width = state.screenWidth * dpr;
-        canvas.height = state.screenHeight * dpr;
-        canvas.style.width = state.screenWidth + 'px';
-        canvas.style.height = state.screenHeight + 'px';
-        if (renderer && renderer.ctx) {
-            renderer.ctx.scale(dpr, dpr);
-        }
-    });
+    canvas.width = state.screenWidth;
+    canvas.height = state.screenHeight;
     
     renderer = new Renderer(canvas);
-    // Apply device pixel ratio scaling for crisp rendering
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    renderer.ctx.scale(dpr, dpr);
     buyMenu = new BuyMenu(state);
     input = new InputHandler(canvas, state, physics, audio);
     input.setBuyMenu(buyMenu);
