@@ -57,6 +57,41 @@ body {
     will-change: transform;
 }
 
+@media (max-width: 480px) {
+    #content {
+        max-width: none;
+        margin: 0;
+    }
+    
+    .hero-sub {
+        max-width: 90%;
+    }
+    
+    .hero {
+        padding: 12vw 6vw;
+    }
+    
+    .proverb, .text-block {
+        padding: 16vw 10vw;
+    }
+    
+    .lyrics {
+        padding: 20vw 8vw;
+    }
+    
+    .manifest {
+        padding: 20vw 10vw;
+    }
+    
+    .victim-text {
+        padding: 12vw 8vw;
+    }
+    
+    .caption {
+        padding: 10vw 8vw;
+    }
+}
+
 /* ===== SPACERS ===== */
 .spacer-xl {
     height: 1281px;
