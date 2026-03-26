@@ -17,6 +17,10 @@ export class Renderer {
         this.superBoostImage = new Image();
         this.superBoostImage.src = 'assets/boop.png';
     }
+    
+    scale(state, value) {
+        return value * state.scaleFactor;
+    }
 
     addParticle(x, y, vx, vy, color, life = 1) {
         this.particles.push({
@@ -140,16 +144,14 @@ drawRingFlash(state) {
     drawWalls(state) {
         const playArea = state.getPlayArea();
         this.ctx.strokeStyle = '#000';
-        this.ctx.lineWidth = 3;
+        this.ctx.lineWidth = this.scale(state, 3);
         this.ctx.lineCap = 'round';
         
-        // Left wall at play area left edge
         this.ctx.beginPath();
         this.ctx.moveTo(playArea.left, 0);
         this.ctx.lineTo(playArea.left, state.screenHeight);
         this.ctx.stroke();
         
-        // Right wall at play area right edge
         this.ctx.beginPath();
         this.ctx.moveTo(playArea.right, 0);
         this.ctx.lineTo(playArea.right, state.screenHeight);
@@ -158,9 +160,10 @@ drawRingFlash(state) {
 
     drawStone(state) {
         const pos = this.getStoneScreenPosition(state);
-        const sizeBonus = state.upgrades.stoneSize.level * 8; // Match physics.js
+        const sizeBonus = state.upgrades.stoneSize.level * 8;
         const growthMultiplier = state.growthBoost ? state.growthPowerUpConfig.growthMultiplier : 1;
-        const radius = Math.max(1, (30 + sizeBonus) * growthMultiplier);
+        const baseRadius = (30 + sizeBonus) * growthMultiplier;
+        const radius = this.scale(state, Math.max(1, baseRadius));
         const rotation = state.stone.rotation;
         
         this.ctx.save();
@@ -169,12 +172,12 @@ drawRingFlash(state) {
         
         if (state.frictionBoost) {
             this.ctx.shadowColor = 'rgba(255, 215, 0, 0.8)';
-            this.ctx.shadowBlur = 20 + Math.sin(Date.now() / 100) * 5;
+            this.ctx.shadowBlur = this.scale(state, 20) + Math.sin(Date.now() / 100) * this.scale(state, 5);
         }
         
         if (state.growthBoost) {
             this.ctx.shadowColor = 'rgba(72, 187, 120, 0.8)';
-            this.ctx.shadowBlur = 25 + Math.sin(Date.now() / 80) * 8;
+            this.ctx.shadowBlur = this.scale(state, 25) + Math.sin(Date.now() / 80) * this.scale(state, 8);
         }
         
         this.ctx.beginPath();
@@ -189,13 +192,13 @@ drawRingFlash(state) {
         this.ctx.fillStyle = fillColor;
         this.ctx.fill();
         this.ctx.strokeStyle = 'rgb(119, 119, 119)';
-        this.ctx.lineWidth = 4;
+        this.ctx.lineWidth = this.scale(state, 4);
         this.ctx.stroke();
         
         this.ctx.beginPath();
-        this.ctx.arc(0, 0, Math.max(0.1, radius - 0.5), 0, Math.PI * 2);
+        this.ctx.arc(0, 0, Math.max(0.1, radius - this.scale(state, 0.5)), 0, Math.PI * 2);
         this.ctx.strokeStyle = 'rgb(178, 0, 0)';
-        this.ctx.lineWidth = 1;
+        this.ctx.lineWidth = this.scale(state, 1);
         this.ctx.stroke();
         
         const handleWidth = radius * 0.8;
@@ -220,36 +223,34 @@ drawSweepZone(state) {
     }
 
 drawPowerUps(state) {
-        // Removed phase check to show pickups during rest/launch
-        
         const playArea = state.getPlayArea();
         const config = state.powerUpConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
+        const radius = this.scale(state, config.radius);
         
         if (state.isDevMode) {
             this.ctx.fillStyle = 'white';
-            this.ctx.font = '12px monospace';
+            this.ctx.font = `${this.scale(state, 12)}px monospace`;
             this.ctx.textAlign = 'left';
-            this.ctx.fillText(`scroll: ${state.scrollProgress.toFixed(3)} pageH: ${state.pageHeight}`, 10, 20);
-            this.ctx.fillText(`worldY: ${state.stone.worldY.toFixed(0)} maxScroll: ${maxScroll}`, 10, 35);
-            this.ctx.fillText(`lives: ${state.lives}`, 10, 50);
+            this.ctx.fillText(`scroll: ${state.scrollProgress.toFixed(3)} pageH: ${state.pageHeight}`, this.scale(state, 10), this.scale(state, 20));
+            this.ctx.fillText(`worldY: ${state.stone.worldY.toFixed(0)} maxScroll: ${maxScroll}`, this.scale(state, 10), this.scale(state, 35));
+            this.ctx.fillText(`lives: ${state.lives}`, this.scale(state, 10), this.scale(state, 50));
 
             if (state.frictionBoost) {
                 this.ctx.fillStyle = 'gold';
-                this.ctx.fillText(`BOOST: ${state.frictionBoost.timer.toFixed(1)}s`, 10, 65);
+                this.ctx.fillText(`BOOST: ${state.frictionBoost.timer.toFixed(1)}s`, this.scale(state, 10), this.scale(state, 65));
             }
             if (state.sweepBoost) {
                 this.ctx.fillStyle = 'lime';
-                this.ctx.fillText(`SWEEP: ${state.sweepBoost.timer.toFixed(1)}s`, 10, 80);
+                this.ctx.fillText(`SWEEP: ${state.sweepBoost.timer.toFixed(1)}s`, this.scale(state, 10), this.scale(state, 80));
             }
         }
         
-        // Show combo if active
         if (state.comboMultiplier > 1) {
             this.ctx.fillStyle = '#ffd700';
-            this.ctx.font = 'bold 16px Arial';
+            this.ctx.font = `bold ${this.scale(state, 16)}px Arial`;
             this.ctx.textAlign = 'center';
-            this.ctx.fillText(`COMBO x${state.comboMultiplier}!`, state.screenWidth / 2, 70);
+            this.ctx.fillText(`COMBO x${state.comboMultiplier}!`, state.screenWidth / 2, this.scale(state, 70));
         }
         
         for (const powerUp of state.powerUps) {
@@ -260,15 +261,15 @@ drawPowerUps(state) {
             const screenY = state.screenHeight * 0.5 - worldDY;
             const screenX = playArea.left + playArea.width / 2 + powerUp.x;
             
-            if (screenY < -config.radius || screenY > state.screenHeight + config.radius) continue;
+            if (screenY < -radius || screenY > state.screenHeight + radius) continue;
             
             this.ctx.save();
             this.ctx.beginPath();
-            this.ctx.arc(screenX, screenY, config.radius, 0, Math.PI * 2);
+            this.ctx.arc(screenX, screenY, radius, 0, Math.PI * 2);
             
             const gradient = this.ctx.createRadialGradient(
                 screenX, screenY, 0,
-                screenX, screenY, config.radius
+                screenX, screenY, radius
             );
             gradient.addColorStop(0, 'rgba(255, 215, 0, 1)');
             gradient.addColorStop(0.7, 'rgba(255, 165, 0, 0.8)');
@@ -278,11 +279,11 @@ drawPowerUps(state) {
             this.ctx.fill();
             
             this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
-            this.ctx.lineWidth = 2;
+            this.ctx.lineWidth = this.scale(state, 2);
             this.ctx.stroke();
             
             this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-            this.ctx.font = 'bold 16px Arial';
+            this.ctx.font = `bold ${this.scale(state, 16)}px Arial`;
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
             this.ctx.fillText('⚡', screenX, screenY);
@@ -315,12 +316,11 @@ addPowerUpParticles(state, powerUp) {
         }
     }
 
-    drawLifePowerUps(state) {
-        // Removed phase check to show pickups during rest/launch
-        
+drawLifePowerUps(state) {
         const playArea = state.getPlayArea();
         const config = state.lifePowerUpConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
+        const radius = this.scale(state, config.radius);
         
         for (const lifePowerUp of state.lifePowerUps) {
             if (lifePowerUp.collected) continue;
@@ -330,16 +330,13 @@ addPowerUpParticles(state, powerUp) {
             const screenY = state.screenHeight * 0.5 - worldDY;
             const screenX = playArea.left + playArea.width / 2 + lifePowerUp.x;
             
-            if (screenY < -config.radius || screenY > state.screenHeight + config.radius) continue;
+            if (screenY < -radius || screenY > state.screenHeight + radius) continue;
             
             this.ctx.save();
             this.ctx.beginPath();
-            this.ctx.arc(screenX, screenY, config.radius, 0, Math.PI * 2);
+            this.ctx.arc(screenX, screenY, radius, 0, Math.PI * 2);
             
-            const gradient = this.ctx.createRadialGradient(
-                screenX, screenY, 0,
-                screenX, screenY, config.radius
-            );
+            const gradient = this.ctx.createRadialGradient(screenX, screenY, 0, screenX, screenY, radius);
             gradient.addColorStop(0, 'rgba(255, 50, 50, 1)');
             gradient.addColorStop(0.7, 'rgba(200, 0, 0, 0.9)');
             gradient.addColorStop(1, 'rgba(150, 0, 0, 0.4)');
@@ -348,11 +345,11 @@ addPowerUpParticles(state, powerUp) {
             this.ctx.fill();
             
             this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
-            this.ctx.lineWidth = 2;
+            this.ctx.lineWidth = this.scale(state, 2);
             this.ctx.stroke();
             
             this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-            this.ctx.font = 'bold 14px Arial';
+            this.ctx.font = `bold ${this.scale(state, 14)}px Arial`;
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
             this.ctx.fillText('♥', screenX, screenY);
@@ -361,7 +358,7 @@ addPowerUpParticles(state, powerUp) {
         }
         
         if (state.lifePowerUpCollected) {
-this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
+            this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
             state.lifePowerUpCollected = null;
         }
     }
@@ -370,6 +367,7 @@ this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
         const playArea = state.getPlayArea();
         const config = state.shopPowerUpConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
+        const radius = this.scale(state, config.radius);
         
         for (const shopPowerUp of state.shopPowerUps) {
             if (shopPowerUp.collected) continue;
@@ -379,16 +377,13 @@ this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
             const screenY = state.screenHeight * 0.5 - worldDY;
             const screenX = playArea.left + playArea.width / 2 + shopPowerUp.x;
             
-            if (screenY < -config.radius || screenY > state.screenHeight + config.radius) continue;
+            if (screenY < -radius || screenY > state.screenHeight + radius) continue;
             
             this.ctx.save();
             this.ctx.beginPath();
-            this.ctx.arc(screenX, screenY, config.radius, 0, Math.PI * 2);
+            this.ctx.arc(screenX, screenY, radius, 0, Math.PI * 2);
             
-            const gradient = this.ctx.createRadialGradient(
-                screenX, screenY, 0,
-                screenX, screenY, config.radius
-            );
+            const gradient = this.ctx.createRadialGradient(screenX, screenY, 0, screenX, screenY, radius);
             gradient.addColorStop(0, 'rgba(0, 191, 255, 1)');
             gradient.addColorStop(0.7, 'rgba(30, 144, 255, 0.9)');
             gradient.addColorStop(1, 'rgba(65, 105, 225, 0.4)');
@@ -397,11 +392,11 @@ this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
             this.ctx.fill();
             
             this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
-            this.ctx.lineWidth = 2;
+            this.ctx.lineWidth = this.scale(state, 2);
             this.ctx.stroke();
             
             this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-            this.ctx.font = 'bold 16px Arial';
+            this.ctx.font = `bold ${this.scale(state, 16)}px Arial`;
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
             this.ctx.fillText('🐟', screenX, screenY);
@@ -454,11 +449,10 @@ this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
     }
 
     drawSweepPowerUps(state) {
-        // Removed phase check to show pickups during rest/launch
-        
         const playArea = state.getPlayArea();
         const config = state.sweepPowerUpConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
+        const radius = this.scale(state, config.radius);
         
         for (const sweepPowerUp of state.sweepPowerUps) {
             if (sweepPowerUp.collected) continue;
@@ -468,16 +462,13 @@ this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
             const screenY = state.screenHeight * 0.5 - worldDY;
             const screenX = playArea.left + playArea.width / 2 + sweepPowerUp.x;
             
-            if (screenY < -config.radius || screenY > state.screenHeight + config.radius) continue;
+            if (screenY < -radius || screenY > state.screenHeight + radius) continue;
             
             this.ctx.save();
             this.ctx.beginPath();
-            this.ctx.arc(screenX, screenY, config.radius, 0, Math.PI * 2);
+            this.ctx.arc(screenX, screenY, radius, 0, Math.PI * 2);
             
-            const gradient = this.ctx.createRadialGradient(
-                screenX, screenY, 0,
-                screenX, screenY, config.radius
-            );
+            const gradient = this.ctx.createRadialGradient(screenX, screenY, 0, screenX, screenY, radius);
             gradient.addColorStop(0, 'rgba(0, 255, 255, 1)');
             gradient.addColorStop(0.7, 'rgba(0, 200, 200, 0.9)');
             gradient.addColorStop(1, 'rgba(0, 150, 150, 0.4)');
@@ -486,11 +477,11 @@ this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
             this.ctx.fill();
             
             this.ctx.strokeStyle = 'rgba(200, 255, 255, 0.6)';
-            this.ctx.lineWidth = 2;
+            this.ctx.lineWidth = this.scale(state, 2);
             this.ctx.stroke();
             
             this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-            this.ctx.font = 'bold 14px Arial';
+            this.ctx.font = `bold ${this.scale(state, 14)}px Arial`;
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
             this.ctx.fillText('🧹', screenX, screenY);
@@ -529,22 +520,23 @@ this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
         
         const centerX = state.screenWidth / 2;
         const centerY = state.screenHeight / 2;
+        const scale = state.scaleFactor;
         
         this.ctx.save();
         
-        this.ctx.font = 'bold 120px Arial';
+        this.ctx.font = `bold ${this.scale(state, 120)}px Arial`;
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
         
         this.ctx.shadowColor = 'rgba(0, 255, 255, 0.8)';
-        this.ctx.shadowBlur = 30;
+        this.ctx.shadowBlur = this.scale(state, 30);
         
         const alpha = Math.min(1, state.sweepBoost.timer / 5);
         this.ctx.fillStyle = `rgba(0, 255, 255, ${alpha})`;
         this.ctx.fillText('SOPA!', centerX, centerY);
         
         this.ctx.strokeStyle = `rgba(200, 255, 255, ${alpha * 0.8})`;
-        this.ctx.lineWidth = 4;
+        this.ctx.lineWidth = this.scale(state, 4);
         this.ctx.strokeText('SOPA!', centerX, centerY);
         
         this.ctx.restore();
@@ -552,18 +544,18 @@ this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
         const broomRotation = Math.sin(Date.now() / 100) * 0.5;
         this.ctx.save();
         
-        this.ctx.font = '80px Arial';
+        this.ctx.font = `${this.scale(state, 80)}px Arial`;
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
         
         this.ctx.save();
-        this.ctx.translate(centerX - 200, centerY);
+        this.ctx.translate(centerX - this.scale(state, 200), centerY);
         this.ctx.rotate(-broomRotation - 0.3);
         this.ctx.fillText('🧹', 0, 0);
         this.ctx.restore();
         
         this.ctx.save();
-        this.ctx.translate(centerX + 200, centerY);
+        this.ctx.translate(centerX + this.scale(state, 200), centerY);
         this.ctx.rotate(broomRotation + 0.3);
         this.ctx.fillText('🧹', 0, 0);
         this.ctx.restore();
@@ -572,11 +564,10 @@ this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
     }
 
     drawRotationPowerUps(state) {
-        // Removed phase check to show pickups during rest/launch
-        
         const playArea = state.getPlayArea();
         const config = state.rotationPowerUpConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
+        const radius = this.scale(state, config.radius);
         
         for (const rotationPowerUp of state.rotationPowerUps) {
             if (rotationPowerUp.collected) continue;
@@ -586,16 +577,13 @@ this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
             const screenY = state.screenHeight * 0.5 - worldDY;
             const screenX = playArea.left + playArea.width / 2 + rotationPowerUp.x;
             
-            if (screenY < -config.radius || screenY > state.screenHeight + config.radius) continue;
+            if (screenY < -radius || screenY > state.screenHeight + radius) continue;
             
             this.ctx.save();
             this.ctx.beginPath();
-            this.ctx.arc(screenX, screenY, config.radius, 0, Math.PI * 2);
+            this.ctx.arc(screenX, screenY, radius, 0, Math.PI * 2);
             
-            const gradient = this.ctx.createRadialGradient(
-                screenX, screenY, 0,
-                screenX, screenY, config.radius
-            );
+            const gradient = this.ctx.createRadialGradient(screenX, screenY, 0, screenX, screenY, radius);
             gradient.addColorStop(0, 'rgba(200, 50, 255, 1)');
             gradient.addColorStop(0.7, 'rgba(150, 0, 200, 0.9)');
             gradient.addColorStop(1, 'rgba(100, 0, 150, 0.4)');
@@ -604,11 +592,11 @@ this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
             this.ctx.fill();
             
             this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
-            this.ctx.lineWidth = 2;
+            this.ctx.lineWidth = this.scale(state, 2);
             this.ctx.stroke();
             
             this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-            this.ctx.font = 'bold 14px Arial';
+            this.ctx.font = `bold ${this.scale(state, 14)}px Arial`;
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
             this.ctx.fillText('↻', screenX, screenY);
@@ -647,11 +635,10 @@ this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
     }
 
     drawSuperBoostPowerUps(state) {
-        // Removed phase check to show pickups during rest/launch
-
         const playArea = state.getPlayArea();
         const config = state.superBoostPowerUpConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
+        const radius = this.scale(state, config.radius);
 
         for (const superBoostPowerUp of state.superBoostPowerUps) {
             if (superBoostPowerUp.collected) continue;
@@ -661,16 +648,13 @@ this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
             const screenY = state.screenHeight * 0.5 - worldDY;
             const screenX = playArea.left + playArea.width / 2 + superBoostPowerUp.x;
 
-            if (screenY < -config.radius || screenY > state.screenHeight + config.radius) continue;
+            if (screenY < -radius || screenY > state.screenHeight + radius) continue;
 
             this.ctx.save();
             this.ctx.beginPath();
-            this.ctx.arc(screenX, screenY, config.radius, 0, Math.PI * 2);
+            this.ctx.arc(screenX, screenY, radius, 0, Math.PI * 2);
 
-            const gradient = this.ctx.createRadialGradient(
-                screenX, screenY, 0,
-                screenX, screenY, config.radius
-            );
+            const gradient = this.ctx.createRadialGradient(screenX, screenY, 0, screenX, screenY, radius);
             gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
             gradient.addColorStop(0.3, 'rgba(255, 215, 0, 1)');
             gradient.addColorStop(0.7, 'rgba(255, 140, 0, 0.9)');
@@ -680,11 +664,11 @@ this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
             this.ctx.fill();
 
             this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-            this.ctx.lineWidth = 3;
+            this.ctx.lineWidth = this.scale(state, 3);
             this.ctx.stroke();
 
             this.ctx.fillStyle = 'rgba(255, 255, 255, 1)';
-            this.ctx.font = 'bold 16px Arial';
+            this.ctx.font = `bold ${this.scale(state, 16)}px Arial`;
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
             this.ctx.fillText('⚡', screenX, screenY);
@@ -717,11 +701,10 @@ this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
     }
 
     drawGrowthPowerUps(state) {
-        // Removed phase check to show pickups during rest/launch
-        
         const playArea = state.getPlayArea();
         const config = state.growthPowerUpConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
+        const radius = this.scale(state, config.radius);
         
         for (const growthPowerUp of state.growthPowerUps) {
             if (growthPowerUp.collected) continue;
@@ -731,16 +714,13 @@ this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
             const screenY = state.screenHeight * 0.5 - worldDY;
             const screenX = playArea.left + playArea.width / 2 + growthPowerUp.x;
             
-            if (screenY < -config.radius || screenY > state.screenHeight + config.radius) continue;
+            if (screenY < -radius || screenY > state.screenHeight + radius) continue;
             
             this.ctx.save();
             this.ctx.beginPath();
-            this.ctx.arc(screenX, screenY, config.radius, 0, Math.PI * 2);
+            this.ctx.arc(screenX, screenY, radius, 0, Math.PI * 2);
             
-            const gradient = this.ctx.createRadialGradient(
-                screenX, screenY, 0,
-                screenX, screenY, config.radius
-            );
+            const gradient = this.ctx.createRadialGradient(screenX, screenY, 0, screenX, screenY, radius);
             gradient.addColorStop(0, 'rgba(72, 187, 120, 1)');
             gradient.addColorStop(0.7, 'rgba(56, 161, 105, 0.9)');
             gradient.addColorStop(1, 'rgba(47, 133, 90, 0.4)');
@@ -749,11 +729,11 @@ this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
             this.ctx.fill();
             
             this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-            this.ctx.lineWidth = 2;
+            this.ctx.lineWidth = this.scale(state, 2);
             this.ctx.stroke();
             
             this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-            this.ctx.font = 'bold 14px Arial';
+            this.ctx.font = `bold ${this.scale(state, 14)}px Arial`;
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
             this.ctx.fillText('+', screenX, screenY);
@@ -787,11 +767,10 @@ this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
     }
 
     drawCurlChaosPickups(state) {
-        // Removed phase check to show pickups during rest/launch
-        
         const playArea = state.getPlayArea();
         const config = state.curlChaosConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
+        const radius = this.scale(state, config.radius);
         
         for (const pickup of state.curlChaosPickups) {
             if (pickup.collected) continue;
@@ -801,16 +780,13 @@ this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
             const screenY = state.screenHeight * 0.5 - worldDY;
             const screenX = playArea.left + playArea.width / 2 + pickup.x;
             
-            if (screenY < -config.radius || screenY > state.screenHeight + config.radius) continue;
+            if (screenY < -radius || screenY > state.screenHeight + radius) continue;
             
             this.ctx.save();
             this.ctx.beginPath();
-            this.ctx.arc(screenX, screenY, config.radius, 0, Math.PI * 2);
+            this.ctx.arc(screenX, screenY, radius, 0, Math.PI * 2);
             
-            const gradient = this.ctx.createRadialGradient(
-                screenX, screenY, 0,
-                screenX, screenY, config.radius
-            );
+            const gradient = this.ctx.createRadialGradient(screenX, screenY, 0, screenX, screenY, radius);
             gradient.addColorStop(0, 'rgba(139, 69, 19, 1)');
             gradient.addColorStop(0.7, 'rgba(160, 82, 45, 0.9)');
             gradient.addColorStop(1, 'rgba(210, 105, 30, 0.4)');
@@ -819,11 +795,11 @@ this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
             this.ctx.fill();
             
             this.ctx.strokeStyle = 'rgba(222, 184, 135, 0.8)';
-            this.ctx.lineWidth = 2;
+            this.ctx.lineWidth = this.scale(state, 2);
             this.ctx.stroke();
             
             this.ctx.fillStyle = 'rgba(255, 228, 196, 0.9)';
-            this.ctx.font = 'bold 14px Arial';
+            this.ctx.font = `bold ${this.scale(state, 14)}px Arial`;
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
             this.ctx.fillText('~', screenX, screenY);
@@ -857,11 +833,10 @@ this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
     }
 
     drawSizeShrinkPickups(state) {
-        // Removed phase check to show pickups during rest/launch
-        
         const playArea = state.getPlayArea();
         const config = state.sizeShrinkConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
+        const radius = this.scale(state, config.radius);
         
         for (const pickup of state.sizeShrinkPickups) {
             if (pickup.collected) continue;
@@ -871,16 +846,13 @@ this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
             const screenY = state.screenHeight * 0.5 - worldDY;
             const screenX = playArea.left + playArea.width / 2 + pickup.x;
             
-            if (screenY < -config.radius || screenY > state.screenHeight + config.radius) continue;
+            if (screenY < -radius || screenY > state.screenHeight + radius) continue;
             
             this.ctx.save();
             this.ctx.beginPath();
-            this.ctx.arc(screenX, screenY, config.radius, 0, Math.PI * 2);
+            this.ctx.arc(screenX, screenY, radius, 0, Math.PI * 2);
             
-            const gradient = this.ctx.createRadialGradient(
-                screenX, screenY, 0,
-                screenX, screenY, config.radius
-            );
+            const gradient = this.ctx.createRadialGradient(screenX, screenY, 0, screenX, screenY, radius);
             gradient.addColorStop(0, 'rgba(105, 105, 105, 1)');
             gradient.addColorStop(0.7, 'rgba(80, 80, 80, 0.9)');
             gradient.addColorStop(1, 'rgba(50, 50, 50, 0.4)');
@@ -889,11 +861,11 @@ this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
             this.ctx.fill();
             
             this.ctx.strokeStyle = 'rgba(169, 169, 169, 0.8)';
-            this.ctx.lineWidth = 2;
+            this.ctx.lineWidth = this.scale(state, 2);
             this.ctx.stroke();
             
             this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-            this.ctx.font = 'bold 14px Arial';
+            this.ctx.font = `bold ${this.scale(state, 14)}px Arial`;
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
             this.ctx.fillText('-', screenX, screenY);
@@ -927,7 +899,6 @@ this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
     }
 
     drawScoringOrbs(state) {
-        // Removed phase check to show pickups during rest/launch
         if (!state.scoringOrbs || state.scoringOrbs.length === 0) return;
         
         const playArea = state.getPlayArea();
@@ -944,7 +915,7 @@ this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
             const screenY = state.screenHeight * 0.5 - worldDY;
             const screenX = playArea.left + playArea.width / 2 + orb.x;
             
-            const radius = config[orb.type].radius;
+            const radius = this.scale(state, config[orb.type].radius);
             
             if (screenY < -radius || screenY > state.screenHeight + radius) continue;
             
@@ -953,10 +924,7 @@ this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
             this.ctx.arc(screenX, screenY, radius, 0, Math.PI * 2);
             
             if (orb.type === 'green') {
-                const gradient = this.ctx.createRadialGradient(
-                    screenX, screenY, 0,
-                    screenX, screenY, radius
-                );
+                const gradient = this.ctx.createRadialGradient(screenX, screenY, 0, screenX, screenY, radius);
                 gradient.addColorStop(0, 'rgba(72, 187, 120, 1)');
                 gradient.addColorStop(0.7, 'rgba(56, 161, 105, 0.9)');
                 gradient.addColorStop(1, 'rgba(47, 133, 90, 0.4)');
@@ -965,13 +933,10 @@ this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
                 this.ctx.fill();
                 
                 this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
-                this.ctx.lineWidth = 2;
+                this.ctx.lineWidth = this.scale(state, 2);
                 this.ctx.stroke();
             } else if (orb.type === 'purple') {
-                const gradient = this.ctx.createRadialGradient(
-                    screenX, screenY, 0,
-                    screenX, screenY, radius
-                );
+                const gradient = this.ctx.createRadialGradient(screenX, screenY, 0, screenX, screenY, radius);
                 gradient.addColorStop(0, 'rgba(159, 122, 234, 1)');
                 gradient.addColorStop(0.7, 'rgba(128, 90, 213, 0.9)');
                 gradient.addColorStop(1, 'rgba(107, 70, 193, 0.4)');
@@ -980,13 +945,10 @@ this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
                 this.ctx.fill();
                 
                 this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-                this.ctx.lineWidth = 2;
+                this.ctx.lineWidth = this.scale(state, 2);
                 this.ctx.stroke();
             } else if (orb.type === 'yellow') {
-                const gradient = this.ctx.createRadialGradient(
-                    screenX, screenY, 0,
-                    screenX, screenY, radius
-                );
+                const gradient = this.ctx.createRadialGradient(screenX, screenY, 0, screenX, screenY, radius);
                 gradient.addColorStop(0, 'rgba(255, 215, 0, 1)');
                 gradient.addColorStop(0.6, 'rgba(255, 193, 7, 0.9)');
                 gradient.addColorStop(1, 'rgba(255, 160, 0, 0.4)');
@@ -995,12 +957,11 @@ this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
                 this.ctx.fill();
                 
                 this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
-                this.ctx.lineWidth = 2;
+                this.ctx.lineWidth = this.scale(state, 2);
                 this.ctx.stroke();
                 
-                // Draw $ symbol
                 this.ctx.fillStyle = 'rgba(139, 69, 19, 1)';
-                this.ctx.font = `bold ${Math.floor(radius * 1.2)}px Arial`;
+                this.ctx.font = `bold ${Math.floor(this.scale(state, config[orb.type].radius * 1.2))}px Arial`;
                 this.ctx.textAlign = 'center';
                 this.ctx.textBaseline = 'middle';
                 this.ctx.fillText('$', screenX, screenY);
@@ -1070,32 +1031,27 @@ this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
             const elapsed = now - anim.startTime;
             const progress = elapsed / anim.duration;
             
-            // Float upward
-            const y = anim.y - progress * 80;
+            const y = anim.y - progress * this.scale(state, 80);
             
-            // Scale: grow then shrink
-            let scale;
+            let animScale;
             if (progress < 0.2) {
-                scale = 0.5 + progress * 5; // 0.5 to 1.5
+                animScale = 0.5 + progress * 5;
             } else {
-                scale = 1.5 - (progress - 0.2) * 1.25; // 1.5 to 1.0
+                animScale = 1.5 - (progress - 0.2) * 1.25;
             }
-            scale *= anim.scale;
+            animScale *= anim.scale;
             
-            // Fade out
             const alpha = 1 - progress;
             
             this.ctx.save();
-            this.ctx.font = `bold ${Math.floor(20 * scale)}px Arial`;
+            this.ctx.font = `bold ${Math.floor(this.scale(state, 20) * animScale)}px Arial`;
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
             
-            // Outline for visibility
             this.ctx.strokeStyle = `rgba(0, 0, 0, ${alpha * 0.8})`;
-            this.ctx.lineWidth = 3;
+            this.ctx.lineWidth = this.scale(state, 3);
             this.ctx.strokeText(anim.text, anim.x, y);
             
-            // Fill with color based on type
             if (anim.isPowerUp && anim.color) {
                 this.ctx.fillStyle = `rgba(${anim.color}, ${alpha})`;
             } else if (anim.isMoney) {
@@ -1125,23 +1081,19 @@ this.addLifePowerUpParticles(state, state.lifePowerUpCollected);
     }
 
 drawScoreText(state) {
-        const baseY = 40;
+        const baseY = this.scale(state, 40);
         const centerX = state.screenWidth / 2;
         
-        // Initialize lastScore if needed
         if (state.lastScore === undefined) {
             state.lastScore = state.score || 0;
         }
         
-        // Ensure score is a number
         const currentScore = state.score || 0;
         
-        // Track score changes for dramatic effects
         if (currentScore !== state.lastScore) {
             const scoreIncrease = currentScore - state.lastScore;
             state.lastScore = currentScore;
             
-            // Add score jump animation (no screen shake)
             if (scoreIncrease >= 50) {
                 state.scoreJumpAnimation = {
                     value: Math.floor(currentScore),
@@ -1159,7 +1111,7 @@ drawScoreText(state) {
             }
         }
         
-        let scale = 1;
+        let jumpScale = 1;
         let glowIntensity = 0;
         
         if (state.scoreJumpAnimation) {
@@ -1168,7 +1120,7 @@ drawScoreText(state) {
             
             if (progress < 1) {
                 const bounce = Math.sin(progress * Math.PI);
-                scale = 1 + (state.scoreJumpAnimation.scale - 1) * bounce;
+                jumpScale = 1 + (state.scoreJumpAnimation.scale - 1) * bounce;
                 glowIntensity = bounce;
             } else {
                 state.scoreJumpAnimation = null;
@@ -1185,7 +1137,7 @@ drawScoreText(state) {
             color = '#ffd700';
         }
         
-        const fontSize = Math.floor(24 * scale);
+        const fontSize = Math.floor(this.scale(state, 24) * jumpScale);
         
         this.ctx.save();
         this.ctx.fillStyle = color;
@@ -1195,12 +1147,12 @@ drawScoreText(state) {
         
         if (glowIntensity > 0) {
             this.ctx.shadowColor = color;
-            this.ctx.shadowBlur = 20 * glowIntensity;
+            this.ctx.shadowBlur = this.scale(state, 20) * glowIntensity;
         } else {
             this.ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-            this.ctx.shadowBlur = 4;
-            this.ctx.shadowOffsetX = 2;
-            this.ctx.shadowOffsetY = 2;
+            this.ctx.shadowBlur = this.scale(state, 4);
+            this.ctx.shadowOffsetX = this.scale(state, 2);
+            this.ctx.shadowOffsetY = this.scale(state, 2);
         }
         
         this.ctx.fillText(`Score: ${state.formatScore(currentScore)}`, centerX, baseY);
@@ -1209,32 +1161,30 @@ drawScoreText(state) {
         
         const playArea = state.getPlayArea();
         
-        // Draw lives in red at the left edge
         const lives = state.lives || 0;
         this.ctx.save();
         this.ctx.fillStyle = '#ff6b6b';
-        this.ctx.font = 'bold 20px Arial';
+        this.ctx.font = `bold ${this.scale(state, 20)}px Arial`;
         this.ctx.textAlign = 'left';
         this.ctx.textBaseline = 'middle';
         this.ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-        this.ctx.shadowBlur = 4;
-        this.ctx.shadowOffsetX = 2;
-        this.ctx.shadowOffsetY = 2;
-        this.ctx.fillText(`♥${lives}`, playArea.left + 10, baseY);
+        this.ctx.shadowBlur = this.scale(state, 4);
+        this.ctx.shadowOffsetX = this.scale(state, 2);
+        this.ctx.shadowOffsetY = this.scale(state, 2);
+        this.ctx.fillText(`♥${lives}`, playArea.left + this.scale(state, 10), baseY);
         this.ctx.restore();
         
-        // Draw money in yellow at the right edge
         const money = state.money || 0;
         this.ctx.save();
         this.ctx.fillStyle = '#ffd700';
-        this.ctx.font = 'bold 20px Arial';
+        this.ctx.font = `bold ${this.scale(state, 20)}px Arial`;
         this.ctx.textAlign = 'right';
         this.ctx.textBaseline = 'middle';
         this.ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-        this.ctx.shadowBlur = 4;
-        this.ctx.shadowOffsetX = 2;
-        this.ctx.shadowOffsetY = 2;
-        this.ctx.fillText(`$${money}`, playArea.right - 10, baseY);
+        this.ctx.shadowBlur = this.scale(state, 4);
+        this.ctx.shadowOffsetX = this.scale(state, 2);
+        this.ctx.shadowOffsetY = this.scale(state, 2);
+        this.ctx.fillText(`$${money}`, playArea.right - this.scale(state, 10), baseY);
         this.ctx.restore();
     }
 
@@ -1283,8 +1233,8 @@ drawScoreText(state) {
         const stoneX = playArea.left + playArea.width / 2 + state.stone.x;
         const stoneY = state.stoneYPx;
         
-        const imageWidth = 60;
-        const imageHeight = 120;
+        const imageWidth = this.scale(state, 60);
+        const imageHeight = this.scale(state, 120);
         const x = stoneX - imageWidth / 2;
         const y = effect.y;
 
@@ -1306,7 +1256,7 @@ drawScoreText(state) {
         const playArea = state.getPlayArea();
         
         const sizeBonusFactor = 1 + (state.upgrades.stoneSize.level * 0.2);
-        const magnetismRadius = (50 + magnetismLevel * 50) * sizeBonusFactor;
+        const magnetismRadius = this.scale(state, (50 + magnetismLevel * 50) * sizeBonusFactor);
 
         this.ctx.save();
         for (const orb of state.scoringOrbs) {

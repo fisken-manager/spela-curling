@@ -18,6 +18,7 @@ export class ScrollController {
     calculatePageHeight() {
         if (this.contentElement) {
             this.state.pageHeight = this.contentElement.scrollHeight;
+            console.log('=== PAGE HEIGHT ===', this.state.pageHeight, 'px at viewport:', window.innerWidth, '×', window.innerHeight);
         }
         this.state.updateScreenDimensions();
     }

@@ -50,10 +50,15 @@ export class GameState {
         const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
         this.isDevMode = isLocalhost && new URLSearchParams(window.location.search).get('dev') === 'true';
 
-        // Screen dimensions        this.screenWidth = window.innerWidth;
+        // Screen dimensions
+        this.screenWidth = window.innerWidth;
         this.screenHeight = window.innerHeight;
         
-        // Play area (constrained width, centered)
+        // Scaling - design is for 480px width
+        this.BASE_WIDTH = 480;
+        this.scaleFactor = Math.min(1, this.screenWidth / this.BASE_WIDTH);
+        
+        // Play area (full width on small screens, centered with max on large)
         this.playAreaMaxWidth = 480;
 
         // Initialize pixel-based positions
@@ -669,6 +674,8 @@ const progressOffset = random(yellowSeed) * 5 * progressOffsetScale;
         this.isDevMode = new URLSearchParams(window.location.search).get('dev') === 'true';
         }
     getPlayArea() {
+        // On screens smaller than BASE_WIDTH, use full width
+        // On larger screens, center within max width
         const width = Math.min(this.screenWidth, this.playAreaMaxWidth);
         const left = (this.screenWidth - width) / 2;
         return { left, right: left + width, width };
@@ -677,9 +684,10 @@ const progressOffset = random(yellowSeed) * 5 * progressOffsetScale;
     updateScreenDimensions() {
         this.screenWidth = window.innerWidth;
         this.screenHeight = window.innerHeight;
+        this.scaleFactor = Math.min(1, this.screenWidth / this.BASE_WIDTH);
         
-        // Calculate stone Y position in pixels (fixed offset from bottom)
-        this.stoneYPx = this.screenHeight - this.restOffsetPx;
+        // Calculate stone Y position in pixels (scaled)
+        this.stoneYPx = this.screenHeight - this.restOffsetPx * this.scaleFactor;
         
         // Center Y position (for scrolling)
         this.centerXYPx = this.screenHeight / 2;

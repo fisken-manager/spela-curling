@@ -35,7 +35,7 @@ bindEvents() {
         if (this.state.phase !== 'resting') return false;
         
         const stonePos = this.getStoneScreenPosition();
-        const stoneRadius = this.state.stone.radius;
+        const stoneRadius = this.state.stone.radius * this.state.scaleFactor;
         const dx = pointerX - stonePos.x;
         const dy = pointerY - stonePos.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
@@ -70,7 +70,7 @@ bindEvents() {
                 this.state.stone.angularVelocity = 0;
                 this.state.stone.rotation = 0;
                 
-                this.state.stoneYPx = this.state.screenHeight - this.state.restOffsetPx;
+                this.state.stoneYPx = this.state.screenHeight - this.state.restOffsetPx * this.state.scaleFactor;
                 this.state.transitionProgress = 0;
                 this.state.inScrollZone = false;
                 this.state.input.isDragging = false;
@@ -115,16 +115,14 @@ bindEvents() {
             const dy = pointerY - this.state.input.dragStartYPx;
             const dist = Math.sqrt(dx * dx + dy * dy);
             
-            // Constrain drag with a soft limit for springiness
-            const softRadius = 80;
-            const maxRadius = 150;
+            const scale = this.state.scaleFactor;
+            const softRadius = 80 * scale;
+            const maxRadius = 150 * scale;
             let clampedDx = dx;
             let clampedDy = dy;
             
             if (dist > softRadius) {
-                // Apply rubber-band effect
                 const excess = dist - softRadius;
-                // Asymptotically approach maxRadius
                 const mappedExcess = (excess * maxRadius) / (excess + maxRadius);
                 const newDist = softRadius + mappedExcess;
                 
@@ -137,7 +135,6 @@ bindEvents() {
             
             this.state.input.flickHistory.push({ x: pointerX, y: pointerY, time: Date.now() });
             
-            // Keep only the last ~150ms of history for calculating flick velocity
             const cutoffTime = Date.now() - 150;
             this.state.input.flickHistory = this.state.input.flickHistory.filter(p => p.time > cutoffTime);
         }
@@ -170,19 +167,15 @@ bindEvents() {
                     const dy = pointerY - oldest.y;
                     const distance = Math.sqrt(dx * dx + dy * dy);
                     
-                    // Velocity in pixels per millisecond
                     const vx = dx / dt;
                     const vy = dy / dt;
                     
                     const speedPxPerMs = Math.sqrt(vx * vx + vy * vy);
                     
-                    // vy < 0 means moving forward (up the screen)
-                    // Require a minimum flick distance of 10 pixels to prevent accidental taps throwing the stone
-                    if (speedPxPerMs > 0.5 && vy < 0 && distance > 10) {
+                    const scale = this.state.scaleFactor;
+                    if (speedPxPerMs > 0.5 * scale && vy < 0 && distance > 10 * scale) {
                         this.state.aimAngle = Math.atan2(vx, -vy);
-                        // Convert pixel speed to a 0-100 power equivalent (approximate scaling)
-                        // A fast flick might be 3-5 px/ms. Let's map 3 px/ms to full power.
-                        const powerValue = Math.min(100, (speedPxPerMs / 3) * 100);
+                        const powerValue = Math.min(100, (speedPxPerMs / scale / 3) * 100);
                         this.physics.launch(this.state, powerValue);
                         flickValid = true;
                     }
@@ -211,14 +204,10 @@ bindEvents() {
             totalMovement += Math.sqrt(dx * dx + dy * dy);
         }
         
-        const stoneY = this.state.stoneVisualY;
-        const sweepZoneTop = stoneY - 0.15;
-        const pointerYRatio = pointerY / this.state.screenHeight;
-        const inSweepZone = true; // Whole screen sweep area
-        
-        if (inSweepZone && totalMovement > this.sweepThreshold) {
+        const scale = this.state.scaleFactor;
+        if (totalMovement > this.sweepThreshold * scale) {
             this.state.isSweeping = true;
-            const intensity = totalMovement / 50;
+            const intensity = totalMovement / (50 * scale);
             this.physics.applySweepBoost(this.state, intensity);
         } else {
             this.state.isSweeping = false;

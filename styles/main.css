@@ -59,8 +59,7 @@ body {
 
 /* ===== SPACERS ===== */
 .spacer-xl {
-    height: 150vh;
-    min-height: 800px;
+    height: 1281px;
 }
 
 .spacer-m {
@@ -69,7 +68,7 @@ body {
 
 /* ===== HERO ===== */
 .hero {
-    min-height: 100vh;
+    min-height: 854px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -203,7 +202,7 @@ body {
 
 /* ===== PROVERB ===== */
 .proverb {
-    min-height: 100vh;
+    min-height: 854px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -230,7 +229,7 @@ body {
 
 /* ===== TEXT BLOCK ===== */
 .text-block {
-    min-height: 100vh;
+    min-height: 854px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -254,7 +253,7 @@ body {
 
 /* ===== MANIFEST ===== */
 .manifest {
-    min-height: 100vh;
+    min-height: 854px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -280,7 +279,7 @@ body {
 
 /* ===== LYRICS ===== */
 .lyrics {
-    min-height: 100vh;
+    min-height: 854px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -300,8 +299,8 @@ body {
 }
 
 .stanza {
-    margin-bottom: 200vh;
-    min-height: 100vh;
+    margin-bottom: 1708px;
+    min-height: 854px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -319,7 +318,7 @@ body {
 }
 
 .stanza.chorus {
-    margin: 200vh 0;
+    margin: 1708px 0;
 }
 
 .stanza.chorus p {
@@ -341,8 +340,8 @@ body {
 .curling-sheet {
     position: relative;
     width: 100%;
+    height: 21600px;
     background: #e2e8f0;
-    aspect-ratio: 1 / 45;
 }
 
 .curling-sheet::before {
