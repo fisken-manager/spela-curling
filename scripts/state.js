@@ -647,8 +647,17 @@ export class GameState {
     }
 
     updateScreenDimensions() {
-        this.screenWidth = window.innerWidth;
-        this.screenHeight = window.innerHeight;
+        // Use visual viewport if available (more accurate on mobile)
+        const vw = window.visualViewport;
+        if (vw) {
+            this.screenWidth = Math.round(vw.width);
+            this.screenHeight = Math.round(vw.height);
+        } else {
+            // Fallback to documentElement client dimensions (excludes scrollbars)
+            const docEl = document.documentElement;
+            this.screenWidth = docEl.clientWidth || window.innerWidth;
+            this.screenHeight = docEl.clientHeight || window.innerHeight;
+        }
         
         // Calculate stone Y position in pixels (fixed offset from bottom)
         this.stoneYPx = this.screenHeight - this.restOffsetPx;

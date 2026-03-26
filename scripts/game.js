@@ -173,7 +173,7 @@ async function init() {
 
     state.initPowerUps();
     state.initScoringOrbs();
-    
+
     await audio.init([
         'assets/song_1.mp3',
         'assets/song_2.mp3',
@@ -181,7 +181,20 @@ async function init() {
         'assets/song_4.mp3',
         'assets/song_5.mp3'
     ]);
-    
+
+    // Handle resize/visual viewport changes (important for mobile)
+    const handleResize = () => {
+        state.updateScreenDimensions();
+        canvas.width = state.screenWidth;
+        canvas.height = state.screenHeight;
+    };
+
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', handleResize);
+    }
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+
     console.log('All systems ready');
     requestAnimationFrame(gameLoop);
 }
