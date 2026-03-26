@@ -59,8 +59,11 @@ body {
 
 @media (max-width: 480px) {
     #content {
-        max-width: none;
+        max-width: 100vw !important;
+        width: 100vw !important;
         margin: 0;
+        left: 0;
+        right: 0;
     }
     
     .hero-sub {
