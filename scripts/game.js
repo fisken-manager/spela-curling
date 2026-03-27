@@ -237,6 +237,23 @@ function checkGameOver(state, overlay, scoreEl, moneyEl) {
     }
 }
 
+function syncViewport() {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    
+    // Update state dimensions
+    state.screenWidth = width;
+    state.screenHeight = height;
+    state.updateScreenDimensions();
+    
+    // Force the layout viewport to match the visual viewport (the window)
+    // This fixes the "Chrome Floor" issue where innerWidth > clientWidth
+    let viewport = document.querySelector('meta[name="viewport"]');
+    if (viewport) {
+        viewport.setAttribute('content', `width=${width}, initial-scale=1.0, maximum-scale=1.0, user-scalable=0`);
+    }
+}
+
 async function init() {
     console.log('Curling Scroll initialized');
     
@@ -248,7 +265,8 @@ async function init() {
     snakeText.init();
     snakeText.start();
     
-    state.updateScreenDimensions();
+    // Sync viewport before any sizing happens
+    syncViewport();
     
     const canvas = document.getElementById('game-canvas');
     if (!canvas) {
@@ -257,6 +275,15 @@ async function init() {
     }
     canvas.width = state.screenWidth;
     canvas.height = state.screenHeight;
+    
+    // Remove manual style overrides - let CSS 100% work with the synced viewport
+    canvas.style.width = '';
+    canvas.style.height = '';
+    
+    const content = document.getElementById('content');
+    if (content) {
+        content.style.width = '';
+    }
     
     renderer = new Renderer(canvas);
     cardMenu = new CardMenu(state);
@@ -327,6 +354,15 @@ async function init() {
     window.addEventListener('resize', () => {
         if (snakeText) {
             snakeText.handleResize();
+        }
+        
+        // Sync viewport and state dimensions
+        syncViewport();
+        
+        const canvas = document.getElementById('game-canvas');
+        if (canvas) {
+            canvas.width = state.screenWidth;
+            canvas.height = state.screenHeight;
         }
     });
 

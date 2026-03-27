@@ -668,7 +668,10 @@ const progressOffset = random(yellowSeed) * 5 * progressOffsetScale;
         this.stone.rotation = 0;
         this.scrollProgress = 0;
         this.input = { isDragging: false, dragStartX: 0, dragStartYPx: 0, stoneStartX: 0, stoneStartYPx: 0, flickHistory: [], snapBackProgress: 0, isSnapping: false };
-        this.stoneYPx = this.screenHeight - this.restOffsetPx;
+        
+        // Use the same calculation as updateScreenDimensions
+        this.updateScreenDimensions();
+        
         this.transitionProgress = 0;
         this.inScrollZone = false;  
         this.isDevMode = new URLSearchParams(window.location.search).get('dev') === 'true';

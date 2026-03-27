@@ -20,8 +20,8 @@ body {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    right: 0;
+    bottom: 0;
     z-index: 10;
     pointer-events: auto;
     touch-action: none;
@@ -31,8 +31,8 @@ body {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    right: 0;
+    bottom: 0;
     z-index: 11;
     pointer-events: none;
     display: none;
@@ -144,7 +144,7 @@ body {
 }
 
 .hero-inner h1 {
-    font-size: clamp(5rem, 20vw, 8rem);
+    font-size: clamp(2rem, 20vw, 8rem);
     font-weight: 800;
     line-height: 0.85;
     letter-spacing: -0.08em;
@@ -153,7 +153,7 @@ body {
 }
 
 .hero-sub {
-    font-size: clamp(1.3rem, 4vw, 1.8rem);
+    font-size: clamp(1rem, 4vw, 1.8rem);
     font-weight: 300;
     color: rgba(255,255,255,0.4);
     max-width: 350px;
@@ -220,7 +220,7 @@ body {
 }
 
 .victim-text h2 {
-    font-size: clamp(3.5rem, 12vw, 5rem);
+    font-size: clamp(1.5rem, 12vw, 5rem);
     font-weight: 800;
     line-height: 0.9;
     margin-bottom: 25px;
@@ -614,8 +614,8 @@ body {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    right: 0;
+    bottom: 0;
     background: rgba(0, 0, 0, 0.95);
     display: flex;
     align-items: center;
@@ -703,8 +703,8 @@ body {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    right: 0;
+    bottom: 0;
     background: #0a0a0a;
     z-index: 2000;
     opacity: 0;
