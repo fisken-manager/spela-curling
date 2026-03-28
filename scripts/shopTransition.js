@@ -22,7 +22,7 @@ export class ShopTransition {
     async loadWaifuSprite() {
         // Load waifu sprite (3x4 sprite sheet)
         try {
-            const response = await fetch('assets/waifu_shop_sprite.jpeg');
+            const response = await fetch('/assets/waifu_shop_sprite.jpeg');
             if (response.ok) {
                 const blob = await response.blob();
                 this.waifuSprite = await createImageBitmap(blob);
@@ -41,7 +41,7 @@ export class ShopTransition {
 
         // Load shop logo
         this.logoImage = new Image();
-        this.logoImage.src = 'assets/shop-logo.svg';
+        this.logoImage.src = '/assets/shop-logo.svg';
         this.logoImage.onload = () => {
             this.logoLoaded = true;
         };

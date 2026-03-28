@@ -8,6 +8,7 @@ export class CardMenu {
         this.images = {};
         this.logoImage = null;
         this.loadLogo();
+        this.loadBackgroundImage();
         this.selectedCardId = null;
         this.selectedOwnedCardId = null;
         this.cardBounds = [];
@@ -26,12 +27,12 @@ export class CardMenu {
             selectAnimation: null,
             purchasedCardId: null
         };
-        this.stars = [];
+        this.snowflakes = [];
         this.fireflies = [];
         this.lastFireflySpawn = 0;
         this.noiseOffset = 0;
         this.noiseCanvas = null;
-        this.initializeStars();
+        this.initializeSnowflakes();
 
         // Entrance animation
         this.isEntering = false;
@@ -54,7 +55,18 @@ export class CardMenu {
 
     loadLogo() {
         this.logoImage = new Image();
-        this.logoImage.src = 'assets/shop-logo.svg';
+        this.logoImage.src = '/assets/shop-logo.svg';
+    }
+
+    loadBackgroundImage() {
+        this.backgroundImage = new Image();
+        this.backgroundImage.src = '/assets/shop-bg-snowy.jpg';
+        this.backgroundImage.onload = () => {
+            console.log('Background image loaded');
+        };
+        this.backgroundImage.onerror = () => {
+            console.error('Background image failed to load');
+        };
     }
 
     hashCardId(str) {
@@ -78,15 +90,16 @@ export class CardMenu {
         };
     }
 
-    initializeStars() {
-        const numStars = 8 + Math.floor(Math.random() * 8);
-        for (let i = 0; i < numStars; i++) {
-            this.stars.push({
+    initializeSnowflakes() {
+        const numSnowflakes = 40 + Math.floor(Math.random() * 20);
+        for (let i = 0; i < numSnowflakes; i++) {
+            this.snowflakes.push({
                 x: Math.random(),
                 y: Math.random(),
-                size: 0.5 + Math.random() * 1,
-                phase: Math.random() * Math.PI * 2,
-                twinkleSpeed: 0.025 + Math.random() * 0.075
+                size: 1 + Math.random() * 2,
+                speedY: 0.05 + Math.random() * 0.05,
+                speedX: -0.02 + Math.random() * 0.04,
+                phase: Math.random() * Math.PI * 2
             });
         }
     }
@@ -131,35 +144,56 @@ export class CardMenu {
         }
     }
 
-    drawTurbulence(ctx, x, y, width, height, time) {
-        ctx.fillStyle = '#0f0f18';
-        ctx.fillRect(x, y, width, height);
+    drawShopBackgroundImage(ctx, x, y, width, height, time) {
+        if (this.backgroundImage && this.backgroundImage.complete && (this.backgroundImage.naturalWidth > 0 || this.backgroundImage.width > 0)) {
+            const imgAspect = this.backgroundImage.naturalWidth / this.backgroundImage.naturalHeight;
+            const screenAspect = width / height;
+
+            let drawWidth = width;
+            let drawHeight = height;
+
+            if (screenAspect > imgAspect) {
+                drawHeight = width / imgAspect;
+            } else {
+                drawWidth = height * imgAspect;
+            }
+
+            const drawX = x + (width - drawWidth) / 2;
+            const drawY = y + (height - drawHeight) / 2;
+
+            ctx.drawImage(this.backgroundImage, drawX, drawY, drawWidth, drawHeight);
+
+            // Darken slightly for readability
+            ctx.fillStyle = 'rgba(15, 15, 24, 0.5)';
+            ctx.fillRect(x, y, width, height);
+        } else {
+            ctx.fillStyle = '#0f0f18';
+            ctx.fillRect(x, y, width, height);
+        }
     }
 
-    drawStars(ctx, x, y, width, height, time) {
+    drawSnowflakes(ctx, x, y, width, height, time) {
         ctx.save();
-        
-        for (let star of this.stars) {
-            const sx = x + Math.floor(star.x * width);
-            const sy = y + Math.floor(star.y * height);
-            
-            const twinkle = Math.max(0.1, 0.4 + Math.sin(time * star.twinkleSpeed + star.phase) * 0.3 + Math.sin(time * star.twinkleSpeed * 1.7 + star.phase * 1.3) * 0.15);
-            
-            const size = Math.max(1, Math.floor(star.size * twinkle * 2));
-            
-            ctx.fillStyle = `rgba(255,255, 255, ${twinkle})`;
-            ctx.fillRect(sx, sy, size, size);
-            
-            if (twinkle > 0.6) {
-                ctx.fillStyle = `rgba(255, 255, 255, ${(twinkle - 0.6) * 0.5})`;
-                ctx.fillRect(sx - 1, sy, size + 2, size);
-                ctx.fillRect(sx, sy - 1, size, size + 2);
-            }
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+
+        for (let flake of this.snowflakes) {
+            flake.y += flake.speedY * 0.016;
+            flake.x += flake.speedX * 0.016 + Math.sin(time + flake.phase) * 0.001;
+
+            if (flake.y > 1) flake.y -= 1;
+            if (flake.x > 1) flake.x -= 1;
+            if (flake.x < 0) flake.x += 1;
+
+            const sx = x + flake.x * width;
+            const sy = y + flake.y * height;
+
+            ctx.beginPath();
+            ctx.arc(sx, sy, flake.size, 0, Math.PI * 2);
+            ctx.fill();
         }
-        
+
         ctx.restore();
     }
-
     drawFireflies(ctx, x, y, width, height, time) {
         ctx.save();
         
@@ -199,8 +233,8 @@ export class CardMenu {
     }
 
     drawBackground(ctx, x, y, width, height, time) {
-        this.drawTurbulence(ctx, x, y, width, height, time);
-        this.drawStars(ctx, x, y, width, height, time);
+        this.drawShopBackgroundImage(ctx, x, y, width, height, time);
+        this.drawSnowflakes(ctx, x, y, width, height, time);
         this.updateFireflies(time, 0.016);
         this.drawFireflies(ctx, x, y, width, height, time);
     }
@@ -1426,6 +1460,17 @@ drawRerollButton(ctx, x, y, width, height, canAfford, cost) {
                 else {
                     this.logoImage.onload = r;
                     this.logoImage.onerror = r;
+                }
+            });
+        }
+
+        // Preload background image
+        if (this.backgroundImage) {
+            await new Promise(r => {
+                if (this.backgroundImage.complete) r();
+                else {
+                    this.backgroundImage.onload = r;
+                    this.backgroundImage.onerror = r;
                 }
             });
         }

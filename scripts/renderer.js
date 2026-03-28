@@ -15,7 +15,7 @@ export class Renderer {
 
     loadSuperBoostImage() {
         this.superBoostImage = new Image();
-        this.superBoostImage.src = 'assets/boop.png';
+        this.superBoostImage.src = '/assets/boop.png';
     }
     
     scale(state, value) {
