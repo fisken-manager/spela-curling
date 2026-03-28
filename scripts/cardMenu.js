@@ -613,7 +613,6 @@ export class CardMenu {
             ctx.fillText(tierNumeral, badgeX, badgeY);
         }
 
-        ctx.restore();
         return { x, y, width, height };
     }
 
@@ -738,7 +737,7 @@ export class CardMenu {
             ? available.find(c => c.id === this.selectedCardId) 
             : null;
 
-        const largeCardHeight = screenHeight * 0.40;
+        const largeCardHeight = Math.min(screenHeight * 0.40, screenWidth * 0.50);
         const largeCardWidth = largeCardHeight;
 
         const selectedOwnedCard = this.selectedOwnedCardId
@@ -748,9 +747,9 @@ export class CardMenu {
         // Draw arch cards (no selected detail yet - drawn last for z-order)
         if (selectedCard) {
             const archPadding = 100 * scale;
-            this.renderArchCards(ctx, areaLeft, areaWidth, archPadding, available, selectedCard.id, time);
+            this.renderArchCards(ctx, areaLeft, areaWidth, screenHeight, archPadding, available, selectedCard.id, time);
         } else {
-            this.renderArchCards(ctx, areaLeft, areaWidth, padding, available, null, time);
+            this.renderArchCards(ctx, areaLeft, areaWidth, screenHeight, padding, available, null, time);
         }
 
         // Reroll button - above owned section
@@ -826,17 +825,23 @@ export class CardMenu {
         if (selectedCard) {
             this.renderSelectedCard(ctx, areaLeft, areaWidth, screenHeight, selectedCard, largeCardWidth, largeCardHeight, time);
         } else if (selectedOwnedCard) {
-            this.renderSelectedOwnedCard(ctx, areaLeft, areaWidth, selectedOwnedCard, largeCardWidth * 0.7, largeCardHeight * 0.7, time);
+            this.renderSelectedOwnedCard(ctx, areaLeft, areaWidth, screenHeight, selectedOwnedCard, largeCardWidth * 0.7, largeCardHeight * 0.7, time);
         }
 
         ctx.restore();
     }
 
-    renderArchCards(ctx, areaLeft, areaWidth, startY, available, selectedId, time) {
+    renderArchCards(ctx, areaLeft, areaWidth, screenHeight, startY, available, selectedId, time) {
         const scale = this.state.scaleFactor;
         const cardHeight = 120 * scale;
         const cardWidth = 120 * scale;
         const spacing = 15 * scale;
+
+        // Clip to play area to prevent overflow on wider screens
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(areaLeft, 0, areaWidth, screenHeight);
+        ctx.clip();
 
         const totalWidth = available.length * cardWidth + (available.length - 1) * spacing;
         const startX = areaLeft + (areaWidth - totalWidth) / 2;
@@ -931,6 +936,8 @@ export class CardMenu {
                 canBuy: this.canAfford(card.id)
             });
         }
+
+        ctx.restore();
     }
 
     getRotatedBounds(x, y, width, height, angle) {
@@ -992,6 +999,12 @@ export class CardMenu {
         const currentLevel = this.state.upgrades[card.id]?.level || 0;
         const tier = card.tiers[currentLevel];
         if (!tier) return;
+
+        // Clip to play area to prevent overflow
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(areaLeft, 0, areaWidth, screenHeight);
+        ctx.clip();
 
         const canBuy = this.canAfford(card.id);
         const centerX = areaLeft + areaWidth / 2;
@@ -1081,12 +1094,20 @@ export class CardMenu {
             height: 45 * scale
         };
         this.drawBuyButton(ctx, centerX - 80 * scale, currentY, 160 * scale, 45 * scale, canBuy);
+
+        ctx.restore();
     }
 
-    renderSelectedOwnedCard(ctx, areaLeft, areaWidth, card, cardWidth, cardHeight, time) {
+    renderSelectedOwnedCard(ctx, areaLeft, areaWidth, screenHeight, card, cardWidth, cardHeight, time) {
         const scale = this.state.scaleFactor;
         const tier = card.tier;
         if (!tier) return;
+
+        // Clip to play area to prevent overflow
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(areaLeft, 0, areaWidth, screenHeight);
+        ctx.clip();
 
         const centerX = areaLeft + areaWidth / 2;
 
@@ -1155,6 +1176,8 @@ export class CardMenu {
         ctx.font = `bold ${Math.floor(14 * scale)}px "Space Mono", monospace`;
         ctx.fillStyle = '#a0ffa0';
         ctx.fillText(`ÄGD · Nivå ${card.tierLevel}`, centerX, currentY);
+
+        ctx.restore();
     }
 
     drawBuyButton(ctx, x, y, width, height, canBuy) {
@@ -1298,6 +1321,12 @@ drawRerollButton(ctx, x, y, width, height, canAfford, cost) {
         this.ownedCardBounds = [];
         this.ownedContainerBounds = { x: areaLeft, y: containerTop, width: areaWidth, height: containerHeight };
 
+        // Clip to container first to contain all rendering within bounds
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(areaLeft, containerTop, areaWidth, containerHeight);
+        ctx.clip();
+
         if (!hideHeader) {
             const headerFontSize = Math.floor(12 * scale);
             ctx.font = `bold ${headerFontSize}px "Space Mono", monospace`;
@@ -1313,6 +1342,7 @@ drawRerollButton(ctx, x, y, width, height, canAfford, cost) {
                 ctx.fillStyle = '#4a5568';
                 ctx.fillText('Inga uppgraderingar ännu', areaLeft + areaWidth / 2, containerTop + containerHeight / 2 - 6 * scale);
             }
+            ctx.restore();
             return;
         }
 
@@ -1322,12 +1352,6 @@ drawRerollButton(ctx, x, y, width, height, canAfford, cost) {
         const totalWidth = owned.length * cardSize + (owned.length - 1) * spacing;
         const maxScroll = Math.max(0, totalWidth - areaWidth);
         this.ownedScrollX = Math.max(0, Math.min(this.ownedScrollX, maxScroll));
-
-        // Clip to container
-        ctx.save();
-        ctx.beginPath();
-        ctx.rect(areaLeft, containerTop, areaWidth, containerHeight);
-        ctx.clip();
 
         const collectionDelay = 0.5;
         const collectionProgress = Math.max(0, (this.enterProgress - collectionDelay) / (1 - collectionDelay));
@@ -1369,7 +1393,7 @@ drawRerollButton(ctx, x, y, width, height, canAfford, cost) {
 
         ctx.restore();
 
-        // Scroll indicators (left/right arrows)
+        // Scroll indicators (left/right arrows) - drawn outside the clip
         if (maxScroll > 0) {
             if (this.ownedScrollX > 0) {
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
