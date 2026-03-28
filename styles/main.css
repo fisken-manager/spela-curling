@@ -152,7 +152,7 @@ body {
 }
 
 .hero-inner h1 {
-    font-size: clamp(1.5rem, 12vw, 8rem);
+    font-size: clamp(1.5rem, 10vw, 4.5rem);
     font-weight: 800;
     line-height: 0.85;
     letter-spacing: -0.08em;
@@ -163,7 +163,7 @@ body {
 }
 
 .hero-sub {
-    font-size: clamp(1rem, 4vw, 1.8rem);
+    font-size: clamp(1rem, 3vw, 1.2rem);
     font-weight: 300;
     color: rgba(255,255,255,0.4);
     max-width: 350px;
