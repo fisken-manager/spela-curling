@@ -22,17 +22,38 @@ export class AudioController {
         this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
         this.playlist = playlist;
         this.currentIndex = 0;
+        this.audioBuffers = new Array(playlist.length);
         
-        for (const url of playlist) {
-            const response = await fetch(url);
+        if (playlist.length > 0) {
+            // Load the first song
+            const firstUrl = playlist[0];
+            const response = await fetch(firstUrl);
             const arrayBuffer = await response.arrayBuffer();
             const buffer = await this.audioContext.decodeAudioData(arrayBuffer);
-            this.audioBuffers.push(buffer);
-            console.log(`Loaded: ${url} (${buffer.duration}s)`);
+            this.audioBuffers[0] = buffer;
+            this.audioBuffer = buffer;
+            console.log(`Loaded first track: ${firstUrl} (${buffer.duration}s)`);
+            
+            // Load the rest in the background
+            this._loadRemainingSongs(playlist);
         }
         
-        this.audioBuffer = this.audioBuffers[0];
-        console.log(`Playlist ready: ${playlist.length} tracks`);
+        console.log(`Playlist initialized, playing first of ${playlist.length} tracks`);
+    }
+
+    async _loadRemainingSongs(playlist) {
+        for (let i = 1; i < playlist.length; i++) {
+            const url = playlist[i];
+            try {
+                const response = await fetch(url);
+                const arrayBuffer = await response.arrayBuffer();
+                const buffer = await this.audioContext.decodeAudioData(arrayBuffer);
+                this.audioBuffers[i] = buffer;
+                console.log(`Loaded background track: ${url} (${buffer.duration}s)`);
+            } catch (err) {
+                console.warn(`Failed to load background track: ${url}`, err);
+            }
+        }
     }
 
     async loadShopSong(url) {
@@ -142,7 +163,23 @@ export class AudioController {
     }
 
     advanceTrack() {
+        let attempts = 0;
+        let originalIndex = this.currentIndex;
         this.currentIndex = (this.currentIndex + 1) % this.playlist.length;
+        
+        // Find the next loaded track, if any
+        while (!this.audioBuffers[this.currentIndex] && attempts < this.playlist.length) {
+            console.warn(`Track ${this.playlist[this.currentIndex]} not loaded yet, skipping...`);
+            this.currentIndex = (this.currentIndex + 1) % this.playlist.length;
+            attempts++;
+        }
+        
+        if (!this.audioBuffers[this.currentIndex]) {
+            console.error("No loaded tracks found in playlist!");
+            this.currentIndex = originalIndex;
+            return;
+        }
+
         this.audioBuffer = this.audioBuffers[this.currentIndex];
         this.currentPosition = 0;
         console.log(`Now playing: ${this.playlist[this.currentIndex]}`);

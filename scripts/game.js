@@ -332,8 +332,8 @@ async function init() {
         'assets/song_5.mp3'
     ]);
     
-    // Load shop song
-    await audio.loadShopSong('assets/shop_song.mp3');
+    // Load shop song in background
+    audio.loadShopSong('assets/shop_song.mp3');
     
     window.addEventListener('blur', () => {
         state.isPaused = true;
