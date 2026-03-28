@@ -342,7 +342,7 @@ function shadeColor(color, percent) {
 function drawButton(ctx, x, y, w, h, text, enabled = true) {
     ctx.beginPath();
     ctx.roundRect(x, y, w, h, 15);
-    ctx.fillStyle = enabled ? 'rgba(255, 215, 0, 0.15)' : 'rgba(100, 100, 100, 0.2)';
+    ctx.fillStyle = enabled ? 'rgba(255, 215, 0, 0.15)' : 'rgb(50, 50, 50)';
     ctx.fill();
     
     ctx.strokeStyle = enabled ? '#ffd700' : 'rgba(100, 100, 100, 0.5)';
