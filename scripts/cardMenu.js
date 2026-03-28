@@ -55,12 +55,12 @@ export class CardMenu {
 
     loadLogo() {
         this.logoImage = new Image();
-        this.logoImage.src = '/assets/shop-logo.svg';
+        this.logoImage.src = 'assets/shop-logo.svg';
     }
 
     loadBackgroundImage() {
         this.backgroundImage = new Image();
-        this.backgroundImage.src = '/assets/shop-bg-snowy.jpg';
+        this.backgroundImage.src = 'assets/shop-bg-snowy.jpg';
         this.backgroundImage.onload = () => {
             console.log('Background image loaded');
         };
