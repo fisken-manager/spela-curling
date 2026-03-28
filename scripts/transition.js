@@ -52,7 +52,12 @@ export class TransitionController {
                 state.scrollProgress = state.stone.worldY / maxScroll;
             }
         } else {
-            state.stone.worldY = -(state.stoneYPx - state.screenHeight * 0.5);
+            // When not in scroll zone, recalculate worldY from current scrollProgress
+            // to preserve the scroll position instead of resetting it
+            const maxScroll = state.pageHeight - state.screenHeight;
+            if (maxScroll > 0) {
+                state.stone.worldY = state.scrollProgress * maxScroll;
+            }
         }
         
         if (t >= 1) {
