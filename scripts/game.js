@@ -197,6 +197,9 @@ function setupGameOverUI() {
             state.lives = 1;
             state.gameOver = false;
             state.phase = 'resting';
+            // Keep current scroll position, just reset stone to resting position
+            state.stone.x = 0;
+            state.stoneYPx = state.screenHeight - state.restOffsetPx;
             gameOverOverlay.classList.add('hidden');
         }
     });

@@ -14,7 +14,11 @@ export class Physics {
         this.maxAngularVelocity = 10;
     }
 
-getMaxVelocity(state) {
+    getStoneEffectiveWorldY(state) {
+        return state.stone.worldY - (state.stoneYPx - state.screenHeight * 0.5);
+    }
+
+    getMaxVelocity(state) {
         // Basic speed upgrade
         const speedLevel = state.upgrades.speed?.level || 0;
         const speedBonus = 1 + (speedLevel * 0.15);
@@ -337,7 +341,8 @@ getMaxVelocity(state) {
             if (pickup.collected) continue;
 
             const pickupWorldY = pickup.scrollProgress * maxScroll;
-            const dy = stone.worldY - pickupWorldY;
+            const effectiveWorldY = this.getStoneEffectiveWorldY(state);
+            const dy = effectiveWorldY - pickupWorldY;
             const dx = stone.x - pickup.x;
             const dist = Math.sqrt(dx * dx + dy * dy);
 
@@ -359,7 +364,8 @@ getMaxVelocity(state) {
             if (powerUp.collected) continue;
             
             const powerUpWorldY = powerUp.scrollProgress * maxScroll;
-            const dy = Math.abs(stone.worldY - powerUpWorldY);
+            const effectiveWorldY = this.getStoneEffectiveWorldY(state);
+            const dy = Math.abs(effectiveWorldY - powerUpWorldY);
             const dx = Math.abs(stone.x - powerUp.x);
             
             const collisionDistance = config.radius + effectiveRadius;
@@ -389,7 +395,8 @@ getMaxVelocity(state) {
             if (lifePowerUp.collected) continue;
             
             const powerUpWorldY = lifePowerUp.scrollProgress * maxScroll;
-            const dy = Math.abs(stone.worldY - powerUpWorldY);
+            const effectiveWorldY = this.getStoneEffectiveWorldY(state);
+            const dy = Math.abs(effectiveWorldY - powerUpWorldY);
             const dx = Math.abs(stone.x - lifePowerUp.x);
             
             const collisionDistance = config.radius + effectiveRadius;
@@ -411,7 +418,7 @@ getMaxVelocity(state) {
                 
                 const playArea = state.getPlayArea();
                 const screenX = playArea.left + playArea.width / 2 + lifePowerUp.x;
-                const screenY = state.screenHeight * 0.5;
+                const screenY = state.stoneYPx;
                 state.triggerRingFlash(screenX, screenY, '255, 50, 50');
             }
         }
@@ -426,7 +433,8 @@ getMaxVelocity(state) {
             if (shopPowerUp.collected) continue;
             
             const powerUpWorldY = shopPowerUp.scrollProgress * maxScroll;
-            const dy = Math.abs(stone.worldY - powerUpWorldY);
+            const effectiveWorldY = this.getStoneEffectiveWorldY(state);
+            const dy = Math.abs(effectiveWorldY - powerUpWorldY);
             const dx = Math.abs(stone.x - shopPowerUp.x);
             
             const collisionDistance = config.radius + effectiveRadius;
@@ -453,7 +461,7 @@ getMaxVelocity(state) {
                 // Storefish position for animation
                 const playArea = state.getPlayArea();
                 state.shopTransitionFishX = playArea.left + playArea.width / 2 + shopPowerUp.x;
-                state.shopTransitionFishY = state.screenHeight * 0.5;
+                state.shopTransitionFishY = state.stoneYPx;
 
                 state.triggerRingFlash(state.shopTransitionFishX, state.shopTransitionFishY, '0, 191, 255');            }
         }
@@ -471,7 +479,8 @@ getMaxVelocity(state) {
             if (sweepPowerUp.collected) continue;
             
             const powerUpWorldY = sweepPowerUp.scrollProgress * maxScroll;
-            const dy = Math.abs(stone.worldY - powerUpWorldY);
+            const effectiveWorldY = this.getStoneEffectiveWorldY(state);
+            const dy = Math.abs(effectiveWorldY - powerUpWorldY);
             const dx = Math.abs(stone.x - sweepPowerUp.x);
             
             const collisionDistance = config.radius + effectiveRadius;
@@ -525,7 +534,8 @@ getMaxVelocity(state) {
             if (rotationPowerUp.collected) continue;
             
             const powerUpWorldY = rotationPowerUp.scrollProgress * maxScroll;
-            const dy = Math.abs(stone.worldY - powerUpWorldY);
+            const effectiveWorldY = this.getStoneEffectiveWorldY(state);
+            const dy = Math.abs(effectiveWorldY - powerUpWorldY);
             const dx = Math.abs(stone.x - rotationPowerUp.x);
             
             const collisionDistance = config.radius + effectiveRadius;
@@ -553,7 +563,8 @@ getMaxVelocity(state) {
             if (superBoostPowerUp.collected) continue;
 
             const powerUpWorldY = superBoostPowerUp.scrollProgress * maxScroll;
-            const dy = Math.abs(stone.worldY - powerUpWorldY);
+            const effectiveWorldY = this.getStoneEffectiveWorldY(state);
+            const dy = Math.abs(effectiveWorldY - powerUpWorldY);
             const dx = Math.abs(stone.x - superBoostPowerUp.x);
 
             const collisionDistance = config.radius + effectiveRadius;
@@ -605,7 +616,8 @@ getMaxVelocity(state) {
             if (growthPowerUp.collected) continue;
             
             const powerUpWorldY = growthPowerUp.scrollProgress * maxScroll;
-            const dy = Math.abs(stone.worldY - powerUpWorldY);
+            const effectiveWorldY = this.getStoneEffectiveWorldY(state);
+            const dy = Math.abs(effectiveWorldY - powerUpWorldY);
             const dx = Math.abs(stone.x - growthPowerUp.x);
             
             const collisionDistance = config.radius + effectiveRadius;
@@ -620,7 +632,7 @@ getMaxVelocity(state) {
                 this.addPowerUpText(state, growthPowerUp.x, 'STOR!', '72, 187, 120');
                 state.triggerRingFlash(
                     state.getPlayArea().left + state.getPlayArea().width / 2 + growthPowerUp.x,
-                    state.screenHeight * 0.5,
+                    state.stoneYPx,
                     '72, 187, 120'
                 );
             }
@@ -640,7 +652,8 @@ getMaxVelocity(state) {
             if (pickup.collected) continue;
             
             const pickupWorldY = pickup.scrollProgress * maxScroll;
-            const dy = Math.abs(stone.worldY - pickupWorldY);
+            const effectiveWorldY = this.getStoneEffectiveWorldY(state);
+            const dy = Math.abs(effectiveWorldY - pickupWorldY);
             const dx = Math.abs(stone.x - pickup.x);
             
             const collisionDistance = config.radius + effectiveRadius;
@@ -653,7 +666,7 @@ getMaxVelocity(state) {
                 this.addPowerUpText(state, pickup.x, `+CURL! x${effectMultiplier}`, '255, 50, 50');
                 state.triggerRingFlash(
                     state.getPlayArea().left + state.getPlayArea().width / 2 + pickup.x,
-                    state.screenHeight * 0.5,
+                    state.stoneYPx,
                     '255, 50, 50'
                 );
             }
@@ -673,7 +686,8 @@ getMaxVelocity(state) {
             if (pickup.collected) continue;
             
             const pickupWorldY = pickup.scrollProgress * maxScroll;
-            const dy = Math.abs(stone.worldY - pickupWorldY);
+            const effectiveWorldY = this.getStoneEffectiveWorldY(state);
+            const dy = Math.abs(effectiveWorldY - pickupWorldY);
             const dx = Math.abs(stone.x - pickup.x);
             
             const collisionDistance = config.radius + effectiveRadius;
@@ -686,7 +700,7 @@ getMaxVelocity(state) {
                 this.addPowerUpText(state, pickup.x, `-STORLEK! x${effectMultiplier}`, '200, 50, 255');
                 state.triggerRingFlash(
                     state.getPlayArea().left + state.getPlayArea().width / 2 + pickup.x,
-                    state.screenHeight * 0.5,
+                    state.stoneYPx,
                     '200, 50, 255'
                 );
             }
@@ -719,7 +733,8 @@ getMaxVelocity(state) {
             if (orb.collected) continue;
             
             const orbWorldY = orb.scrollProgress * maxScroll;
-            const dy = stone.worldY - orbWorldY;
+            const effectiveWorldY = this.getStoneEffectiveWorldY(state);
+            const dy = effectiveWorldY - orbWorldY;
             const dx = stone.x - orb.x;
             const dist = Math.sqrt(dx * dx + dy * dy);
             
@@ -781,7 +796,7 @@ getMaxVelocity(state) {
             
             const playArea = state.getPlayArea();
             const screenX = playArea.left + playArea.width / 2 + orb.x;
-            const screenY = state.screenHeight * 0.5;
+            const screenY = state.stoneYPx;
             
             state.scoreAnimations.push({
                 x: screenX,
@@ -808,7 +823,7 @@ getMaxVelocity(state) {
             
             state.triggerScreenShake(10, 0.2);
             const playArea = state.getPlayArea();
-            state.triggerRingFlash(playArea.left + playArea.width / 2 + orb.x, state.screenHeight * 0.5, '255, 255, 255');
+            state.triggerRingFlash(playArea.left + playArea.width / 2 + orb.x, state.stoneYPx, '255, 255, 255');
             
             const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
             const orbWorldY = orb.scrollProgress * maxScroll;
@@ -861,7 +876,7 @@ getMaxVelocity(state) {
             
             const playArea = state.getPlayArea();
             const screenX = playArea.left + playArea.width / 2 + orb.x;
-            const screenY = state.screenHeight * 0.5;
+            const screenY = state.stoneYPx;
             
             state.scoreAnimations.push({
                 x: screenX,
@@ -902,7 +917,7 @@ getMaxVelocity(state) {
         // Score animation
         const playArea = state.getPlayArea();
         const screenX = playArea.left + playArea.width / 2 + orb.x;
-        const screenY = state.screenHeight * 0.5;
+        const screenY = state.stoneYPx;
         
         state.scoreAnimations.push({
             x: screenX,
@@ -955,7 +970,7 @@ getMaxVelocity(state) {
     addPowerUpText(state, x, text, color) {
         const playArea = state.getPlayArea();
         const screenX = playArea.left + playArea.width / 2 + x;
-        const screenY = state.screenHeight * 0.5;
+        const screenY = state.stoneYPx;
         
         state.scoreAnimations.push({
             x: screenX,
@@ -1150,7 +1165,7 @@ getMaxVelocity(state) {
                 state.triggerScreenShake(5, 0.1);
                 state.triggerRingFlash(
                     stone.x < leftBound ? playArea.left : playArea.right,
-                    state.screenHeight * 0.5,
+                    state.stoneYPx,
                     '255, 215, 0'
                 );
             }
@@ -1281,7 +1296,7 @@ getMaxVelocity(state) {
                             state.shopTransitionProgress = 0;
                             const playArea = state.getPlayArea();
                             state.shopTransitionFishX = playArea.left + playArea.width / 2;
-                            state.shopTransitionFishY = state.screenHeight * 0.5;
+                            state.shopTransitionFishY = state.stoneYPx;
                         }, 1250);
                     } else {
                         performReset();
@@ -1303,7 +1318,7 @@ getMaxVelocity(state) {
                         state.shopTransitionProgress = 0;
                         const playArea = state.getPlayArea();
                         state.shopTransitionFishX = playArea.left + playArea.width / 2;
-                        state.shopTransitionFishY = state.screenHeight * 0.5;
+                        state.shopTransitionFishY = state.stoneYPx;
                     }
                 }
             }

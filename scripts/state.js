@@ -265,6 +265,10 @@ export class GameState {
         
         const loopSeed = Math.floor(baseSeed + (this.loopCount || 1) * 100000);
         
+        // Scale xRange by responsive factor
+        const xScale = this.getResponsiveXScale();
+        const scaledXRange = xRange * xScale;
+        
         for (let i = 0; i < targetCount; i++) {
             const itemSeed = loopSeed + i * 1000;
             const baseProgress = (startOffsetPx + i * segmentSize) / maxScroll;
@@ -276,7 +280,7 @@ export class GameState {
             // Keep away from absolute bottom
             if (itemProgress > 0.98) itemProgress = 0.98;
             
-            const itemX = (random(itemSeed + 1) - 0.5) * xRange;
+            const itemX = (random(itemSeed + 1) - 0.5) * scaledXRange;
             
             items.push({
                 id: `${type}-${itemId++}`,
@@ -315,8 +319,9 @@ export class GameState {
             return x - Math.floor(x);
         };
         
-        const edgeMargin = 30;
-        const edgeWidth = 80;
+        const xScale = this.getResponsiveXScale();
+        const edgeMargin = 30 * xScale;
+        const edgeWidth = 80 * xScale;
         
         for (let i = 0; i < this.sweepPowerUps.length; i++) {
             const pickup = this.sweepPowerUps[i];
@@ -328,9 +333,10 @@ export class GameState {
     }
 
     enforcePickupProximity() {
-        const maxAttempts = 50; // Increased attempts
-        const minDistance = 200;
-        const verticalTolerance = 300; // Increased vertical buffer
+        const maxAttempts = 50;
+        const xScale = this.getResponsiveXScale();
+        const minDistance = 200 * xScale;
+        const verticalTolerance = 300;
         
         const random = (s) => {
             const x = Math.sin(s) * 10000;
@@ -338,17 +344,17 @@ export class GameState {
         };
         
         const pickupTypes = [
-            { items: this.powerUps, xRange: 160 },
-            { items: this.lifePowerUps, xRange: 100 },
-            { items: this.shopPowerUps, xRange: 100 },
-            { items: this.sweepPowerUps, xRange: 120 },
-            { items: this.rotationPowerUps, xRange: 370 },
-            { items: this.superBoostPowerUps, xRange: 100 },
-            { items: this.growthPowerUps, xRange: 100 },
+            { items: this.powerUps, xRange: 160 * xScale },
+            { items: this.lifePowerUps, xRange: 100 * xScale },
+            { items: this.shopPowerUps, xRange: 100 * xScale },
+            { items: this.sweepPowerUps, xRange: 120 * xScale },
+            { items: this.rotationPowerUps, xRange: 370 * xScale },
+            { items: this.superBoostPowerUps, xRange: 100 * xScale },
+            { items: this.growthPowerUps, xRange: 100 * xScale },
             // Only include negative pickups if noNegativePickups is NOT purchased
             ...(this.upgrades.noNegativePickups.level > 0 ? [] : [
-                { items: this.curlChaosPickups, xRange: 90 },
-                { items: this.sizeShrinkPickups, xRange: 110 }
+                { items: this.curlChaosPickups, xRange: 90 * xScale },
+                { items: this.sizeShrinkPickups, xRange: 110 * xScale }
             ])
         ];
         
@@ -383,7 +389,13 @@ export class GameState {
         }
     }
 
-initPowerUps() {
+    // Calculate responsive x position multiplier based on play area width
+    getResponsiveXScale() {
+        const playArea = this.getPlayArea();
+        return playArea.width / this.playAreaMaxWidth;
+    }
+
+    initPowerUps() {
         const tuning = this.debugGenTuning || {};
         let powerup = tuning.powerup ?? 1400;
         const life = tuning.life ?? 40000;
@@ -450,6 +462,9 @@ initPowerUps() {
         
         let orbId = 0;
         
+        // Get responsive x scale for orb placement
+        const xScale = this.getResponsiveXScale();
+        
         for (let i = 0; i < numSegments; i++) {
             const baseProgress = (startOffset + i * segmentSize) / maxScroll;
             
@@ -475,7 +490,8 @@ initPowerUps() {
             const orbProgress = baseProgress + progressOffset;
             
             if (orbProgress <= 1 && random(groupSeed + 4) < 0.2) {
-                const centerX = (random(groupSeed + 3) - 0.5) * 320;
+                // Scale centerX by responsive xScale
+                const centerX = (random(groupSeed + 3) - 0.5) * 320 * xScale;
                 
                 const orbs = this.generatePatternOrbs(pattern, count, centerX, orbProgress);
                 for (const orb of orbs) {
@@ -499,7 +515,8 @@ initPowerUps() {
                 
                 if (orbProgress > 1) continue;
                 
-                const orbX = (random(purpleSeed + 1) - 0.5) * 320;
+                // Scale orbX by responsive xScale
+                const orbX = (random(purpleSeed + 1) - 0.5) * 320 * xScale;
                 
                 this.scoringOrbs.push({
                     id: `orb-${orbId++}`,
@@ -513,11 +530,12 @@ initPowerUps() {
             // Yellow orbs at wall edges (80% chance per segment)
             if (random(seed + 2000) < (0.8 / 3)) {
                 const yellowSeed = seed + 3000;
-const progressOffset = random(yellowSeed) * 5 * progressOffsetScale;
-            const orbProgress = baseProgress + progressOffset;
+                const progressOffset = random(yellowSeed) * 5 * progressOffsetScale;
+                const orbProgress = baseProgress + progressOffset;
                 
                 if (orbProgress <= 1) {
-                    const wallOffset = 180;
+                    // Scale wallOffset by responsive xScale
+                    const wallOffset = 180 * xScale;
                     const onLeftWall = random(yellowSeed + 1) < 0.5;
                     const orbX = onLeftWall ? -wallOffset : wallOffset;
                     
@@ -535,14 +553,15 @@ const progressOffset = random(yellowSeed) * 5 * progressOffsetScale;
     
     generatePatternOrbs(pattern, count, centerX, baseProgress) {
         const orbs = [];
-        const spacing = 0.006; // Double the vertical spacing
+        const spacing = 0.006;
+        const xScale = this.getResponsiveXScale();
         
         switch (pattern) {
             case 'arcLeft':
                 for (let i = 0; i < count; i++) {
                     const angle = (Math.PI * 0.3) + (i / (count - 1 || 1)) * (Math.PI * 0.4);
                     orbs.push({
-                        x: centerX - Math.cos(angle) * 80,
+                        x: centerX - Math.cos(angle) * 80 * xScale,
                         scrollProgress: baseProgress - (count / 2 - i) * spacing
                     });
                 }
@@ -551,7 +570,7 @@ const progressOffset = random(yellowSeed) * 5 * progressOffsetScale;
                 for (let i = 0; i < count; i++) {
                     const angle = (Math.PI * 0.3) + (i / (count - 1 || 1)) * (Math.PI * 0.4);
                     orbs.push({
-                        x: centerX + Math.cos(angle) * 80,
+                        x: centerX + Math.cos(angle) * 80 * xScale,
                         scrollProgress: baseProgress - (count / 2 - i) * spacing
                     });
                 }
@@ -566,7 +585,7 @@ const progressOffset = random(yellowSeed) * 5 * progressOffsetScale;
                 ];
                 for (const pos of diamondPositions) {
                     orbs.push({
-                        x: centerX + pos.x,
+                        x: centerX + pos.x * xScale,
                         scrollProgress: baseProgress + pos.y * spacing
                     });
                 }
@@ -588,7 +607,7 @@ const progressOffset = random(yellowSeed) * 5 * progressOffsetScale;
                 ];
                 for (const pos of boxPositions) {
                     orbs.push({
-                        x: centerX + pos.x,
+                        x: centerX + pos.x * xScale,
                         scrollProgress: baseProgress + pos.y * spacing
                     });
                 }

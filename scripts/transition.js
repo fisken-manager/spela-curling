@@ -51,6 +51,8 @@ export class TransitionController {
             if (maxScroll > 0) {
                 state.scrollProgress = state.stone.worldY / maxScroll;
             }
+        } else {
+            state.stone.worldY = -(state.stoneYPx - state.screenHeight * 0.5);
         }
         
         if (t >= 1) {
