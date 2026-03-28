@@ -1175,16 +1175,37 @@ drawScoreText(state) {
         this.ctx.restore();
         
         const money = state.money || 0;
+        const moneyStr = `${money}$`;
         this.ctx.save();
-        this.ctx.fillStyle = '#ffd700';
         this.ctx.font = `bold ${this.scale(state, 20)}px Arial`;
+        
+        const minTextWidth = this.ctx.measureText('999$').width;
+        const actualTextWidth = this.ctx.measureText(moneyStr).width;
+        const textWidth = Math.max(minTextWidth, actualTextWidth);
+        
+        const paddingX = this.scale(state, 12);
+        const barWidth = textWidth + paddingX * 2;
+        const barHeight = this.scale(state, 32);
+        const barRight = playArea.right - this.scale(state, 10);
+        const barX = barRight - barWidth;
+        const barY = baseY - barHeight / 2;
+
+        this.ctx.beginPath();
+        this.ctx.roundRect(barX, barY, barWidth, barHeight, this.scale(state, 10));
+        this.ctx.fillStyle = 'rgba(60, 60, 60, 0.85)';
+        this.ctx.fill();
+        this.ctx.strokeStyle = 'rgba(170, 170, 170, 0.8)';
+        this.ctx.lineWidth = this.scale(state, 2);
+        this.ctx.stroke();
+
+        this.ctx.fillStyle = '#ffd700';
         this.ctx.textAlign = 'right';
         this.ctx.textBaseline = 'middle';
         this.ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
         this.ctx.shadowBlur = this.scale(state, 4);
         this.ctx.shadowOffsetX = this.scale(state, 2);
         this.ctx.shadowOffsetY = this.scale(state, 2);
-        this.ctx.fillText(`$${money}`, playArea.right - this.scale(state, 10), baseY);
+        this.ctx.fillText(moneyStr, barX + barWidth - paddingX, baseY);
         this.ctx.restore();
     }
 
@@ -1292,7 +1313,7 @@ drawScoreText(state) {
             const finalScoreEl = document.querySelector('.final-score');
             const moneyEl = document.querySelector('.game-over-money');
             if (finalScoreEl) finalScoreEl.textContent = state.formatScore(state.score);
-            if (moneyEl) moneyEl.textContent = `$${state.money}`;
+            if (moneyEl) moneyEl.textContent = `${state.money}$`;
         }
 
         this.updateEffects(state, deltaTime);

@@ -16,11 +16,12 @@ export class InputHandler {
         this.cardMenu = cardMenu;
     }
 
-bindEvents() {
+    bindEvents() {
         this.canvas.addEventListener('pointerdown', (e) => this.onPointerDown(e));
         this.canvas.addEventListener('pointermove', (e) => this.onPointerMove(e));
         this.canvas.addEventListener('pointerup', (e) => this.onPointerUp(e));
         this.canvas.addEventListener('pointercancel', (e) => this.onPointerUp(e));
+        this.canvas.addEventListener('wheel', (e) => this.onWheel(e), { passive: false });
     }
 
     getStoneScreenPosition() {
@@ -59,25 +60,8 @@ bindEvents() {
         const pointerY = e.clientY;
 
         if (this.state.showBuyMenu && this.cardMenu) {
-            const result = this.cardMenu.handleClick(pointerX, pointerY);
-            if (result && result.action === 'continue') {
-                this.state.showBuyMenu = false;
-                this.state.isPaused = false;
-                this.state.phase = 'resting';
-                this.state.stone.x = 0;
-                this.state.stone.vx = 0;
-                this.state.stone.vy = 0;
-                this.state.stone.angularVelocity = 0;
-                this.state.stone.rotation = 0;
-                
-                this.state.stoneYPx = this.state.screenHeight - this.state.restOffsetPx * this.state.scaleFactor;
-                this.state.transitionProgress = 0;
-                this.state.inScrollZone = false;
-                this.state.input.isDragging = false;
-                this.state.input.isSnapping = false;
-                this.state.input.snapBackProgress = 0;
-                this.state.input.flickHistory = [];
-                this.state.resetForNewThrow();
+            if (this.cardMenu.isInOwnedContainer(pointerX, pointerY)) {
+                this.cardMenu.startDrag(pointerX, pointerY);
             }
             return;
         }
@@ -96,6 +80,14 @@ bindEvents() {
         }
     }
 
+    onWheel(e) {
+        if (!this.state.showBuyMenu || !this.cardMenu) return;
+        e.preventDefault();
+
+        const scrollAmount = e.deltaY * 0.5;
+        this.cardMenu.ownedScrollX = Math.max(0, this.cardMenu.ownedScrollX + scrollAmount);
+    }
+
     onPointerMove(e) {
         const controlsPanel = document.getElementById('physics-controls');
         if (controlsPanel && controlsPanel.contains(e.target)) {
@@ -104,6 +96,12 @@ bindEvents() {
         
         const pointerX = e.clientX;
         const pointerY = e.clientY;
+
+        // Drag scroll for owned cards container
+        if (this.state.showBuyMenu && this.cardMenu && this.cardMenu.ownedDragState) {
+            this.cardMenu.updateDrag(pointerX, pointerY);
+            return;
+        }
         
         this.sweepPositions.push({ x: pointerX, y: pointerY, time: Date.now() });
         if (this.sweepPositions.length > 10) {
@@ -147,6 +145,59 @@ bindEvents() {
     onPointerUp(e) {
         const controlsPanel = document.getElementById('physics-controls');
         if (controlsPanel && controlsPanel.contains(e.target)) {
+            return;
+        }
+
+        if (this.state.showBuyMenu && this.cardMenu) {
+            const dragState = this.cardMenu.ownedDragState;
+            if (dragState) {
+                if (!dragState.moved) {
+                    // It was a tap, process as click
+                    this.cardMenu.endDrag();
+                    const result = this.cardMenu.handleClick(e.clientX, e.clientY);
+                    if (result && result.action === 'continue') {
+                        this.state.showBuyMenu = false;
+                        this.state.isPaused = false;
+                        this.state.phase = 'resting';
+                        this.state.stone.x = 0;
+                        this.state.stone.vx = 0;
+                        this.state.stone.vy = 0;
+                        this.state.stone.angularVelocity = 0;
+                        this.state.stone.rotation = 0;
+                        this.state.stoneYPx = this.state.screenHeight - this.state.restOffsetPx * this.state.scaleFactor;
+                        this.state.transitionProgress = 0;
+                        this.state.inScrollZone = false;
+                        this.state.input.isDragging = false;
+                        this.state.input.isSnapping = false;
+                        this.state.input.snapBackProgress = 0;
+                        this.state.input.flickHistory = [];
+                        this.state.resetForNewThrow();
+                    }
+                } else {
+                    this.cardMenu.endDrag();
+                }
+                return;
+            }
+            // Not in owned container drag - process as click
+            const result = this.cardMenu.handleClick(e.clientX, e.clientY);
+            if (result && result.action === 'continue') {
+                this.state.showBuyMenu = false;
+                this.state.isPaused = false;
+                this.state.phase = 'resting';
+                this.state.stone.x = 0;
+                this.state.stone.vx = 0;
+                this.state.stone.vy = 0;
+                this.state.stone.angularVelocity = 0;
+                this.state.stone.rotation = 0;
+                this.state.stoneYPx = this.state.screenHeight - this.state.restOffsetPx * this.state.scaleFactor;
+                this.state.transitionProgress = 0;
+                this.state.inScrollZone = false;
+                this.state.input.isDragging = false;
+                this.state.input.isSnapping = false;
+                this.state.input.snapBackProgress = 0;
+                this.state.input.flickHistory = [];
+                this.state.resetForNewThrow();
+            }
             return;
         }
         

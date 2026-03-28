@@ -9,7 +9,13 @@ export class CardMenu {
         this.logoImage = null;
         this.loadLogo();
         this.selectedCardId = null;
+        this.selectedOwnedCardId = null;
         this.cardBounds = [];
+        this.cardBuyButtonBounds = [];
+        this.ownedCardBounds = [];
+        this.ownedScrollX = 0;
+        this.ownedDragState = null;
+        this.ownedContainerBounds = null;
         this.buyButtonBounds = null;
         this.continueButtonBounds = null;
         this.rerollButtonBounds = null;
@@ -42,6 +48,8 @@ export class CardMenu {
         this.enterProgress = 0;
         this.skipLogoEntrance = this.state.skipLogoEntrance;
         this.state.skipLogoEntrance = false;
+        this.selectedOwnedCardId = null;
+        this.ownedScrollY = 0;
     }
 
     loadLogo() {
@@ -374,6 +382,7 @@ export class CardMenu {
             if (x >= cb.x && x <= cb.x + cb.width &&
                 y >= cb.y && y <= cb.y + cb.height) {
                 this.selectedCardId = null;
+                this.selectedOwnedCardId = null;
                 this.animationState.selectAnimation = null;
                 return { action: 'continue' };
             }
@@ -411,9 +420,46 @@ export class CardMenu {
             }
         }
 
+        // Check per-card buy buttons (direct purchase)
+        for (const bounds of this.cardBuyButtonBounds) {
+            if (x >= bounds.x && x <= bounds.x + bounds.width &&
+                y >= bounds.y && y <= bounds.y + bounds.height) {
+                if (this.canAfford(bounds.cardId)) {
+                    const card = this.cards.find(c => c.id === bounds.cardId);
+                    const currentLevel = this.state.upgrades[bounds.cardId]?.level || 0;
+                    this.animationState.purchasedCardId = bounds.cardId;
+                    this.animationState.purchasedTierLevel = currentLevel + 1;
+                    this.purchase(bounds.cardId);
+                    this.state.shopUpgradeSelection = this.state.shopUpgradeSelection.filter(c => c.id !== bounds.cardId);
+                    this.selectedCardId = null;
+                    this.selectedOwnedCardId = null;
+                    this.animationState.selectAnimation = null;
+                    return { action: 'purchase' };
+                }
+                return null;
+            }
+        }
+
+        // Check owned card clicks
+        for (const bounds of this.ownedCardBounds) {
+            if (x >= bounds.x && x <= bounds.x + bounds.width &&
+                y >= bounds.y && y <= bounds.y + bounds.height) {
+                this.selectedCardId = null;
+                if (this.selectedOwnedCardId === bounds.cardId) {
+                    this.selectedOwnedCardId = null;
+                } else {
+                    this.selectedOwnedCardId = bounds.cardId;
+                    this.animationState.selectAnimation = { progress: 0 };
+                }
+                return null;
+            }
+        }
+
+        // Check buyable card clicks
         for (const bounds of this.cardBounds) {
             if (x >= bounds.x && x <= bounds.x + bounds.width &&
                 y >= bounds.y && y <= bounds.y + bounds.height) {
+                this.selectedOwnedCardId = null;
                 if (this.selectedCardId === bounds.cardId) {
                     this.selectedCardId = null;
                     this.animationState.selectAnimation = null;
@@ -426,8 +472,34 @@ export class CardMenu {
         }
 
         this.selectedCardId = null;
+        this.selectedOwnedCardId = null;
         this.animationState.selectAnimation = null;
         return null;
+    }
+
+    isInOwnedContainer(x, y) {
+        if (!this.ownedContainerBounds) return false;
+        const b = this.ownedContainerBounds;
+        return x >= b.x && x <= b.x + b.width && y >= b.y && y <= b.y + b.height;
+    }
+
+    startDrag(x, y) {
+        this.ownedDragState = {
+            startX: x,
+            startScrollX: this.ownedScrollX,
+            moved: false
+        };
+    }
+
+    updateDrag(x, y) {
+        if (!this.ownedDragState) return;
+        const deltaX = this.ownedDragState.startX - x;
+        if (Math.abs(deltaX) > 5) this.ownedDragState.moved = true;
+        this.ownedScrollX = Math.max(0, this.ownedDragState.startScrollX + deltaX);
+    }
+
+    endDrag() {
+        this.ownedDragState = null;
     }
 
     update(deltaTime) {
@@ -585,7 +657,7 @@ export class CardMenu {
 
         const waifuX = areaLeft + 70 * scale;
         if (this.shopTransition) {
-            this.shopTransition.renderChibi(ctx, waifuX, time, this.selectedCardId !== null);
+            this.shopTransition.renderChibi(ctx, waifuX, time, this.selectedCardId !== null || this.selectedOwnedCardId !== null);
         }
 
         let logoScale = 1;
@@ -630,13 +702,35 @@ export class CardMenu {
         ctx.translate(areaLeft + areaWidth - 15 * scale, 15 * scale);
         ctx.scale(moneyScale, moneyScale);
         ctx.font = `bold ${Math.floor(16 * scale)}px "Space Mono", monospace`;
+        
+        const moneyVal = Math.floor(this.state.money);
+        const moneyStr = `${moneyVal}$`;
+        const minTextWidth = ctx.measureText('999$').width;
+        const actualTextWidth = ctx.measureText(moneyStr).width;
+        const textWidth = Math.max(minTextWidth, actualTextWidth);
+        
+        const paddingX = 10 * scale;
+        const barWidth = textWidth + paddingX * 2;
+        const barHeight = 28 * scale;
+        
+        const barX = -barWidth;
+        const barY = -4 * scale;
+
+        ctx.beginPath();
+        ctx.roundRect(barX, barY, barWidth, barHeight, 10 * scale);
+        ctx.fillStyle = 'rgba(60, 60, 60, 0.85)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(170, 170, 170, 0.8)';
+        ctx.lineWidth = 2 * scale;
+        ctx.stroke();
+
         ctx.textAlign = 'right';
-        ctx.textBaseline = 'top';
+        ctx.textBaseline = 'middle';
         ctx.fillStyle = '#ffd700';
-        ctx.fillText(`$${Math.floor(this.state.money)}`, 0, 0);
+        ctx.fillText(moneyStr, barX + barWidth - paddingX, barY + barHeight / 2);
         ctx.restore();
 
-        const padding = 130 * scale;
+        const padding = 200 * scale;
         const available = this.getAvailableUpgrades();
         const owned = this.getOwnedUpgrades();
 
@@ -647,47 +741,94 @@ export class CardMenu {
         const largeCardHeight = screenHeight * 0.40;
         const largeCardWidth = largeCardHeight;
 
+        const selectedOwnedCard = this.selectedOwnedCardId
+            ? owned.find(c => c.id === this.selectedOwnedCardId)
+            : null;
+
+        // Draw arch cards (no selected detail yet - drawn last for z-order)
         if (selectedCard) {
-            this.renderArchCards(ctx, areaLeft, areaWidth, padding, available, selectedCard.id, time);
-            this.renderSelectedCard(ctx, areaLeft, areaWidth, screenHeight, selectedCard, largeCardWidth, largeCardHeight, time);
+            const archPadding = 100 * scale;
+            this.renderArchCards(ctx, areaLeft, areaWidth, archPadding, available, selectedCard.id, time);
         } else {
             this.renderArchCards(ctx, areaLeft, areaWidth, padding, available, null, time);
+        }
 
-            const buttonProgress = Math.max(0, (this.enterProgress - 0.3) / 0.7);
-            const buttonAlpha = Math.min(1, buttonProgress);
-            const buttonSlide = (1 - Math.min(1, buttonProgress)) * 50 * scale;
+        // Reroll button - above owned section
+        const buttonProgress = Math.max(0, (this.enterProgress - 0.3) / 0.7);
+        const buttonAlpha = Math.min(1, buttonProgress);
+        const buttonSlide = (1 - Math.min(1, buttonProgress)) * 50 * scale;
 
-            ctx.save();
-            ctx.globalAlpha = buttonAlpha;
+        const rerollBtnWidth = 140 * scale;
+        const rerollBtnHeight = 32 * scale;
+        const rerollY = padding + 120 * scale + 6 * scale + 28 * scale + 48 * scale + buttonSlide;
 
-            const continueY = screenHeight - 180 * scale + buttonSlide;
+        ctx.save();
+        ctx.globalAlpha = buttonAlpha;
+
+        const isTestVersion = window.location.pathname.includes('/test/');
+        const rerollCost = isTestVersion ? 0 : (this.state.rerollCost || 1);
+        const canAffordReroll = this.state.money >= rerollCost;
+        const rerollX = areaLeft + (areaWidth - rerollBtnWidth) / 2;
+        this.rerollButtonBounds = {
+            x: rerollX,
+            y: rerollY,
+            width: rerollBtnWidth,
+            height: rerollBtnHeight
+        };
+        this.drawRerollButton(ctx, rerollX, rerollY, rerollBtnWidth, rerollBtnHeight, canAffordReroll, rerollCost);
+
+        ctx.restore();
+
+        const anyCardSelected = selectedCard || selectedOwnedCard;
+
+        // Owned cards section
+        const headerHeight = 24 * scale;
+        const tickerHeight = 45;
+        const tickerY = screenHeight - tickerHeight - 4;
+        const continueBtnHeight = 40 * scale;
+        const continueBtnY = tickerY - 55 * scale + buttonSlide;
+
+        if (!selectedCard) {
+            let ownedContainerTop;
+            let ownedContainerHeight;
+            if (selectedOwnedCard) {
+                ownedContainerTop = rerollY + rerollBtnHeight + 8 * scale + 50;
+                ownedContainerHeight = tickerY - ownedContainerTop - 8 * scale;
+            } else {
+                ownedContainerTop = rerollY + rerollBtnHeight + headerHeight + 16 * scale;
+                ownedContainerHeight = Math.max(50 * scale, continueBtnY - ownedContainerTop - 8 * scale);
+            }
+            this.renderCollectionZone(ctx, areaLeft, areaWidth, ownedContainerTop, ownedContainerHeight, owned, time, !!selectedOwnedCard);
+        }
+
+        // Ticker and Lämna button at bottom
+        ctx.save();
+        ctx.globalAlpha = buttonAlpha;
+
+        this.drawTicker(ctx, areaLeft, areaWidth, time, tickerY);
+
+        if (!anyCardSelected) {
             const centerX = areaLeft + areaWidth / 2;
             this.continueButtonBounds = {
                 x: centerX - 100 * scale,
-                y: continueY,
+                y: continueBtnY,
                 width: 200 * scale,
-                height: 40 * scale
+                height: continueBtnHeight
             };
-            this.drawContinueButton(ctx, centerX - 100 * scale, continueY, 200 * scale, 40 * scale);
-
-            this.drawTicker(ctx, areaLeft, areaWidth, time, continueY - 180 * scale);
-
-            const isTestVersion = window.location.pathname.includes('/test/');
-            const rerollCost = isTestVersion ? 0 : (this.state.rerollCost || 1);
-            const canAffordReroll = this.state.money >= rerollCost;
-            this.rerollButtonBounds = {
-                x: centerX - 60 * scale,
-                y: continueY - 50 * scale,
-                width: 120 * scale,
-                height: 35 * scale
-            };
-            this.drawRerollButton(ctx, centerX - 60 * scale, continueY - 50 * scale, 120 * scale, 35 * scale, canAffordReroll, rerollCost);
-
-            ctx.restore();
+            this.drawContinueButton(ctx, centerX - 100 * scale, continueBtnY, 200 * scale, continueBtnHeight);
+        } else {
+            this.continueButtonBounds = null;
         }
 
-        this.renderCollectionZone(ctx, areaLeft, areaWidth, screenHeight, owned, time);
-        
+        ctx.restore();
+
+        // Selected card detail drawn last (on top of everything)
+        if (selectedCard) {
+            this.renderSelectedCard(ctx, areaLeft, areaWidth, screenHeight, selectedCard, largeCardWidth, largeCardHeight, time);
+        } else if (selectedOwnedCard) {
+            this.renderSelectedOwnedCard(ctx, areaLeft, areaWidth, selectedOwnedCard, largeCardWidth * 0.7, largeCardHeight * 0.7, time);
+        }
+
         ctx.restore();
     }
 
@@ -695,24 +836,19 @@ export class CardMenu {
         const scale = this.state.scaleFactor;
         const cardHeight = 120 * scale;
         const cardWidth = 120 * scale;
-        const spacing = -10 * scale;
-        const archHeight = 35 * scale;
+        const spacing = 15 * scale;
 
         const totalWidth = available.length * cardWidth + (available.length - 1) * spacing;
         const startX = areaLeft + (areaWidth - totalWidth) / 2;
 
         this.cardBounds = [];
+        this.cardBuyButtonBounds = [];
 
         for (let i = 0; i < available.length; i++) {
             const card = available[i];
             const isSelected = card.id === selectedId;
             if (isSelected) continue;
 
-            const normalizedPos = (i - (available.length - 1) / 2) / (available.length > 1 ? (available.length - 1) / 2 : 1);
-            
-            const angle = normalizedPos * 0.15;
-            const archY = startY + Math.abs(normalizedPos) * archHeight;
-            
             const floatOffset = this.getCardFloatOffset(card.id, time);
 
             const cardDelay = i * 0.08;
@@ -736,22 +872,61 @@ export class CardMenu {
             }
 
             const x = startX + i * (cardWidth + spacing);
-            const y = archY + floatOffset.y * scale;
+            const y = startY + floatOffset.y * scale;
 
             ctx.save();
             ctx.globalAlpha = cardAlpha;
             ctx.translate(x + cardWidth / 2, y + cardHeight / 2);
-            ctx.rotate(angle + floatOffset.rotation);
+            ctx.rotate(floatOffset.rotation);
             ctx.scale(cardScale, cardScale);
             ctx.translate(-(x + cardWidth / 2), -(y + cardHeight / 2));
 
-            const bounds = this.drawCard(ctx, x, y, cardWidth, cardHeight, card, card.currentTier, false, false, 0);
+            this.drawCard(ctx, x, y, cardWidth, cardHeight, card, card.currentTier, false, false, 0);
 
             ctx.restore();
 
-            const rotatedBounds = this.getRotatedBounds(x, y, cardWidth, cardHeight, angle);
+            const showButtons = selectedId === null && this.selectedOwnedCardId === null;
+
+            if (showButtons) {
+                ctx.save();
+                ctx.globalAlpha = cardAlpha;
+
+                const btnWidth = cardWidth * 0.85;
+                const btnHeight = 28 * scale;
+                const btnX = x + (cardWidth - btnWidth) / 2;
+                const btnY = y + cardHeight + 6 * scale;
+                const canBuy = this.canAfford(card.id);
+
+                ctx.beginPath();
+                ctx.roundRect(btnX, btnY, btnWidth, btnHeight, 6 * scale);
+                ctx.fillStyle = canBuy ? 'rgba(255, 215, 0, 0.15)' : 'rgba(100, 100, 100, 0.2)';
+                ctx.fill();
+                ctx.strokeStyle = canBuy ? '#ffd700' : 'rgba(100, 100, 100, 0.5)';
+                ctx.lineWidth = 2 * scale;
+                if (canBuy) {
+                    ctx.shadowColor = '#ffd700';
+                    ctx.shadowBlur = 10 * scale;
+                }
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+                ctx.shadowColor = 'transparent';
+
+                ctx.font = `bold ${Math.floor(12 * scale)}px "Space Mono", monospace`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = canBuy ? '#ffd700' : '#718096';
+                ctx.fillText(`KÖP ($${card.currentTier.cost})`, btnX + btnWidth / 2, btnY + btnHeight / 2);
+
+                ctx.restore();
+
+                this.cardBuyButtonBounds.push({
+                    x: btnX, y: btnY, width: btnWidth, height: btnHeight,
+                    cardId: card.id
+                });
+            }
+
             this.cardBounds.push({
-                ...rotatedBounds,
+                x, y, width: cardWidth, height: cardHeight,
                 cardId: card.id,
                 canBuy: this.canAfford(card.id)
             });
@@ -908,6 +1083,80 @@ export class CardMenu {
         this.drawBuyButton(ctx, centerX - 80 * scale, currentY, 160 * scale, 45 * scale, canBuy);
     }
 
+    renderSelectedOwnedCard(ctx, areaLeft, areaWidth, card, cardWidth, cardHeight, time) {
+        const scale = this.state.scaleFactor;
+        const tier = card.tier;
+        if (!tier) return;
+
+        const centerX = areaLeft + areaWidth / 2;
+
+        const anim = this.animationState.selectAnimation;
+        let cardY = 200 * scale;
+        let animScale = 1;
+        let alpha = 1;
+
+        if (anim && anim.progress < 1) {
+            const t = anim.progress;
+            const ease = 1 - Math.pow(1 - t, 3);
+            animScale = 0.3 + ease * 0.7;
+            alpha = ease;
+            cardY = 160 * scale + ease * 40 * scale;
+        }
+
+        const floatOffset = this.getCardFloatOffset(card.id, time, true);
+
+        const x = centerX - (cardWidth * animScale) / 2 + floatOffset.x * scale;
+        const y = cardY + floatOffset.y * scale;
+        const w = cardWidth * animScale;
+        const h = cardHeight * animScale;
+
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.translate(x + w / 2, y + h / 2);
+        ctx.rotate(floatOffset.rotation);
+        ctx.translate(-(x + w / 2), -(y + h / 2));
+
+        this.drawCard(ctx, x, y, w, h, card, tier, true, true, 0);
+
+        ctx.restore();
+
+        this.cardBounds.push({
+            x, y, width: w, height: h,
+            cardId: card.id,
+            canBuy: false
+        });
+
+        const romanNumerals = ['I', 'II', 'III', 'IV', 'V'];
+        const tierNumeral = romanNumerals[tier.level - 1] || 'I';
+
+        const textY = y + h + 12 * scale;
+        const maxTextWidth = Math.min(areaWidth * 0.85, 300 * scale);
+
+        let currentY = textY;
+
+        ctx.font = `bold ${Math.floor(18 * scale)}px "Work Sans", sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillStyle = '#ffd700';
+        ctx.fillText(`${card.name} ${tierNumeral}`, centerX, currentY);
+        currentY += 24 * scale;
+
+        ctx.font = `${Math.floor(14 * scale)}px "Work Sans", sans-serif`;
+        const effectLines = this.wrapText(ctx, tier.effect, maxTextWidth);
+        currentY = this.drawWrappedText(ctx, effectLines, centerX, currentY, 18 * scale, `${Math.floor(14 * scale)}px "Work Sans", sans-serif`, '#94a3b8', 'center');
+        currentY += 10 * scale;
+
+        if (card.proverb) {
+            const proverbLines = this.wrapText(ctx, `"${card.proverb}"`, maxTextWidth);
+            currentY = this.drawWrappedText(ctx, proverbLines, centerX, currentY, 16 * scale, `italic ${Math.floor(12 * scale)}px "Space Mono", monospace`, '#64748b', 'center');
+            currentY += 8 * scale;
+        }
+
+        ctx.font = `bold ${Math.floor(14 * scale)}px "Space Mono", monospace`;
+        ctx.fillStyle = '#a0ffa0';
+        ctx.fillText(`ÄGD · Nivå ${card.tierLevel}`, centerX, currentY);
+    }
+
     drawBuyButton(ctx, x, y, width, height, canBuy) {
         const scale = this.state.scaleFactor;
         ctx.beginPath();
@@ -1010,92 +1259,90 @@ drawRerollButton(ctx, x, y, width, height, canAfford, cost) {
         ctx.fill();
 
         ctx.strokeStyle = canAfford ? '#64b5f6' : 'rgba(100, 100, 100, 0.5)';
-        ctx.lineWidth = scale;
-        ctx.stroke();
-
-        ctx.font = `bold ${Math.floor(14 * scale)}px "Space Mono", monospace`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillStyle = canAfford ? '#64b5f6' : '#718096';
-        ctx.fillText(`REROLL ($${cost})`, x + width / 2, y + height / 2);
-    }
-
-    renderCollectionZone(ctx, areaLeft, areaWidth, screenHeight, owned, time) {
-        if (owned.length === 0) return;
-
-        const scale = this.state.scaleFactor;
-        const cardWidth = 60 * scale;
-        const cardHeight = 60 * scale;
-        const spacing = 8 * scale;
-        const totalWidth = owned.length * cardWidth + (owned.length - 1) * spacing;
-        const startX = areaLeft + (areaWidth - totalWidth) / 2;
-        const cardY = screenHeight - cardHeight - 15 * scale;
-
-        const collectionDelay = 0.5;
-        const collectionProgress = Math.max(0, (this.enterProgress - collectionDelay) / (1 - collectionDelay));
-
-        for (let i = 0; i < owned.length; i++) {
-            const card = owned[i];
-            const baseX = startX + i * (cardWidth + spacing);
-            const baseY = cardY;
-
-            const ownedId = `${card.id}-${card.tierLevel}`;
-            const floatOffset = this.getCardFloatOffset(ownedId, time);
-
-            const seed = card.id.charCodeAt(card.id.length - 1) + card.tierLevel;
-            const angle = ((seed * 7) % 11 - 5) * 0.02;
-
-            const anim = this.animationState.enteringCards.find(
-                a => a.cardId === card.id && a.tierLevel === card.tierLevel
-            );
-
-            const cardDelay = i * 0.05;
-            let cardProgress = Math.min(1, Math.max(0, (collectionProgress - cardDelay) / 0.3));
-            let cardAlpha = Math.min(1, cardProgress * 2);
-            let cardScale = 0.5 + cardProgress * 0.5;
-
-            ctx.save();
-            ctx.globalAlpha = cardAlpha;
-            ctx.translate(baseX + floatOffset.x * scale + cardWidth / 2, baseY + floatOffset.y * scale + cardHeight / 2);
-            ctx.scale(cardScale, cardScale);
-            ctx.translate(-(baseX + floatOffset.x * scale + cardWidth / 2), -(baseY + floatOffset.y * scale + cardHeight / 2));
-
-            this.drawCard(ctx, baseX + floatOffset.x * scale, baseY + floatOffset.y * scale, cardWidth, cardHeight, card, card.tier, true, false, angle + floatOffset.rotation);
-
-            ctx.restore();
+        ctx.lineWidth = 2 * scale;
+        if (canAfford) {
+            ctx.shadowColor = '#64b5f6';
+            ctx.shadowBlur = 12 * scale;
         }
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+        ctx.shadowColor = 'transparent';
+
+        const fontSize = Math.floor(14 * scale);
+        ctx.font = `bold ${fontSize}px "Space Mono", monospace`;
+        ctx.textBaseline = 'middle';
+        const label = 'REROLL';
+        const priceStr = ` ($${cost})`;
+        const labelWidth = ctx.measureText(label).width;
+        const priceWidth = ctx.measureText(priceStr).width;
+        const totalWidth = labelWidth + priceWidth;
+        const startX = x + (width - totalWidth) / 2;
+        const centerY = y + height / 2;
+
+        ctx.textAlign = 'left';
+        if (canAfford) {
+            ctx.shadowColor = '#64b5f6';
+            ctx.shadowBlur = 8 * scale;
+        }
+        ctx.fillStyle = canAfford ? '#64b5f6' : '#718096';
+        ctx.fillText(label, startX, centerY);
+
+        ctx.fillStyle = canAfford ? '#ffd700' : '#718096';
+        ctx.fillText(priceStr, startX + labelWidth, centerY);
+        ctx.shadowBlur = 0;
+        ctx.shadowColor = 'transparent';
     }
 
-    renderCollectionZone(ctx, areaLeft, areaWidth, screenHeight, owned, time) {
-        if (owned.length === 0) return;
+    renderCollectionZone(ctx, areaLeft, areaWidth, containerTop, containerHeight, owned, time, hideHeader = false) {
+        const scale = this.state.scaleFactor;
+        this.ownedCardBounds = [];
+        this.ownedContainerBounds = { x: areaLeft, y: containerTop, width: areaWidth, height: containerHeight };
 
-        const cardWidth = 60;
-        const cardHeight = 60;
-        const spacing = 8;
-        const totalWidth = owned.length * cardWidth + (owned.length - 1) * spacing;
-        const startX = areaLeft + (areaWidth - totalWidth) / 2;
-        const cardY = screenHeight - cardHeight - 15;
+        if (!hideHeader) {
+            const headerFontSize = Math.floor(12 * scale);
+            ctx.font = `bold ${headerFontSize}px "Space Mono", monospace`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText('DINA UPPGRADERINGAR', areaLeft + areaWidth / 2, containerTop - headerFontSize - 6 * scale);
+        }
 
-        // Collection zone entrance animation (delayed)
+        if (owned.length === 0) {
+            if (!hideHeader) {
+                ctx.font = `${Math.floor(10 * scale)}px "Space Mono", monospace`;
+                ctx.fillStyle = '#4a5568';
+                ctx.fillText('Inga uppgraderingar ännu', areaLeft + areaWidth / 2, containerTop + containerHeight / 2 - 6 * scale);
+            }
+            return;
+        }
+
+        // Card layout - horizontal scroll
+        const cardSize = 100 * scale;
+        const spacing = 8 * scale;
+        const totalWidth = owned.length * cardSize + (owned.length - 1) * spacing;
+        const maxScroll = Math.max(0, totalWidth - areaWidth);
+        this.ownedScrollX = Math.max(0, Math.min(this.ownedScrollX, maxScroll));
+
+        // Clip to container
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(areaLeft, containerTop, areaWidth, containerHeight);
+        ctx.clip();
+
         const collectionDelay = 0.5;
         const collectionProgress = Math.max(0, (this.enterProgress - collectionDelay) / (1 - collectionDelay));
 
+        const startBaseX = areaLeft + (maxScroll > 0 ? 0 : (areaWidth - totalWidth) / 2);
+        const baseY = containerTop + (containerHeight - cardSize) / 2;
+
         for (let i = 0; i < owned.length; i++) {
             const card = owned[i];
-            const baseX = startX + i * (cardWidth + spacing);
-            const baseY = cardY;
+            const isSelected = card.id === this.selectedOwnedCardId;
+            const baseX = startBaseX + i * (cardSize + spacing) - this.ownedScrollX;
 
             const ownedId = `${card.id}-${card.tierLevel}`;
             const floatOffset = this.getCardFloatOffset(ownedId, time);
 
-            const seed = card.id.charCodeAt(card.id.length - 1) + card.tierLevel;
-            const angle = ((seed *7) % 11 - 5) * 0.02;
-
-            const anim = this.animationState.enteringCards.find(
-                a => a.cardId === card.id && a.tierLevel === card.tierLevel
-            );
-
-            // Staggered entrance for owned cards
             const cardDelay = i * 0.05;
             let cardProgress = Math.min(1, Math.max(0, (collectionProgress - cardDelay) / 0.3));
             let cardAlpha = Math.min(1, cardProgress * 2);
@@ -1103,13 +1350,47 @@ drawRerollButton(ctx, x, y, width, height, canAfford, cost) {
 
             ctx.save();
             ctx.globalAlpha = cardAlpha;
-            ctx.translate(baseX + floatOffset.x + cardWidth / 2, baseY + floatOffset.y + cardHeight / 2);
+            ctx.translate(baseX + cardSize / 2, baseY + cardSize / 2);
             ctx.scale(cardScale, cardScale);
-            ctx.translate(-(baseX + floatOffset.x + cardWidth / 2), -(baseY + floatOffset.y + cardHeight / 2));
+            ctx.translate(-(baseX + cardSize / 2), -(baseY + cardSize / 2));
 
-            this.drawCard(ctx, baseX + floatOffset.x, baseY + floatOffset.y, cardWidth, cardHeight, card, card.tier, true, false, angle + floatOffset.rotation);
+            this.drawCard(ctx, baseX, baseY, cardSize, cardSize, card, card.tier, true, isSelected, floatOffset.rotation);
 
             ctx.restore();
+
+            this.ownedCardBounds.push({
+                x: baseX,
+                y: baseY,
+                width: cardSize,
+                height: cardSize,
+                cardId: card.id
+            });
+        }
+
+        ctx.restore();
+
+        // Scroll indicators (left/right arrows)
+        if (maxScroll > 0) {
+            if (this.ownedScrollX > 0) {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.beginPath();
+                const arrowY = containerTop + containerHeight / 2;
+                const arrowX = areaLeft + 6 * scale;
+                ctx.moveTo(arrowX, arrowY);
+                ctx.lineTo(arrowX + 6 * scale, arrowY - 6 * scale);
+                ctx.lineTo(arrowX + 6 * scale, arrowY + 6 * scale);
+                ctx.fill();
+            }
+            if (this.ownedScrollX < maxScroll) {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.beginPath();
+                const arrowY = containerTop + containerHeight / 2;
+                const arrowX = areaLeft + areaWidth - 6 * scale;
+                ctx.moveTo(arrowX, arrowY);
+                ctx.lineTo(arrowX - 6 * scale, arrowY - 6 * scale);
+                ctx.lineTo(arrowX - 6 * scale, arrowY + 6 * scale);
+                ctx.fill();
+            }
         }
     }
 

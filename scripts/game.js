@@ -221,7 +221,7 @@ function checkGameOver(state, overlay, scoreEl, moneyEl) {
     if (state.gameOver) {
         overlay.classList.remove('hidden');
         scoreEl.textContent = state.formatScore(state.score);
-        moneyEl.textContent = `$${state.money}`;
+        moneyEl.textContent = `${state.money}$`;
         
         const buyLifeBtn = document.getElementById('buy-life-btn');
         if (buyLifeBtn) {

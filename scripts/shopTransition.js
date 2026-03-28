@@ -162,12 +162,13 @@ export class ShopTransition {
 renderFishZoom(ctx, screenWidth, screenHeight) {
         const t = this.state.shopTransitionProgress;
         const ease = 1 - Math.pow(1 - t, 3);
+        const scale = this.state.scaleFactor;
 
         const playArea = this.state.getPlayArea();
         const centerX = playArea.left + playArea.width / 2;
         const centerY = screenHeight / 2;
 
-        const scale = 1 + ease * 3;
+        const animScale = (1 + ease * 3) * scale;
         const angle = t * Math.PI * 4;
 
         if (t > 0.8 && t < 0.85) {
@@ -177,7 +178,7 @@ renderFishZoom(ctx, screenWidth, screenHeight) {
         ctx.save();
         ctx.translate(centerX, centerY);
         ctx.rotate(angle);
-        ctx.scale(scale, scale);
+        ctx.scale(animScale, animScale);
 
         const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, 50);
         gradient.addColorStop(0, 'rgba(200, 240, 255, 0.3)');
@@ -205,6 +206,7 @@ renderFishZoom(ctx, screenWidth, screenHeight) {
     renderFadeIn(ctx, screenWidth, screenHeight) {
         const t = this.state.shopTransitionProgress;
         const ease = 1 - Math.pow(1 - t, 3);
+        const scale = this.state.scaleFactor;
 
         const playArea = this.state.getPlayArea();
         
@@ -214,26 +216,25 @@ renderFishZoom(ctx, screenWidth, screenHeight) {
         const centerX = playArea.left + playArea.width / 2;
         const centerY = screenHeight / 2;
 
-        const scale = 0.6 + ease * 0.4;
+        const animScale = (0.6 + ease * 0.4) * scale;
         const alpha = ease;
 
-        const waifuSize = 160;
         ctx.save();
         ctx.globalAlpha = alpha;
-        ctx.translate(centerX, centerY + 50);
-        ctx.scale(scale * 2, scale * 2);
+        ctx.translate(centerX, centerY + 50 * scale);
+        ctx.scale(animScale * 2, animScale * 2);
         this.drawWaifu(ctx, 0, 0, t);
         ctx.restore();
 
         if (this.logoLoaded && this.logoImage) {
-            const baseLogoW = Math.min(playArea.width * 0.75, 450);
+            const baseLogoW = Math.min(playArea.width * 0.75, 450 * scale);
             const baseLogoH = baseLogoW * 0.5;
             const logoW = baseLogoW * 2;
             const logoH = baseLogoH * 2;
             ctx.save();
             ctx.globalAlpha = alpha;
-            ctx.translate(centerX, centerY - 150);
-            ctx.scale(scale, scale);
+            ctx.translate(centerX, centerY - 150 * scale);
+            ctx.scale(animScale / scale, animScale / scale); 
             ctx.drawImage(this.logoImage, -logoW / 2, -logoH / 2, logoW, logoH);
             ctx.restore();
         }
@@ -242,6 +243,7 @@ renderFishZoom(ctx, screenWidth, screenHeight) {
     renderElementsSlide(ctx, screenWidth, screenHeight) {
         const t = this.state.shopTransitionProgress;
         const ease = 1 - Math.pow(1 - t, 3);
+        const scale = this.state.scaleFactor;
 
         const playArea = this.state.getPlayArea();
         
@@ -249,13 +251,13 @@ renderFishZoom(ctx, screenWidth, screenHeight) {
         ctx.fillRect(playArea.left, 0, playArea.width, screenHeight);
 
         const centerX = playArea.left + playArea.width / 2;
-        const waifuEndX = playArea.left + 70;
+        const waifuEndX = playArea.left + 70 * scale;
         const waifuStartX = centerX;
-        const waifuStartY = screenHeight / 2 + 50;
-        const waifuEndY = 70;
+        const waifuStartY = screenHeight / 2 + 50 * scale;
+        const waifuEndY = 70 * scale;
         const waifuX = waifuStartX + (waifuEndX - waifuStartX) * ease;
         const waifuY = waifuStartY + (waifuEndY - waifuStartY) * ease;
-        const waifuScale = 2 - ease * 1.25;
+        const waifuScale = (2 - ease * 1.25) * scale;
         
         ctx.save();
         ctx.globalAlpha = 0.95;
@@ -265,15 +267,15 @@ renderFishZoom(ctx, screenWidth, screenHeight) {
         ctx.restore();
 
         if (this.logoLoaded && this.logoImage) {
-            const baseLogoW = Math.min(playArea.width * 0.75, 450);
+            const baseLogoW = Math.min(playArea.width * 0.75, 450 * scale);
             const baseLogoH = baseLogoW * 0.5;
             const logoStartX = centerX;
-            const logoStartY = screenHeight / 2 - 150;
+            const logoStartY = screenHeight / 2 - 150 * scale;
             const logoEndX = centerX;
-            const logoEndY = -30 + baseLogoH / 2;
+            const logoEndY = -30 * scale + baseLogoH / 2;
             const logoX = logoStartX + (logoEndX - logoStartX) * ease;
             const logoY = logoStartY + (logoEndY - logoStartY) * ease;
-            const logoScale = 2 - ease * 1;
+            const logoScale = (2 - ease * 1) * scale;
 
             ctx.save();
             ctx.globalAlpha = 0.95;
@@ -285,17 +287,18 @@ renderFishZoom(ctx, screenWidth, screenHeight) {
     }
 
     renderParticles(ctx) {
+        const scale = this.state.scaleFactor;
         for (const p of this.particles) {
             ctx.fillStyle = p.color + p.life + ')';
             ctx.beginPath();
-            ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+            ctx.arc(p.x, p.y, p.size * p.life * scale, 0, Math.PI * 2);
             ctx.fill();
         }
     }
 
 drawWaifu(ctx, x, y, progress) {
-        // Display size - use frame aspect ratio
-        const displayWidth = 100;
+        const scale = this.state.scaleFactor;
+        const displayWidth = 100 * scale;
         const displayHeight = Math.round(displayWidth * (this.frameHeight / this.frameWidth));
 
         if (this.waifuLoaded && this.waifuSprite) {
@@ -308,31 +311,25 @@ drawWaifu(ctx, x, y, progress) {
     drawWaifuFrame(ctx, x, y, timeSeconds, displayWidth, displayHeight) {
         if (!this.waifuLoaded || !this.waifuSprite) return;
 
-        // Use actual time for animation (1 second per frame)
         const now = performance.now() / 1000;
-        const totalFrames = 12; // 3 cols × 4 rows
+        const totalFrames = 12;
         const frameIndex = Math.floor(now) % totalFrames;
         
-        // Calculate row and col from frame index
         const col = frameIndex % this.spriteCols;
         const row = Math.floor(frameIndex / this.spriteCols);
 
-        // Calculate source position (tightly packed frames)
         const srcX = col * this.frameWidth;
         const srcY = row * this.frameHeight;
 
-        // Create offscreen canvas for chroma key
-        if (!this.chromaCanvas || this.chromaCanvas.width !== displayWidth || this.chromaCanvas.height !== displayHeight) {
+        if (!this.chromaCanvas || this.chromaCanvas.width !== Math.ceil(displayWidth) || this.chromaCanvas.height !== Math.ceil(displayHeight)) {
             this.chromaCanvas = document.createElement('canvas');
-            this.chromaCanvas.width = displayWidth;
-            this.chromaCanvas.height = displayHeight;
+            this.chromaCanvas.width = Math.ceil(displayWidth);
+            this.chromaCanvas.height = Math.ceil(displayHeight);
             this.chromaCtx = this.chromaCanvas.getContext('2d', { willReadFrequently: true });
         }
 
-        // Draw frame to offscreen canvas
-        this.chromaCtx.clearRect(0, 0, displayWidth, displayHeight);
+        this.chromaCtx.clearRect(0, 0, this.chromaCanvas.width, this.chromaCanvas.height);
         this.chromaCtx.save();
-        // Flip horizontally
         this.chromaCtx.scale(-1, 1);
         this.chromaCtx.drawImage(
             this.waifuSprite,
@@ -341,9 +338,8 @@ drawWaifu(ctx, x, y, progress) {
         );
         this.chromaCtx.restore();
 
-        // Remove green background (chroma key)
         try {
-            const imageData = this.chromaCtx.getImageData(0, 0, displayWidth, displayHeight);
+            const imageData = this.chromaCtx.getImageData(0, 0, this.chromaCanvas.width, this.chromaCanvas.height);
             const data = imageData.data;
 
             for (let i = 0; i < data.length; i += 4) {
@@ -351,33 +347,31 @@ drawWaifu(ctx, x, y, progress) {
                 const g = data[i + 1];
                 const b = data[i + 2];
 
-                // Green screen detection
                 if (g > 100 && g > r * 1.2 && g > b * 1.2) {
                     data[i + 3] = 0;
                 }
             }
 
             this.chromaCtx.putImageData(imageData, 0, 0);
-        } catch (e) {
-            // Canvas tainted (CORS), skip chroma key
-        }
+        } catch (e) {}
 
-        // Draw to main canvas (centered)
         ctx.drawImage(this.chromaCanvas, x - displayWidth / 2, y - displayHeight / 2);
     }
 
     drawPlaceholderWaifu(ctx, x, y) {
-        ctx.font = '48px Arial';
+        const scale = this.state.scaleFactor;
+        ctx.font = `${Math.floor(48 * scale)}px Arial`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('٩(◕‿◕｡)۶', x, y);
     }
 
     renderChibi(ctx, waifuX, time, isCardSelected) {
-        const waifuY = 70;
+        const scale = this.state.scaleFactor;
+        const waifuY = 70 * scale;
 
-        const floatY = Math.sin(time * 0.8) * 2;
-        const floatX = Math.sin(time * 0.5) * 1;
+        const floatY = Math.sin(time * 0.8) * 2 * scale;
+        const floatX = Math.sin(time * 0.5) * 1 * scale;
 
         ctx.save();
         ctx.globalAlpha = 0.95;
