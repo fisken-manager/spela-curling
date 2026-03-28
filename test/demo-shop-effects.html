@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop Effects Demo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #0a0a0a;
+            color: #fff;
+            font-family: 'Work Sans', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        h1 {
+            font-size: 24px;
+            color: #ffd700;
+            margin-bottom: 15px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        label {
+            font-size: 14px;
+            color: #94a3b8;
+        }
+        
+        select {
+            background: #1a1a28;
+            border: 1px solid #333;
+            color: #fff;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-family: 'Work Sans', sans-serif;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        input[type="range"] {
+            width: 120px;
+            accent-color: #ffd700;
+        }
+        
+        .strength-value {
+            color: #ffd700;
+            font-family: 'Space Mono', monospace;
+            min-width: 30px;
+        }
+        
+        canvas {
+            border: 1px solid #333;
+            border-radius: 8px;
+        }
+        
+        .effect-info {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 10px;
+            text-align: center;
+            max-width: 400px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Shop Fisheye Effects Demo</h1>
+    
+    <div class="controls">
+        <div class="control-group">
+            <label>Effect:</label>
+            <select id="effect-type">
+                <option value="none">None (Original)</option>
+                <option value="barrel">Barrel Distortion</option>
+                <option value="perspective">Perspective Curve</option>
+                <option value="fisheye">Strong Fisheye</option>
+            </select>
+        </div>
+        
+        <div class="control-group">
+            <label>Strength:</label>
+            <input type="range" id="strength" min="0" max="100" value="30">
+            <span class="strength-value" id="strength-value">30</span>
+        </div>
+    </div>
+    
+    <canvas id="demo-canvas" width="800" height="1200"></canvas>
+    
+    <p class="effect-info" id="effect-description">Original shop without distortion</p>
+    
+    <script>
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+    CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+        if (w < 2 * r) r = w / 2;
+        if (h < 2 * r) r = h / 2;
+        this.beginPath();
+        this.moveTo(x + r, y);
+        this.arcTo(x + w, y, x + w, y + h, r);
+        this.arcTo(x + w, y + h, x, y + h, r);
+        this.arcTo(x, y + h, x, y, r);
+        this.arcTo(x, y, x + w, y, r);
+        this.closePath();
+        return this;
+    };
+}
+
+const canvas = document.getElementById('demo-canvas');
+const ctx = canvas.getContext('2d');
+const effectSelect = document.getElementById('effect-type');
+const strengthSlider = document.getElementById('strength');
+const strengthValue = document.getElementById('strength-value');
+const effectDescription = document.getElementById('effect-description');
+
+const offscreenCanvas = document.createElement('canvas');
+offscreenCanvas.width = canvas.width;
+offscreenCanvas.height = canvas.height;
+const offscreenCtx = offscreenCanvas.getContext('2d');
+
+const descriptions = {
+    'none': 'Original shop without distortion',
+    'barrel': 'Authentic fisheye - center normal, edges bulge outward',
+    'perspective': '3D billboard feel - edges squeeze slightly',
+    'fisheye': 'Heavy barrel distortion for dramatic warped look'
+};
+
+const cards = [
+    { id: 'speed', name: 'Hastig Leda', tier: 'I', cost: 5, color: '#e74c3c', effect: '+15% hastighet' },
+    { id: 'friction', name: 'Glatt Misär', tier: 'II', cost: 10, color: '#3498db', effect: '-30% friktion' },
+    { id: 'size', name: 'Tung Börda', tier: 'I', cost: 5, color: '#2ecc71', effect: '+25% storlek' },
+    { id: 'curl', name: 'Vilsen Skruv', tier: 'I', cost: 15, color: '#9b59b6', effect: 'Random snurr' },
+    { id: 'shield', name: 'Falsk Trygghet', tier: 'I', cost: 20, color: '#f1c40f', effect: 'Ta bort negativa' },
+    { id: 'coins', name: 'Blodspengar', tier: 'I', cost: 15, color: '#1abc9c', effect: 'Mynt boost' }
+];
+
+const ownedCards = [
+    { id: 'speed', tier: 'I', color: '#e74c3c' },
+    { id: 'friction', tier: 'I', color: '#3498db' }
+];
+
+let selectedCard = null;
+let selectedCardAnim = { progress: 1 };
+let time = 0;
+
+strengthSlider.addEventListener('input', () => {
+    strengthValue.textContent = strengthSlider.value;
+});
+
+effectSelect.addEventListener('change', () => {
+    effectDescription.textContent = descriptions[effectSelect.value];
+});
+
+canvas.addEventListener('click', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+    
+    const cardHeight = 180;
+    const cardWidth = 130;
+    const spacing = -15;
+    const startY = 200;
+    const archHeight = 60;
+    const totalWidth = cards.length * cardWidth + (cards.length - 1) * spacing;
+    const startX = (canvas.width - totalWidth) / 2;
+    
+    if (selectedCard) {
+        const centerX = canvas.width / 2;
+        const cardY = 200;
+        const largeHeight = canvas.height * 0.40;
+        const largeWidth = largeHeight * 0.65;
+        
+        const buyY = cardY + largeHeight + 32 + 56 + 104 + 140;
+        const buyX = centerX - 150;
+        const buyW = 300;
+        const buyH = 70;
+        
+        if (x >= buyX && x <= buyX + buyW && y >= buyY && y <= buyY + buyH) {
+            console.log('BUY clicked for', selectedCard.name);
+            selectedCard = null;
+            selectedCardAnim.progress = 0;
+            return;
+        }
+        
+        selectedCard = null;
+        selectedCardAnim.progress = 0;
+        return;
+    }
+    
+    for (let i = 0; i < cards.length; i++) {
+        const card = cards[i];
+        const normalizedPos = (i - (cards.length - 1) / 2) / (cards.length > 1 ? (cards.length - 1) / 2 : 1);
+        const archY = startY + Math.abs(normalizedPos) * archHeight;
+        const cx = startX + i * (cardWidth + spacing) + cardWidth / 2;
+        const cy = archY + cardHeight / 2;
+        
+        if (x >= cx - cardWidth/2 - 20 && x <= cx + cardWidth/2 + 20 &&
+            y >= cy - cardHeight/2 - 20 && y <= cy + cardHeight/2 + 20) {
+            selectedCard = card;
+            selectedCardAnim.progress = 0;
+            return;
+        }
+    }
+});
+
+function drawBackground(ctx, width, height, t) {
+    ctx.fillStyle = '#0f0f18';
+    ctx.fillRect(0, 0, width, height);
+    
+    for (let i = 0; i < 15; i++) {
+        const sx = Math.floor(((i * 73) % 100) / 100 * width);
+        const sy = Math.floor(((i * 137) % 100) / 100 * height);
+        const twinkle = 0.3 + 0.4 * Math.sin(t * 0.5 + i * 0.7);
+        ctx.fillStyle = `rgba(255, 255, 255, ${twinkle})`;
+        ctx.fillRect(sx, sy, 2, 2);
+    }
+    
+    for (let i = 0; i < 3; i++) {
+        const fx = (Math.sin(t * 0.2 + i * 2) * 0.3 + 0.5) * width;
+        const fy = (Math.cos(t * 0.15 + i * 1.5) * 0.3 + 0.4) * height;
+        const pulse = 0.5 + 0.3 * Math.sin(t * 0.8 + i);
+        
+        for (let dy = -3; dy <= 3; dy++) {
+            for (let dx = -3; dx <= 3; dx++) {
+                const dist = Math.abs(dx) + Math.abs(dy);
+                if (dist <= 3) {
+                    const alpha = pulse * (1 - dist / 4) * 0.6;
+                    ctx.fillStyle = `rgba(255, 200, 50, ${alpha})`;
+                    ctx.fillRect(Math.floor(fx + dx), Math.floor(fy + dy), 1, 1);
+                }
+            }
+        }
+    }
+}
+
+function drawCard(ctx, x, y, w, h, card, isLarge = false, isSelected = false) {
+    const cornerRadius = Math.max(8, w * 0.08);
+    
+    const shadowLayers = isSelected ? 3 : 2;
+    const shadowOffsetY = isSelected ? 12 : 6;
+    
+    for (let i = shadowLayers; i > 0; i--) {
+        const opacity = 0.06 + (i * 0.03);
+        ctx.beginPath();
+        ctx.roundRect(x + 2, y + shadowOffsetY + i * 2, w, h, cornerRadius);
+        ctx.fillStyle = `rgba(60, 60, 60, ${opacity})`;
+        ctx.fill();
+    }
+    
+    const gradient = ctx.createLinearGradient(x, y, x + w, y + h);
+    gradient.addColorStop(0, '#2a2a3a');
+    gradient.addColorStop(1, '#1a1a28');
+    
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, cornerRadius);
+    ctx.fillStyle = gradient;
+    ctx.fill();
+    
+    ctx.strokeStyle = isSelected ? '#ffd700' : 'rgba(255, 255, 255, 0.15)';
+    ctx.lineWidth = isSelected ? 2 : 1;
+    ctx.stroke();
+    
+    const imgPad = Math.max(2, w * 0.08);
+    const imgX = x + imgPad;
+    const imgY = y + imgPad;
+    const imgW = w - imgPad * 2;
+    const imgH = h - imgPad * 2;
+    
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(imgX, imgY, imgW, imgH, cornerRadius - 2);
+    ctx.clip();
+    
+    const imgGradient = ctx.createLinearGradient(imgX, imgY, imgX + imgW, imgY + imgH);
+    imgGradient.addColorStop(0, card.color);
+    imgGradient.addColorStop(0.5, shadeColor(card.color, -20));
+    imgGradient.addColorStop(1, shadeColor(card.color, -40));
+    ctx.fillStyle = imgGradient;
+    ctx.fillRect(imgX, imgY, imgW, imgH);
+    
+    ctx.restore();
+    
+    const romanNumerals = ['I', 'II', 'III', 'IV', 'V'];
+    const fontSize = Math.max(8, w * 0.12);
+    const inset = Math.max(3, w * 0.06);
+    
+    ctx.font = `bold ${fontSize}px "Space Mono", monospace`;
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#000';
+    ctx.fillText(card.tier, x + w - inset, y + inset + fontSize * 0.5);
+    
+    if (isLarge) {
+        const textY = y + h + 32;
+        ctx.font = 'bold 40px "Work Sans", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillStyle = '#ffd700';
+        ctx.fillText(`${card.name} ${card.tier}`, x + w/2, textY);
+        
+        ctx.font = '32px "Work Sans", sans-serif';
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText(card.effect, x + w/2, textY + 56);
+        
+        ctx.font = 'bold 36px "Space Mono", monospace';
+        ctx.fillStyle = '#ffd700';
+        ctx.fillText(`$${card.cost}`, x + w/2, textY + 104);
+    }
+}
+
+function shadeColor(color, percent) {
+    const num = parseInt(color.replace('#', ''), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = Math.max(0, Math.min(255, (num >> 16) + amt));
+    const G = Math.max(0, Math.min(255, ((num >> 8) & 0x00FF) + amt));
+    const B = Math.max(0, Math.min(255, (num & 0x0000FF) + amt));
+    return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
+}
+
+function drawButton(ctx, x, y, w, h, text, enabled = true) {
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, 15);
+    ctx.fillStyle = enabled ? 'rgba(255, 215, 0, 0.15)' : 'rgb(50, 50, 50)';
+    ctx.fill();
+    
+    ctx.strokeStyle = enabled ? '#ffd700' : 'rgba(100, 100, 100, 0.5)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    ctx.font = 'bold 32px "Space Mono", monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = enabled ? '#ffd700' : '#718096';
+    ctx.fillText(text, x + w/2, y + h/2);
+}
+
+function renderShop(ctx, width, height, t) {
+    drawBackground(ctx, width, height, t);
+    
+    ctx.font = 'bold 28px "Space Mono", monospace';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = '#ffd700';
+    ctx.fillText('$150', width - 30, 30);
+    
+    ctx.font = 'bold 56px "Work Sans", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#fff';
+    ctx.fillText('BUTIK', width / 2, 100);
+    
+    const cardHeight = 180;
+    const cardWidth = 130;
+    const spacing = -15;
+    const startY = 200;
+    const totalWidth = cards.length * cardWidth + (cards.length - 1) * spacing;
+    const startX = (width - totalWidth) / 2;
+    const archHeight = 60;
+    
+    if (!selectedCard) {
+        for (let i = 0; i < cards.length; i++) {
+            const card = cards[i];
+            const normalizedPos = (i - (cards.length - 1) / 2) / (cards.length > 1 ? (cards.length - 1) / 2 : 1);
+            const archY = startY + Math.abs(normalizedPos) * archHeight;
+            const floatY = Math.sin(t * 0.8 + i * 0.7) * 1.5;
+            const x = startX + i * (cardWidth + spacing);
+            const y = archY + floatY;
+            const angle = normalizedPos * 0.35;
+            
+            ctx.save();
+            ctx.translate(x + cardWidth / 2, y + cardHeight / 2);
+            ctx.rotate(angle);
+            ctx.translate(-(x + cardWidth / 2), -(y + cardHeight / 2));
+            drawCard(ctx, x, y, cardWidth, cardHeight, card);
+            ctx.restore();
+        }
+        
+        const continueY = height - 300;
+        drawButton(ctx, width/2 - 160, continueY, 320, 60, 'LÄMNA', false);
+    } else {
+        selectedCardAnim.progress = Math.min(1, selectedCardAnim.progress + 0.08);
+        
+        const largeHeight = height * 0.40;
+        const largeWidth = largeHeight * 0.65;
+        const cardY = 200;
+        const centerX = width / 2;
+        
+        const scaleX = 0.3 + selectedCardAnim.progress * 0.7;
+        const scaleY = 0.3 + selectedCardAnim.progress * 0.7;
+        const floatY = Math.sin(t * 0.5) * 3;
+        const floatX = Math.sin(t * 0.3) * 2;
+        
+        const x = centerX - (largeWidth * scaleX) / 2 + floatX;
+        const y = cardY + floatY;
+        
+        ctx.save();
+        ctx.globalAlpha = selectedCardAnim.progress;
+        drawCard(ctx, x, y, largeWidth * scaleX, largeHeight * scaleY, selectedCard, true, true);
+        ctx.restore();
+        
+        if (selectedCardAnim.progress >= 1) {
+            const buyY = cardY + largeHeight + 32 + 56 + 104 + 140;
+            drawButton(ctx, centerX - 150, buyY, 300, 70, 'KÖP', true);
+        }
+        
+        const smallCardHeight = 120;
+        const smallCardWidth = 85;
+        const smallSpacing = 15;
+        const smallStartX = (width - (ownedCards.length * smallCardWidth + (ownedCards.length - 1) * smallSpacing)) / 2;
+        const smallY = height - smallCardHeight - 30;
+        
+        for (let i = 0; i < ownedCards.length; i++) {
+            const card = ownedCards[i];
+            const floatY = Math.sin(t * 0.6 + i * 0.5) * 1;
+            const floatX = Math.sin(t * 0.4 + i * 0.3) * 0.5;
+            drawCard(ctx, smallStartX + i * (smallCardWidth + smallSpacing) + floatX, smallY + floatY, smallCardWidth, smallCardHeight, card);
+        }
+    }
+}
+
+function applyBarrelDistortion(targetCtx, sourceCanvas, strength) {
+    const width = sourceCanvas.width;
+    const height = sourceCanvas.height;
+    const k = strength / 800;
+    
+    if (k < 0.001) {
+        targetCtx.drawImage(sourceCanvas, 0, 0);
+        return;
+    }
+    
+    const srcCtx = sourceCanvas.getContext('2d');
+    const imageData = srcCtx.getImageData(0, 0, width, height);
+    const sourceData = imageData.data;
+    const targetImageData = targetCtx.createImageData(width, height);
+    const targetData = targetImageData.data;
+    
+    const cx = width / 2;
+    const cy = height / 2;
+    const maxR = Math.sqrt(cx * cx + cy * cy);
+    
+    for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+            const dx = x - cx;
+            const dy = y - cy;
+            const r = Math.sqrt(dx * dx + dy * dy) / maxR;
+            
+            const factor = 1 + k * r * r;
+            
+            let srcX = cx + dx / factor;
+            let srcY = cy + dy / factor;
+            
+            srcX = Math.max(0, Math.min(width - 1, srcX));
+            srcY = Math.max(0, Math.min(height - 1, srcY));
+            
+            const srcXInt = Math.floor(srcX);
+            const srcYInt = Math.floor(srcY);
+            
+            const targetIndex = (y * width + x) * 4;
+            const sourceIndex = (srcYInt * width + srcXInt) * 4;
+            
+            targetData[targetIndex] = sourceData[sourceIndex];
+            targetData[targetIndex + 1] = sourceData[sourceIndex + 1];
+            targetData[targetIndex + 2] = sourceData[sourceIndex + 2];
+            targetData[targetIndex + 3] = sourceData[sourceIndex + 3];
+        }
+    }
+    
+    targetCtx.putImageData(targetImageData, 0, 0);
+}
+
+function applyPerspectiveCurve(targetCtx, sourceCanvas, strength) {
+    const width = sourceCanvas.width;
+    const height = sourceCanvas.height;
+    const s = strength / 100;
+    
+    if (s < 0.01) {
+        targetCtx.drawImage(sourceCanvas, 0, 0);
+        return;
+    }
+    
+    const srcCtx = sourceCanvas.getContext('2d');
+    const imageData = srcCtx.getImageData(0, 0, width, height);
+    const sourceData = imageData.data;
+    const targetImageData = targetCtx.createImageData(width, height);
+    const targetData = targetImageData.data;
+    
+    const cx = width / 2;
+    
+    for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+            const normalizedX = (x - cx) / cx;
+            const curveFactor = 1 - s * normalizedX * normalizedX * 0.5;
+            
+            let srcY = (y - height / 2) / curveFactor + height / 2;
+            let srcX = x;
+            
+            srcY = Math.max(0, Math.min(height - 1, srcY));
+            
+            const srcYInt = Math.floor(srcY);
+            const srcXInt = Math.floor(srcX);
+            
+            const targetIndex = (y * width + x) * 4;
+            const sourceIndex = (srcYInt * width + srcXInt) * 4;
+            
+            targetData[targetIndex] = sourceData[sourceIndex];
+            targetData[targetIndex + 1] = sourceData[sourceIndex + 1];
+            targetData[targetIndex + 2] = sourceData[sourceIndex + 2];
+            targetData[targetIndex + 3] = sourceData[sourceIndex + 3];
+        }
+    }
+    
+    targetCtx.putImageData(targetImageData, 0, 0);
+}
+
+function applyStrongFisheye(targetCtx, sourceCanvas, strength) {
+    const width = sourceCanvas.width;
+    const height = sourceCanvas.height;
+    const k = strength / 400;
+    
+    if (k < 0.001) {
+        targetCtx.drawImage(sourceCanvas, 0, 0);
+        return;
+    }
+    
+    const srcCtx = sourceCanvas.getContext('2d');
+    const imageData = srcCtx.getImageData(0, 0, width, height);
+    const sourceData = imageData.data;
+    const targetImageData = targetCtx.createImageData(width, height);
+    const targetData = targetImageData.data;
+    
+    const cx = width / 2;
+    const cy = height / 2;
+    const maxR = Math.sqrt(cx * cx + cy * cy);
+    
+    for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+            const dx = x - cx;
+            const dy = y - cy;
+            const r = Math.sqrt(dx * dx + dy * dy) / maxR;
+            const theta = Math.atan2(dy, dx);
+            
+            const radialDistort = 1 + k * r * r * (1 + k * r * r * 0.5);
+            let srcR = r / radialDistort;
+            
+            let srcX = cx + srcR * maxR * Math.cos(theta);
+            let srcY = cy + srcR * maxR * Math.sin(theta);
+            
+            srcX = Math.max(0, Math.min(width - 1, srcX));
+            srcY = Math.max(0, Math.min(height - 1, srcY));
+            
+            const srcXInt = Math.floor(srcX);
+            const srcYInt = Math.floor(srcY);
+            
+            const targetIndex = (y * width + x) * 4;
+            const sourceIndex = (srcYInt * width + srcXInt) * 4;
+            
+            targetData[targetIndex] = sourceData[sourceIndex];
+            targetData[targetIndex + 1] = sourceData[sourceIndex + 1];
+            targetData[targetIndex + 2] = sourceData[sourceIndex + 2];
+            targetData[targetIndex + 3] = sourceData[sourceIndex + 3];
+        }
+    }
+    
+    targetCtx.putImageData(targetImageData, 0, 0);
+}
+
+let lastTime = performance.now();
+let frameCount = 0;
+
+function render(currentTime) {
+    try {
+        const deltaTime = Math.min((currentTime - lastTime) / 1000, 0.1);
+        lastTime = currentTime;
+        time += deltaTime;
+        
+        offscreenCtx.fillStyle = '#0f0f18';
+        offscreenCtx.fillRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
+        
+        renderShop(offscreenCtx, offscreenCanvas.width, offscreenCanvas.height, time);
+        
+        ctx.fillStyle = '#0a0a0a';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        const effect = effectSelect.value;
+        const strength = parseInt(strengthSlider.value);
+        
+        switch(effect) {
+            case 'barrel':
+                applyBarrelDistortion(ctx, offscreenCanvas, strength);
+                break;
+            case 'perspective':
+                applyPerspectiveCurve(ctx, offscreenCanvas, strength);
+                break;
+            case 'fisheye':
+                applyStrongFisheye(ctx, offscreenCanvas, strength);
+                break;
+            default:
+                ctx.drawImage(offscreenCanvas, 0, 0);
+        }
+        
+        frameCount++;
+        if (frameCount === 1) console.log('First frame rendered');
+    } catch (err) {
+        console.error('Render error:', err);
+        ctx.fillStyle = 'red';
+        ctx.font = '20px sans-serif';
+        ctx.fillText('Error: ' + err.message, 10, 30);
+    }
+    
+    requestAnimationFrame(render);
+}
+
+console.log('Starting render...');
+render(performance.now());
+    </script>
+</body>
+</html>

@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dev: Upgrade Management - Spela Curling</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Work+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a12;
+            --card-bg: #1a1a28;
+            --accent: #ffd700;
+            --text: #e0e0e0;
+            --text-dim: #94a3b8;
+            --border: #2a2a3a;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Work Sans', sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            background: var(--bg);
+            z-index: 100;
+        }
+
+        h1 {
+            font-family: 'Space Mono', monospace;
+            color: var(--accent);
+            margin: 0;
+        }
+
+        .actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border-radius: 6px;
+            border: 1px solid var(--accent);
+            background: transparent;
+            color: var(--accent);
+            font-family: 'Space Mono', monospace;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background: var(--accent);
+            color: var(--bg);
+        }
+
+        button.primary {
+            background: var(--accent);
+            color: var(--bg);
+        }
+
+        .upgrade-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 30px;
+        }
+
+        .upgrade-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        label {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            font-family: 'Space Mono', monospace;
+        }
+
+        input, textarea {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: inherit;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .tier-editor {
+            margin-top: 15px;
+            border-top: 1px solid var(--border);
+            padding-top: 15px;
+        }
+
+        .tier-row {
+            display: grid;
+            grid-template-columns: 80px 1fr 80px;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: start;
+        }
+
+        .tier-image-preview {
+            width: 80px;
+            height: 80px;
+            border-radius: 4px;
+            background: #000;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border-color 0.2s;
+            object-fit: cover;
+        }
+
+        .tier-image-preview:hover {
+            border-color: var(--accent);
+        }
+
+        /* Modal / Gallery */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+        }
+
+        .modal-content {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            max-width: 1000px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 30px;
+        }
+
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .gallery-item {
+            cursor: pointer;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.2s;
+            background: #000;
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .gallery-item:hover {
+            border-color: var(--accent);
+            transform: scale(1.05);
+        }
+
+        .gallery-item.selected {
+            border-color: var(--accent);
+            box-shadow: 0 0 15px var(--accent);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .gallery-item .label {
+            font-size: 0.6rem;
+            padding: 4px;
+            text-align: center;
+            background: rgba(0,0,0,0.7);
+            color: #fff;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .tab-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 8px 16px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            color: var(--text-dim);
+        }
+
+        .tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--accent);
+            color: var(--bg);
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: bold;
+            display: none;
+            z-index: 2000;
+        }
+
+        .copy-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1100;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .copy-box {
+            background: #1a1a1a;
+            padding: 30px;
+            border-radius: 12px;
+            width: 80%;
+            height: 80%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        pre {
+            background: #000;
+            color: #0f0;
+            padding: 15px;
+            overflow: auto;
+            flex: 1;
+            font-size: 0.8rem;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Upgrade Management (DEV)</h1>
+            <div class="actions">
+                <button onclick="exportToCode()">Export to Code</button>
+                <button class="primary" onclick="saveToLocalStorage()">Save to LocalStorage</button>
+                <button onclick="resetDefaults()">Reset to Defaults</button>
+            </div>
+        </header>
+
+        <div id="upgrade-grid" class="upgrade-grid"></div>
+    </div>
+
+    <!-- Image Selector Modal -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <h2 style="margin-top: 0; color: var(--accent)">Select Image</h2>
+            <div class="tab-controls">
+                <div class="tab active" onclick="switchGallery('assets')">Current (assets/)</div>
+                <div class="tab" onclick="switchGallery('previews')">New Previews (assets/new_previews/)</div>
+            </div>
+            <div id="gallery" class="gallery"></div>
+            <div style="margin-top: 20px; display: flex; justify-content: flex-end">
+                <button onclick="closeModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Overlay -->
+    <div id="copy-overlay" class="copy-overlay">
+        <div class="copy-box">
+            <h3>Copy this JSON and ask Gemini to update scripts/upgrade-definitions.js</h3>
+            <pre id="export-pre"></pre>
+            <button onclick="document.getElementById('copy-overlay').style.display='none'">Close</button>
+        </div>
+    </div>
+
+    <div id="toast" class="toast">Saved!</div>
+
+    <script type="module">
+        import { UPGRADES } from './scripts/upgrade-definitions.js';
+
+        // Security check
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const isDevParam = new URLSearchParams(window.location.search).get('dev') === 'true';
+        if (!isLocalhost || !isDevParam) {
+            document.body.innerHTML = '<h1 style="color: red; text-align: center; margin-top: 100px;">ACCESS DENIED</h1>';
+            throw new Error('Dev mode only');
+        }
+
+        const ASSETS_IMAGES = [
+            "boop.png", "coinSpeedBoost-tier1.jpg", "coinSpeedBoost-tier2.jpg", "cursed_harvest-tier1.jpg", 
+            "cursed_harvest-tier2.jpg", "cursed_harvest-tier3.jpg", "double_shops-tier1.jpg", "double_shops-tier2.jpg", 
+            "double_shops-tier3.jpg", "echo_woods-tier1.jpg", "echo_woods-tier2.jpg", "echo_woods-tier3.jpg", 
+            "elvdal-regler.jpg", "event_horizon-tier1.jpg", "event_horizon-tier2.jpg", "event_horizon-tier3.jpg", 
+            "friction_forge-tier1.jpg", "friction_forge-tier2.jpg", "friction_forge-tier3.jpg", "frictionReduction-tier1.jpg", 
+            "frictionReduction-tier2.jpg", "frictionReduction-tier3.jpg", "frictionReduction-tier4.jpg", "frictionReduction-tier5.jpg", 
+            "friction-tier1.jpg", "friction-tier2.jpg", "friction-tier3.jpg", "friction-tier4.jpg", "friction-tier5.jpg", 
+            "frozen_broom-tier1.jpg", "frozen_broom-tier2.jpg", "frozen_broom-tier3.jpg", "glass_cannon-tier1.jpg", 
+            "glass_cannon-tier2.jpg", "glass_cannon-tier3.jpg", "gold_grift-tier1.jpg", "gold_grift-tier2.jpg", 
+            "gold_grift-tier3.jpg", "magnetism-tier1.jpg", "magnetism-tier2.jpg", "magnetism-tier3.jpg", 
+            "magnetism-tier4.jpg", "magnetism-tier5.jpg", "maxVelocity-tier1.jpg", "maxVelocity-tier2.jpg", 
+            "maxVelocity-tier3.jpg", "maxVelocity-tier4.jpg", "maxVelocity-tier5.jpg", "needle_eye-tier1.jpg", 
+            "needle_eye-tier2.jpg", "needle_eye-tier3.jpg", "noNegativePickups-tier1.jpg", "rail_rider-tier1.jpg", 
+            "rail_rider-tier2.jpg", "rail_rider-tier3.jpg", "randomCurl-tier1.jpg", "randomCurl-tier2.jpg", 
+            "size-tier1.jpg", "size-tier2.jpg", "size-tier3.jpg", "size-tier4.jpg", "size-tier5.jpg", 
+            "snap_curl-tier1.jpg", "snap_curl-tier2.jpg", "snap_curl-tier3.jpg", "speed-tier1.jpg", 
+            "speed-tier2.jpg", "speed-tier3.jpg", "speed-tier4.jpg", "speed-tier5.jpg", "spin_to_speed-tier1.jpg", 
+            "spin_to_speed-tier2.jpg", "spin_to_speed-tier3.jpg", "spin_win-tier1.jpg", "spin_win-tier2.jpg", 
+            "spin_win-tier3.jpg", "stoneSize-tier1.jpg", "stoneSize-tier2.jpg", "stoneSize-tier3.jpg", 
+            "stoneSize-tier4.jpg", "stoneSize-tier5.jpg", "sweep_life-tier1.jpg", "sweep_life-tier2.jpg", 
+            "tar_launch-tier1.jpg", "tar_launch-tier2.jpg", "waifu-curl.jpg", "waifu-friction.jpg", 
+            "waifu-shield.jpg", "waifu-size.jpg", "waifu-speed.jpg", "wall_ping_coin-tier1.jpg", 
+            "wall_ping_coin-tier2.jpg", "wall_ping_coin-tier3.jpg", "wall_speed-tier1.jpg", 
+            "wall_speed-tier2.jpg", "wall_speed-tier3.jpg"
+        ];
+
+        const PREVIEW_IMAGES = [
+            "cursed_harvest-tier1.jpg", "cursed_harvest-tier2.jpg", "cursed_harvest-tier3.jpg", "double_shops-tier1.jpg", 
+            "double_shops-tier2.jpg", "double_shops-tier3.jpg", "echo_woods-tier1.jpg", "echo_woods-tier2.jpg", 
+            "echo_woods-tier3.jpg", "event_horizon-tier1.jpg", "event_horizon-tier2.jpg", "event_horizon-tier3.jpg", 
+            "friction_forge-tier1.jpg", "friction_forge-tier2.jpg", "friction_forge-tier3.jpg", "friction-tier1.jpg", 
+            "friction-tier2.jpg", "friction-tier3.jpg", "friction-tier4.jpg", "friction-tier5.jpg", 
+            "frozen_broom-tier1.jpg", "frozen_broom-tier2.jpg", "frozen_broom-tier3.jpg", "glass_cannon-tier1.jpg", 
+            "glass_cannon-tier2.jpg", "glass_cannon-tier3.jpg", "gold_grift-tier1.jpg", "gold_grift-tier2.jpg", 
+            "gold_grift-tier3.jpg", "magnetism-tier1.jpg", "magnetism-tier2.jpg", "magnetism-tier3.jpg", 
+            "magnetism-tier4.jpg", "magnetism-tier5.jpg", "needle_eye-tier1.jpg", "needle_eye-tier2.jpg", 
+            "needle_eye-tier3.jpg", "rail_rider-tier1.jpg", "rail_rider-tier2.jpg", "rail_rider-tier3.jpg", 
+            "size-tier1.jpg", "size-tier2.jpg", "size-tier3.jpg", "size-tier4.jpg", "size-tier5.jpg", 
+            "snap_curl-tier1.jpg", "snap_curl-tier2.jpg", "snap_curl-tier3.jpg", "speed-tier1.jpg", 
+            "speed-tier2.jpg", "speed-tier3.jpg", "speed-tier4.jpg", "speed-tier5.jpg", "spin_to_speed-tier1.jpg", 
+            "spin_to_speed-tier2.jpg", "spin_to_speed-tier3.jpg", "spin_win-tier1.jpg", "spin_win-tier2.jpg", 
+            "spin_win-tier3.jpg", "sweep_life-tier1.jpg", "sweep_life-tier2.jpg", "tar_launch-tier1.jpg", 
+            "tar_launch-tier2.jpg", "wall_ping_coin-tier1.jpg", "wall_ping_coin-tier2.jpg", "wall_ping_coin-tier3.jpg", 
+            "wall_speed-tier1.jpg", "wall_speed-tier2.jpg", "wall_speed-tier3.jpg"
+        ];
+
+        let localUpgrades = JSON.parse(JSON.stringify(UPGRADES));
+        
+        // Load overrides if any
+        const saved = localStorage.getItem('upgrades_override');
+        if (saved) {
+            const overrides = JSON.parse(saved);
+            localUpgrades = localUpgrades.map(u => {
+                if (overrides[u.id]) return { ...u, ...overrides[u.id] };
+                return u;
+            });
+        }
+
+        let activeTarget = null; // { upgradeId, tierLevel }
+        let currentGallery = 'assets';
+
+        function render() {
+            const grid = document.getElementById('upgrade-grid');
+            grid.innerHTML = '';
+
+            localUpgrades.forEach(u => {
+                const card = document.createElement('div');
+                card.className = 'upgrade-card';
+                card.innerHTML = `
+                    <div class="field-group">
+                        <label>Name</label>
+                        <input type="text" value="${u.name}" oninput="updateField('${u.id}', 'name', this.value)">
+                    </div>
+                    <div class="field-group">
+                        <label>Vibe/Proverb</label>
+                        <textarea oninput="updateField('${u.id}', 'proverb', this.value)">${u.proverb}</textarea>
+                    </div>
+                    <div class="tier-editor">
+                        <label>Tiers</label>
+                        ${u.tiers.map(t => `
+                            <div class="tier-row">
+                                <img src="${getImageUrl(t.image)}" 
+                                     class="tier-image-preview" 
+                                     onclick="openModal('${u.id}', ${t.level})"
+                                     onerror="this.src='assets/waifu-curl.jpg'">
+                                <div class="field-group">
+                                    <input type="text" value="${t.effect}" 
+                                           oninput="updateTierField('${u.id}', ${t.level}, 'effect', this.value)"
+                                           style="font-size: 0.8rem">
+                                </div>
+                                <div class="field-group">
+                                    <input type="number" value="${t.cost}" 
+                                           oninput="updateTierField('${u.id}', ${t.level}, 'cost', parseInt(this.value))">
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function getImageUrl(image) {
+            if (image.startsWith('new_previews/')) return 'assets/' + image;
+            return 'assets/' + image;
+        }
+
+        window.updateField = (id, field, value) => {
+            const u = localUpgrades.find(u => u.id === id);
+            u[field] = value;
+        };
+
+        window.updateTierField = (id, level, field, value) => {
+            const u = localUpgrades.find(u => u.id === id);
+            const t = u.tiers.find(t => t.level === level);
+            t[field] = value;
+        };
+
+        window.openModal = (id, level) => {
+            activeTarget = { id, level };
+            document.getElementById('modal').style.display = 'flex';
+            switchGallery(currentGallery);
+        };
+
+        window.closeModal = () => {
+            document.getElementById('modal').style.display = 'none';
+        };
+
+        window.switchGallery = (type) => {
+            currentGallery = type;
+            document.querySelectorAll('.tab').forEach((t, i) => {
+                t.classList.toggle('active', (type === 'assets' && i === 0) || (type === 'previews' && i === 1));
+            });
+
+            const gallery = document.getElementById('gallery');
+            gallery.innerHTML = '';
+
+            const list = type === 'assets' ? ASSETS_IMAGES : PREVIEW_IMAGES;
+            const prefix = type === 'previews' ? 'new_previews/' : '';
+
+            list.forEach(img => {
+                const item = document.createElement('div');
+                item.className = 'gallery-item';
+                item.innerHTML = `
+                    <img src="assets/${prefix}${img}">
+                    <div class="label">${img}</div>
+                `;
+                item.onclick = () => selectImage(prefix + img);
+                gallery.appendChild(item);
+            });
+        };
+
+        function selectImage(path) {
+            const u = localUpgrades.find(u => u.id === activeTarget.id);
+            const t = u.tiers.find(t => t.level === activeTarget.level);
+            t.image = path;
+            closeModal();
+            render();
+        }
+
+        window.saveToLocalStorage = () => {
+            const overrides = {};
+            localUpgrades.forEach(u => {
+                overrides[u.id] = u;
+            });
+            localStorage.setItem('upgrades_override', JSON.stringify(overrides));
+            showToast();
+        };
+
+        window.resetDefaults = () => {
+            if (confirm('Reset all changes?')) {
+                localStorage.removeItem('upgrades_override');
+                window.location.reload();
+            }
+        };
+
+        window.exportToCode = () => {
+            const json = JSON.stringify(localUpgrades, null, 4);
+            const code = `export const UPGRADES = ${json};`;
+            document.getElementById('export-pre').textContent = code;
+            document.getElementById('copy-overlay').style.display = 'flex';
+        };
+
+        function showToast() {
+            const toast = document.getElementById('toast');
+            toast.style.display = 'block';
+            setTimeout(() => toast.style.display = 'none', 2000);
+        }
+
+        render();
+    </script>
+</body>
+</html>

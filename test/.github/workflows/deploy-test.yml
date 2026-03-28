@@ -1,0 +1,49 @@
+name: Deploy Test to GitHub Pages
+
+on:
+  push:
+    branches: [test]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout test branch
+        uses: actions/checkout@v4
+        with:
+          ref: test
+          
+      - name: Deploy to gh-pages branch
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          
+          # Store test content
+          mkdir -p /tmp/test-content
+          cp -r . /tmp/test-content/
+          
+          # Fetch gh-pages or create it
+          git fetch origin gh-pages || true
+          
+          # Checkout gh-pages
+          git checkout gh-pages 2>/dev/null || git checkout --orphan gh-pages
+          
+          # Clean everything except .git
+          git rm -rf . 2>/dev/null || rm -rf *
+          
+          # Copy test content
+          cp -r /tmp/test-content/. .
+          
+          # Add test banner
+          if [ -f index.html ]; then
+            sed -i 's|<body>|<body><div style="background: #e67e22; color: white; text-align: center; padding: 8px; font-family: monospace; font-weight: bold;">🧪 TEST VERSION - ${{ github.sha }}<\/div>|' index.html
+          fi
+          
+          # Commit and push
+          git add .
+          git commit -m "Deploy test branch @ ${{ github.sha }}" || echo "No changes"
+          git push origin gh-pages --force
