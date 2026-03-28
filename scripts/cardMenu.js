@@ -778,15 +778,6 @@ export class CardMenu {
             ? owned.find(c => c.id === this.selectedOwnedCardId)
             : null;
 
-        // Draw arch cards (no selected detail yet - drawn last for z-order)
-        if (selectedCard) {
-            const archPadding = 100 * scale;
-            this.renderArchCards(ctx, areaLeft, areaWidth, screenHeight, archPadding, available, selectedCard.id, time);
-        } else {
-            this.renderArchCards(ctx, areaLeft, areaWidth, screenHeight, padding, available, null, time);
-        }
-
-        // Reroll button - above owned section
         const buttonProgress = Math.max(0, (this.enterProgress - 0.3) / 0.7);
         const buttonAlpha = Math.min(1, buttonProgress);
         const buttonSlide = (1 - Math.min(1, buttonProgress)) * 50 * scale;
@@ -795,22 +786,37 @@ export class CardMenu {
         const rerollBtnHeight = 32 * scale;
         const rerollY = padding + 120 * scale + 6 * scale + 28 * scale + 48 * scale + buttonSlide;
 
-        ctx.save();
-        ctx.globalAlpha = buttonAlpha;
+        // Draw arch cards (no selected detail yet - drawn last for z-order)
+        if (!selectedOwnedCard) {
+            if (selectedCard) {
+                const archPadding = 100 * scale;
+                this.renderArchCards(ctx, areaLeft, areaWidth, screenHeight, archPadding, available, selectedCard.id, time);
+            } else {
+                this.renderArchCards(ctx, areaLeft, areaWidth, screenHeight, padding, available, null, time);
+            }
 
-        const isTestVersion = window.location.pathname.includes('/test/');
-        const rerollCost = isTestVersion ? 0 : (this.state.rerollCost || 1);
-        const canAffordReroll = this.state.money >= rerollCost;
-        const rerollX = areaLeft + (areaWidth - rerollBtnWidth) / 2;
-        this.rerollButtonBounds = {
-            x: rerollX,
-            y: rerollY,
-            width: rerollBtnWidth,
-            height: rerollBtnHeight
-        };
-        this.drawRerollButton(ctx, rerollX, rerollY, rerollBtnWidth, rerollBtnHeight, canAffordReroll, rerollCost);
+            // Reroll button - above owned section
+            ctx.save();
+            ctx.globalAlpha = buttonAlpha;
 
-        ctx.restore();
+            const isTestVersion = window.location.pathname.includes('/test/');
+            const rerollCost = isTestVersion ? 0 : (this.state.rerollCost || 1);
+            const canAffordReroll = this.state.money >= rerollCost;
+            const rerollX = areaLeft + (areaWidth - rerollBtnWidth) / 2;
+            this.rerollButtonBounds = {
+                x: rerollX,
+                y: rerollY,
+                width: rerollBtnWidth,
+                height: rerollBtnHeight
+            };
+            this.drawRerollButton(ctx, rerollX, rerollY, rerollBtnWidth, rerollBtnHeight, canAffordReroll, rerollCost);
+
+            ctx.restore();
+        } else {
+            this.cardBounds = [];
+            this.cardBuyButtonBounds = [];
+            this.rerollButtonBounds = null;
+        }
 
         const anyCardSelected = selectedCard || selectedOwnedCard;
 
@@ -1236,7 +1242,7 @@ export class CardMenu {
         const scale = this.state.scaleFactor;
         ctx.beginPath();
         ctx.roundRect(x, y, width, height, 10 * scale);
-        ctx.fillStyle = 'rgba(100, 100, 100, 0.2)';
+        ctx.fillStyle = 'rgb(50, 50, 50)';
         ctx.fill();
 
         ctx.strokeStyle = 'rgba(150, 150, 150, 0.5)';
