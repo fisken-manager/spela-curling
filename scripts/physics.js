@@ -396,7 +396,15 @@ getMaxVelocity(state) {
             
             if (dy < collisionDistance && dx < collisionDistance) {
                 lifePowerUp.collected = true;
+                const oldMaxVel = this.getMaxVelocity(state);
                 state.lives++;
+                const newMaxVel = this.getMaxVelocity(state);
+                const currentSpeed = Math.sqrt(stone.vx ** 2 + stone.vy ** 2);
+                if (currentSpeed > 0.001 && oldMaxVel > 0) {
+                    const scale = newMaxVel / oldMaxVel;
+                    stone.vx *= scale;
+                    stone.vy *= scale;
+                }
                 state.lifePowerUpCollected = lifePowerUp;
                 
                 this.addPowerUpText(state, lifePowerUp.x, '+1 LIV!', '255, 50, 50');
@@ -427,7 +435,15 @@ getMaxVelocity(state) {
                 shopPowerUp.collected = true;
                 state.shopUpgradeSelection = null;
                 state.rerollCost = 1;
+                const oldMaxVel = this.getMaxVelocity(state);
                 state.lives++;
+                const newMaxVel = this.getMaxVelocity(state);
+                const currentSpeed = Math.sqrt(stone.vx ** 2 + stone.vy ** 2);
+                if (currentSpeed > 0.001 && oldMaxVel > 0) {
+                    const scale = newMaxVel / oldMaxVel;
+                    stone.vx *= scale;
+                    stone.vy *= scale;
+                }
 
                 // Start shop transition animation
                 state.shopTransition = 'fishZoom';
@@ -465,7 +481,15 @@ getMaxVelocity(state) {
                 
                 if (sweepLifeLevel > 0) {
                     // Sweep life upgrade - gives extra life instead of sweep
+                    const oldMaxVel = this.getMaxVelocity(state);
                     state.lives++;
+                    const newMaxVel = this.getMaxVelocity(state);
+                    const currentSpeed = Math.sqrt(stone.vx ** 2 + stone.vy ** 2);
+                    if (currentSpeed > 0.001 && oldMaxVel > 0) {
+                        const scale = newMaxVel / oldMaxVel;
+                        stone.vx *= scale;
+                        stone.vy *= scale;
+                    }
                     this.addPowerUpText(state, sweepPowerUp.x, '+1 LIV!', '50, 255, 50');
                 } else {
                     // Normal sweep boost
@@ -1242,7 +1266,15 @@ getMaxVelocity(state) {
                             state.isLoopTransitioning = false;
                             state.shopUpgradeSelection = null;
                             state.rerollCost = 1;
+                            const oldMaxVel = this.getMaxVelocity(state);
                             state.lives++;
+                            const newMaxVel = this.getMaxVelocity(state);
+                            const currentSpeed = Math.sqrt(stone.vx ** 2 + stone.vy ** 2);
+                            if (currentSpeed > 0.001 && oldMaxVel > 0) {
+                                const scale = newMaxVel / oldMaxVel;
+                                stone.vx *= scale;
+                                stone.vy *= scale;
+                            }
                             // Start shop transition animation (same as power-up shop)
                             state.shopTransition = 'fishZoom';
                             state.shopTransitionStartTime = performance.now();
@@ -1256,7 +1288,15 @@ getMaxVelocity(state) {
                         state.isLoopTransitioning = false;
                         state.shopUpgradeSelection = null;
                         state.rerollCost = 1;
+                        const oldMaxVel = this.getMaxVelocity(state);
                         state.lives++;
+                        const newMaxVel = this.getMaxVelocity(state);
+                        const currentSpeed = Math.sqrt(stone.vx ** 2 + stone.vy ** 2);
+                        if (currentSpeed > 0.001 && oldMaxVel > 0) {
+                            const scale = newMaxVel / oldMaxVel;
+                            stone.vx *= scale;
+                            stone.vy *= scale;
+                        }
                         // Start shop transition animation (same as power-up shop)
                         state.shopTransition = 'fishZoom';
                         state.shopTransitionStartTime = performance.now();
