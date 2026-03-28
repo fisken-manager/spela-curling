@@ -76,9 +76,9 @@ export const UPGRADES = [
         detail: 'spinning rapidly, spiral energy trails, dizzy but triumphant',
         category: 'corrupted',
         tiers: [
-            { level: 1, cost: 3, effect: 'Magnetism skalar med rotation, -5% fart per föremål', image: 'spin_win-tier1.jpg' },
-            { level: 2, cost: 10, effect: 'Större rotation-bonus, -10% fart per föremål', image: 'spin_win-tier2.jpg' },
-            { level: 3, cost: 15, effect: 'Max rotation-bonus, -15% fart per föremål', image: 'spin_win-tier3.jpg' },
+            { level: 1, cost: 3, effect: 'Magnetism skalar med rotation, snurr dör 40% snabbare', image: 'spin_win-tier1.jpg' },
+            { level: 2, cost: 10, effect: 'Större rotation-bonus, snurr dör 80% snabbare', image: 'spin_win-tier2.jpg' },
+            { level: 3, cost: 15, effect: 'Max rotation-bonus, snurr dör 120% snabbare', image: 'spin_win-tier3.jpg' },
         ]
     },
     {

@@ -47,13 +47,6 @@ getMaxVelocity(state) {
             maxVel *= (1 + tarLevel);
         }
         
-        // Spin_win penalty based on items collected
-        const spinWinLevel = state.upgrades.spin_win?.level || 0;
-        if (spinWinLevel > 0 && state.items_collected_this_throw > 0) {
-            const penalty = 1 - (spinWinLevel * 0.05 * state.items_collected_this_throw);
-            maxVel *= Math.max(0.3, penalty);
-        }
-        
         // Gold_grift loop penalty
         const goldGriftLevel = state.upgrades.gold_grift?.level || 0;
         if (goldGriftLevel > 0) {
@@ -294,7 +287,10 @@ getMaxVelocity(state) {
         stone.vx += curlAcceleration * dt - decelX * dt;
         stone.vy -= decelY * dt;
         
-        stone.angularVelocity -= stone.angularVelocity * this.baseFriction * dt * this.angularDecayFactor;
+        // Spin_win increases rotation decay
+        const spinWinLevel = state.upgrades.spin_win?.level || 0;
+        const decayMultiplier = 1 + spinWinLevel * 0.4;
+        stone.angularVelocity -= stone.angularVelocity * this.baseFriction * dt * this.angularDecayFactor * decayMultiplier;
         if (Math.abs(stone.angularVelocity) < 0.01) stone.angularVelocity = 0;
         
         const damping = state.frictionBoost ? 0.9999 : 0.9997;
@@ -697,22 +693,26 @@ getMaxVelocity(state) {
         const { stone } = state;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
         
-        // Basic magnetism upgrade
+        // Basic magnetism upgrade (always active)
         const magnetismLevel = state.upgrades.magnetism?.level || 0;
         const sizeBonusFactor = 1 + ((state.upgrades.size?.level || 0) * 0.2);
         const baseMagnetismRadius = magnetismLevel > 0 ? (50 + magnetismLevel * 50) * sizeBonusFactor : 0;
-        
-        // Spin_win upgrade - magnetism scales with rotation
+        const magnetismStrength = magnetismLevel > 0 ? (0.05 + magnetismLevel * 0.05) : 0;
+
+        // Spin_win upgrade (only when rotating, independent of magnetism)
         const spinWinLevel = state.upgrades.spin_win?.level || 0;
-        const rotationBonus = spinWinLevel > 0 ? Math.abs(stone.angularVelocity) * spinWinLevel * 10 : 0;
-        const magnetismRadius = baseMagnetismRadius + rotationBonus;
-        
+        const spin = Math.abs(stone.angularVelocity);
+        const spinWinScale = spinWinLevel > 0 ? Math.min(1, spin / 10) : 0;
+        const spinWinStrength = spinWinLevel > 0 ? (0.1 * spinWinLevel) * spinWinScale : 0;
+        const spinWinRadius = spinWinLevel > 0 ? (50 + spinWinLevel * 50) * sizeBonusFactor * (1 + spin * spinWinLevel * 0.5) : 0;
+
         // Event_horizon upgrade - passive attraction for all pickups
         const eventHorizonLevel = state.upgrades.event_horizon?.level || 0;
         const eventHorizonRadius = eventHorizonLevel > 0 ? 50 + eventHorizonLevel * 75 : 0;
-        
-        // Combined magnetism strength
-        const combinedMagnetism = magnetismLevel > 0 ? (0.05 + magnetismLevel * 0.05) : 0;
+
+        // Combined: magnetism baseline + spin_win bonus on top
+        const combinedMagnetism = magnetismStrength + spinWinStrength;
+        const magnetismRadius = baseMagnetismRadius + spinWinRadius;
         const eventHorizonStrength = eventHorizonLevel > 0 ? (0.02 + eventHorizonLevel * 0.02) : 0;
 
         for (const orb of state.scoringOrbs) {
@@ -732,11 +732,6 @@ getMaxVelocity(state) {
                 // Apply magnetism
                 let effectiveRadius2 = magnetismRadius;
                 let strength = combinedMagnetism;
-                
-                // Spin_win uses rotation-scaled magnetism
-                if (spinWinLevel > 0 && dist < magnetismRadius) {
-                    strength = combinedMagnetism * (1 + Math.abs(stone.angularVelocity) * 0.1);
-                }
                 
                 // Coin speed boost increases yellow orb magnetism
                 if (orb.type === 'yellow' && state.upgrades.coinSpeedBoost?.level > 0) {
