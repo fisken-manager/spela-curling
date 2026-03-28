@@ -346,37 +346,93 @@ getMaxVelocity(state) {
         }
     }
 
+    applyMagnetismToPickup(state, pickup, objectRadius, maxScroll, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength) {
+        if (magnetismRadius <= 0 && eventHorizonRadius <= 0) return;
+        if (combinedMagnetism <= 0 && eventHorizonStrength <= 0) return;
+
+        const { stone } = state;
+        const pickupWorldY = pickup.scrollProgress * maxScroll;
+        const dy = stone.worldY - pickupWorldY;
+        const dx = stone.x - pickup.x;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist <= 0) return;
+
+        // Weight based on area: π × r². Scale relative to green orb (r=8, area=64π)
+        const weightScale = 64 / (objectRadius * objectRadius);
+
+        // Magnetism + spin_win pull
+        if (combinedMagnetism > 0) {
+            const effRadius = magnetismRadius * weightScale;
+            const effStrength = combinedMagnetism * weightScale;
+            if (dist < effRadius && effStrength > 0) {
+                pickup.x += (dx / dist) * effStrength * 60;
+                pickup.scrollProgress += (dy / dist) * effStrength * 60 / maxScroll;
+            }
+        }
+
+        // Event horizon pull (same weight-based scaling)
+        if (eventHorizonRadius > 0) {
+            const effRadius = eventHorizonRadius * weightScale;
+            const effStrength = eventHorizonStrength * weightScale;
+            if (dist < effRadius && effStrength > 0) {
+                pickup.x += (dx / dist) * effStrength * 60;
+                pickup.scrollProgress += (dy / dist) * effStrength * 60 / maxScroll;
+            }
+        }
+    }
+
     checkPowerUps(state, effectiveRadius) {
         const { stone } = state;
         const config = state.powerUpConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
-        
+
+        // Pre-compute magnetism values for all pickups
+        const magnetismLevel = state.upgrades.magnetism?.level || 0;
+        const sizeBonusFactor = 1 + ((state.upgrades.size?.level || 0) * 0.2);
+        const baseMagnetismRadius = magnetismLevel > 0 ? (50 + magnetismLevel * 50) * sizeBonusFactor : 0;
+        const magnetismStrength = magnetismLevel > 0 ? (0.05 + magnetismLevel * 0.05) : 0;
+
+        const spinWinLevel = state.upgrades.spin_win?.level || 0;
+        const spin = Math.abs(stone.angularVelocity);
+        const spinWinScale = spinWinLevel > 0 ? Math.min(1, spin / 10) : 0;
+        const spinWinStrength = spinWinLevel > 0 ? (0.1 * spinWinLevel) * spinWinScale : 0;
+        const spinWinRadius = spinWinLevel > 0 ? (50 + spinWinLevel * 50) * sizeBonusFactor * (1 + spin * spinWinLevel * 0.5) : 0;
+
+        const eventHorizonLevel = state.upgrades.event_horizon?.level || 0;
+        const eventHorizonRadius = eventHorizonLevel > 0 ? 50 + eventHorizonLevel * 75 : 0;
+        const eventHorizonStrength = eventHorizonLevel > 0 ? (0.02 + eventHorizonLevel * 0.02) : 0;
+
+        const combinedMagnetism = magnetismStrength + spinWinStrength;
+        const magnetismRadius = baseMagnetismRadius + spinWinRadius;
+
         for (const powerUp of state.powerUps) {
             if (powerUp.collected) continue;
-            
+
             const powerUpWorldY = powerUp.scrollProgress * maxScroll;
             const dy = Math.abs(stone.worldY - powerUpWorldY);
             const dx = Math.abs(stone.x - powerUp.x);
-            
+
             const collisionDistance = config.radius + effectiveRadius;
-            
+
             if (dy < collisionDistance && dx < collisionDistance) {
                 this.collectPowerUp(state, powerUp, effectiveRadius);
+            } else {
+                this.applyMagnetismToPickup(state, powerUp, config.radius, maxScroll, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
             }
         }
-        
-        this.checkLifePowerUps(state, effectiveRadius);
-        this.checkShopPowerUps(state, effectiveRadius);
-        this.checkSweepPowerUps(state, effectiveRadius);
-        this.checkRotationPowerUps(state, effectiveRadius);
-        this.checkSuperBoostPowerUps(state, effectiveRadius);
-        this.checkScoringOrbs(state, effectiveRadius);
-        this.checkGrowthPowerUps(state, effectiveRadius);
-        this.checkCurlChaosPickups(state, effectiveRadius);
-        this.checkSizeShrinkPickups(state, effectiveRadius);
+
+        this.checkLifePowerUps(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
+        this.checkShopPowerUps(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
+        this.checkSweepPowerUps(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
+        this.checkRotationPowerUps(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
+        this.checkSuperBoostPowerUps(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
+        this.checkScoringOrbs(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
+        this.checkGrowthPowerUps(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
+        this.checkCurlChaosPickups(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
+        this.checkSizeShrinkPickups(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
     }
 
-    checkLifePowerUps(state, effectiveRadius) {
+    checkLifePowerUps(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength) {
         const { stone } = state;
         const config = state.lifePowerUpConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
@@ -409,11 +465,13 @@ getMaxVelocity(state) {
                 const screenX = playArea.left + playArea.width / 2 + lifePowerUp.x;
                 const screenY = state.screenHeight * 0.5;
                 state.triggerRingFlash(screenX, screenY, '255, 50, 50');
+            } else {
+                this.applyMagnetismToPickup(state, lifePowerUp, config.radius, maxScroll, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
             }
         }
     }
 
-    checkShopPowerUps(state, effectiveRadius) {
+    checkShopPowerUps(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength) {
         const { stone } = state;
         const config = state.shopPowerUpConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
@@ -451,11 +509,14 @@ getMaxVelocity(state) {
                 state.shopTransitionFishX = playArea.left + playArea.width / 2 + shopPowerUp.x;
                 state.shopTransitionFishY = state.screenHeight * 0.5;
 
-                state.triggerRingFlash(state.shopTransitionFishX, state.shopTransitionFishY, '0, 191, 255');            }
+                state.triggerRingFlash(state.shopTransitionFishX, state.shopTransitionFishY, '0, 191, 255');
+            } else {
+                this.applyMagnetismToPickup(state, shopPowerUp, config.radius, maxScroll, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
+            }
         }
     }
 
-    checkSweepPowerUps(state, effectiveRadius) {
+    checkSweepPowerUps(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength) {
         const { stone } = state;
         const config = state.sweepPowerUpConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
@@ -508,11 +569,13 @@ getMaxVelocity(state) {
                 
                 state.sweepPowerUpCollected = sweepPowerUp;
                 state.triggerScreenShake(8, 0.15);
+            } else {
+                this.applyMagnetismToPickup(state, sweepPowerUp, config.radius, maxScroll, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
             }
         }
     }
 
-    checkRotationPowerUps(state, effectiveRadius) {
+    checkRotationPowerUps(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength) {
         const { stone } = state;
         const config = state.rotationPowerUpConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
@@ -536,11 +599,13 @@ getMaxVelocity(state) {
                 
                 state.rotationPowerUpCollected = rotationPowerUp;
                 this.addPowerUpText(state, rotationPowerUp.x, 'SNURR!', '200, 50, 255');
+            } else {
+                this.applyMagnetismToPickup(state, rotationPowerUp, config.radius, maxScroll, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
             }
         }
     }
 
-    checkSuperBoostPowerUps(state, effectiveRadius) {
+    checkSuperBoostPowerUps(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength) {
         const { stone } = state;
         const config = state.superBoostPowerUpConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
@@ -588,11 +653,13 @@ getMaxVelocity(state) {
                 };
                 
                 this.addPowerUpText(state, superBoostPowerUp.x, 'SUPER!', '255, 140, 0');
+            } else {
+                this.applyMagnetismToPickup(state, superBoostPowerUp, config.radius, maxScroll, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
             }
         }
     }
 
-    checkGrowthPowerUps(state, effectiveRadius) {
+    checkGrowthPowerUps(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength) {
         const { stone } = state;
         const config = state.growthPowerUpConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
@@ -619,11 +686,13 @@ getMaxVelocity(state) {
                     state.screenHeight * 0.5,
                     '72, 187, 120'
                 );
+            } else {
+                this.applyMagnetismToPickup(state, growthPowerUp, config.radius, maxScroll, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
             }
         }
     }
 
-    checkCurlChaosPickups(state, effectiveRadius) {
+    checkCurlChaosPickups(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength) {
         const { stone } = state;
         const config = state.curlChaosConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
@@ -652,11 +721,13 @@ getMaxVelocity(state) {
                     state.screenHeight * 0.5,
                     '255, 50, 50'
                 );
+            } else {
+                this.applyMagnetismToPickup(state, pickup, config.radius, maxScroll, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
             }
         }
     }
 
-    checkSizeShrinkPickups(state, effectiveRadius) {
+    checkSizeShrinkPickups(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength) {
         const { stone } = state;
         const config = state.sizeShrinkConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
@@ -685,73 +756,35 @@ getMaxVelocity(state) {
                     state.screenHeight * 0.5,
                     '200, 50, 255'
                 );
+            } else {
+                this.applyMagnetismToPickup(state, pickup, config.radius, maxScroll, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
             }
         }
     }
 
-    checkScoringOrbs(state, effectiveRadius) {
+    checkScoringOrbs(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength) {
         const { stone } = state;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
-        
-        // Basic magnetism upgrade (always active)
-        const magnetismLevel = state.upgrades.magnetism?.level || 0;
-        const sizeBonusFactor = 1 + ((state.upgrades.size?.level || 0) * 0.2);
-        const baseMagnetismRadius = magnetismLevel > 0 ? (50 + magnetismLevel * 50) * sizeBonusFactor : 0;
-        const magnetismStrength = magnetismLevel > 0 ? (0.05 + magnetismLevel * 0.05) : 0;
 
-        // Spin_win upgrade (only when rotating, independent of magnetism)
-        const spinWinLevel = state.upgrades.spin_win?.level || 0;
-        const spin = Math.abs(stone.angularVelocity);
-        const spinWinScale = spinWinLevel > 0 ? Math.min(1, spin / 10) : 0;
-        const spinWinStrength = spinWinLevel > 0 ? (0.1 * spinWinLevel) * spinWinScale : 0;
-        const spinWinRadius = spinWinLevel > 0 ? (50 + spinWinLevel * 50) * sizeBonusFactor * (1 + spin * spinWinLevel * 0.5) : 0;
-
-        // Event_horizon upgrade - passive attraction for all pickups
-        const eventHorizonLevel = state.upgrades.event_horizon?.level || 0;
-        const eventHorizonRadius = eventHorizonLevel > 0 ? 50 + eventHorizonLevel * 75 : 0;
-
-        // Combined: magnetism baseline + spin_win bonus on top
-        const combinedMagnetism = magnetismStrength + spinWinStrength;
-        const magnetismRadius = baseMagnetismRadius + spinWinRadius;
-        const eventHorizonStrength = eventHorizonLevel > 0 ? (0.02 + eventHorizonLevel * 0.02) : 0;
+        const coinSpeedBoostLevel = state.upgrades.coinSpeedBoost?.level || 0;
 
         for (const orb of state.scoringOrbs) {
             if (orb.collected) continue;
-            
+
             const orbWorldY = orb.scrollProgress * maxScroll;
             const dy = stone.worldY - orbWorldY;
             const dx = stone.x - orb.x;
             const dist = Math.sqrt(dx * dx + dy * dy);
-            
+
             const orbRadius = this.getEffectiveOrbRadius(state, orb.type);
             const collisionDistance = orbRadius + effectiveRadius;
-            
+
             if (dist < collisionDistance) {
                 this.collectScoringOrb(state, orb);
             } else {
-                // Apply magnetism
-                let effectiveRadius2 = magnetismRadius;
-                let strength = combinedMagnetism;
-                
-                // Coin speed boost increases yellow orb magnetism
-                if (orb.type === 'yellow' && state.upgrades.coinSpeedBoost?.level > 0) {
-                    strength *= 2;
-                }
-                
-                if (dist < effectiveRadius2 && strength > 0) {
-                    const pullX = (dx / dist) * strength * 60;
-                    const pullY = (dy / dist) * strength * 60;
-                    orb.x += pullX;
-                    orb.scrollProgress += pullY / maxScroll;
-                }
-                
-                // Event horizon passive attraction
-                if (eventHorizonLevel > 0 && dist < eventHorizonRadius) {
-                    const pullX = (dx / dist) * eventHorizonStrength * 60;
-                    const pullY = (dy / dist) * eventHorizonStrength * 60;
-                    orb.x += pullX;
-                    orb.scrollProgress += pullY / maxScroll;
-                }
+                // Coin speed boost doubles magnetism for yellow orbs
+                const orbMagnetism = (orb.type === 'yellow' && coinSpeedBoostLevel > 0) ? combinedMagnetism * 2 : combinedMagnetism;
+                this.applyMagnetismToPickup(state, orb, orbRadius, maxScroll, magnetismRadius, orbMagnetism, eventHorizonRadius, eventHorizonStrength);
             }
         }
     }
