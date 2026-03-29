@@ -160,7 +160,7 @@ drawRingFlash(state) {
 
     drawStone(state) {
         const pos = this.getStoneScreenPosition(state);
-        const sizeBonus = state.upgrades.stoneSize.level * 8;
+        const sizeBonus = state.upgrades.size.level * 8;
         const growthMultiplier = state.growthBoost ? state.growthPowerUpConfig.growthMultiplier : 1;
         const baseRadius = (30 + sizeBonus) * growthMultiplier;
         const radius = this.scale(state, Math.max(1, baseRadius));
@@ -1276,7 +1276,7 @@ drawScoreText(state) {
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
         const playArea = state.getPlayArea();
         
-        const sizeBonusFactor = 1 + (state.upgrades.stoneSize.level * 0.2);
+        const sizeBonusFactor = 1 + (state.upgrades.size.level * 0.2);
         const magnetismRadius = this.scale(state, (50 + magnetismLevel * 50) * sizeBonusFactor);
 
         this.ctx.save();
@@ -1351,7 +1351,7 @@ drawScoreText(state) {
             
             if (this.prevStoneX !== null) {
                 const playArea = state.getPlayArea();
-                const sizeBonus = state.upgrades.stoneSize.level * 8;
+        const sizeBonus = state.upgrades.size.level * 8;
                 const growthMultiplier = state.growthBoost ? state.growthPowerUpConfig.growthMultiplier : 1;
                 const effectiveRadius = Math.max(1, (30 + sizeBonus) * growthMultiplier);
                 const leftBound = effectiveRadius - playArea.width / 2;
