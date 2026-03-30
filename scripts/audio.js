@@ -156,8 +156,11 @@ export class AudioController {
         this.sourceNode.buffer = this.audioBuffer;
         this.sourceNode.playbackRate.value = this.currentPlaybackRate;
         
-        // Use effects chain instead of direct connection
-        if (this.effectsSystem && this.effectsSystem.isInitialized) {
+        // Use effects chain only when upgrades are active
+        const hasEffects = this.effectsSystem && this.effectsSystem.isInitialized && 
+                           this.effectsSystem.hasActiveEffects(this.activeUpgrades);
+
+        if (hasEffects) {
             this.effectsSystem.connectChain(this.sourceNode, this.audioContext.destination);
         } else {
             this.sourceNode.connect(this.audioContext.destination);
