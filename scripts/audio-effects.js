@@ -151,62 +151,52 @@ export class AudioEffectsSystem {
         };
 
         // === PASSIVE UPGRADES (always active when owned) ===
+        // Keep passive effects VERY subtle - just barely noticeable
         
-        // speed: brightens sound
+        // speed: very subtle brightness (barely noticeable)
         const speedLevel = upgrades.speed?.level || 0;
         if (speedLevel > 0) {
-            params.highpassFreq = 200 + (speedLevel * 150); // 350-950 Hz (moderate)
+            params.highpassFreq = 150 + (speedLevel * 100); // 250-650 Hz (very subtle)
         }
 
-        // friction: slippery feel (subtle delay)
+        // friction: very subtle delay (barely noticeable)
         const frictionLevel = upgrades.friction?.level || 0;
         if (frictionLevel > 0) {
-            params.delayTime = 0.003 + (frictionLevel * 0.002); // 0.005-0.013s
+            params.delayTime = 0.002 + (frictionLevel * 0.001); // 0.003-0.007s (barely there)
         }
 
-        // size: heavier feel (bass boost)
+        // size: very subtle bass boost (not 15dB!)
         const sizeLevel = upgrades.size?.level || 0;
         if (sizeLevel > 0) {
-            params.lowshelfGain = sizeLevel * 3; // 3-15 dB (moderate bass)
-            params.playbackRate = 1.0 - (sizeLevel * 0.003); // 0.985-0.97 (slight pitch down)
+            params.lowshelfGain = sizeLevel * 1; // 1-5 dB (subtle)
+            params.playbackRate = 1.0 - (sizeLevel * 0.001); // 0.995-0.99 (tiny pitch)
         }
 
-        // spiders_web: muffled feel
+        // spiders_web: very subtle muffle
         const spiderLevel = upgrades.spiders_web?.level || 0;
         if (spiderLevel > 0) {
-            params.lowpassFreq = 12000 - (spiderLevel * 1000); // 11000-8000 Hz
+            params.lowpassFreq = 18000 - (spiderLevel * 500); // 17500-16000 Hz (barely noticeable)
         }
 
-        // glass_cannon: subtle grit
-        const glassLevel = upgrades.glass_cannon?.level || 0;
-        if (glassLevel > 0) {
-            params.distortionAmount = glassLevel * 8; // 8-40 (light distortion)
-        }
+        // glass_cannon: NO PASSIVE DISTORTION - only event-triggered
+        // distortion is too aggressive for passive
 
-        // tar_launch: baseline compression (when NOT boosted)
+        // tar_launch: very subtle compression (not aggressive)
         const tarLevel = upgrades.tar_launch?.level || 0;
         if (tarLevel > 0) {
-            params.compressorThreshold = -20 - (tarLevel * 2); // -22 to -30
-            params.compressorRatio = 2 + tarLevel; // 2-4 ratio
+            params.compressorThreshold = -28; // Very gentle compression
+            params.compressorRatio = 1.5; // Very gentle ratio
         }
 
-        // spin_to_speed: mechanical texture (pitch wobble)
+        // spin_to_speed: very subtle pitch wobble
         const spinToSpeedLevel = upgrades.spin_to_speed?.level || 0;
         if (spinToSpeedLevel > 0) {
-            const wobble = Math.sin(Date.now() * 0.005) * spinToSpeedLevel * 0.003;
-            params.playbackRate = Math.max(0.95, Math.min(1.05, params.playbackRate + wobble));
+            const wobble = Math.sin(Date.now() * 0.003) * spinToSpeedLevel * 0.001;
+            params.playbackRate = Math.max(0.98, Math.min(1.02, params.playbackRate + wobble));
         }
 
-        // rail_rider: narrow stereo
-        const railLevel = upgrades.rail_rider?.level || 0;
-        if (railLevel > 0) {
-            // Keep centered (pan = 0)
-        }
-
-        // double_shops: slight saturation
-        const shopLevel = upgrades.double_shops?.level || 0;
-        if (shopLevel > 0) {
-            params.distortionAmount = Math.max(params.distortionAmount, shopLevel * 5);
+        // rail_rider: no passive effect
+        // double_shops: NO PASSIVE DISTORTION - only event-triggered
         }
 
         // herrings_last_dance: dynamic based on lives (use last-known lives)
