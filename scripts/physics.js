@@ -298,6 +298,14 @@ export class Physics {
         stone.vx += curlAcceleration * dt - decelX * dt;
         stone.vy -= decelY * dt;
         
+        // Spindelns Väv - center pull force (very gentle)
+        const spidersWebLevel = state.upgrades.spiders_web?.level || 0;
+        if (spidersWebLevel > 0) {
+            const pullStrength = spidersWebLevel === 1 ? 0.001 : (spidersWebLevel === 2 ? 0.002 : 0.004);
+            const centerPull = -stone.x * pullStrength * dt * 60;
+            stone.vx += centerPull;
+        }
+        
         stone.angularVelocity -= stone.angularVelocity * this.baseFriction * dt * this.angularDecayFactor;
         if (Math.abs(stone.angularVelocity) < 0.01) stone.angularVelocity = 0;
         
@@ -1026,10 +1034,20 @@ export class Physics {
             if (stone.x < leftBound) {
                 // Wrap from left to right
                 stone.x = rightBound;
+                // Trigger teleport audio effect with intensity based on current max velocity
+                const speed = Math.sqrt(stone.vx ** 2 + stone.vy ** 2);
+                const maxVel = this.getMaxVelocity(state);
+                const intensity = speed / maxVel;
+                state.triggerTeleportAudio?.(intensity);
                 return; // Skip all other wall handling
             } else if (stone.x > rightBound) {
                 // Wrap from right to left
                 stone.x = leftBound;
+                // Trigger teleport audio effect with intensity based on current max velocity
+                const speed = Math.sqrt(stone.vx ** 2 + stone.vy ** 2);
+                const maxVel = this.getMaxVelocity(state);
+                const intensity = speed / maxVel;
+                state.triggerTeleportAudio?.(intensity);
                 return; // Skip all other wall handling
             }
         }
@@ -1048,7 +1066,17 @@ export class Physics {
                 stone.vx = 0;
                 this.addPowerUpText(state, stone.x, 'TIMMERMANNENS GREPP!', '100, 200, 255');
             } else {
-                stone.vx = -stone.vx * bounceEnergy;
+                // Spindelns Väv - make bounce shallower (more toward walls), same speed
+                const spidersWebLevel = state.upgrades.spiders_web?.level || 0;
+                if (spidersWebLevel > 0) {
+                    const angleMultiplier = spidersWebLevel === 1 ? 1.30 : (spidersWebLevel === 2 ? 1.60 : 2.00);
+                    // Flip vx normally
+                    stone.vx = -stone.vx * bounceEnergy;
+                    // Reduce vy to make angle shallower (more horizontal toward walls)
+                    stone.vy = stone.vy * bounceEnergy / angleMultiplier;
+                } else {
+                    stone.vx = -stone.vx * bounceEnergy;
+                }
                 stone.angularVelocity *= 0.5;
             }
         } else if (stone.x > rightBound) {
@@ -1063,7 +1091,17 @@ export class Physics {
                 stone.vx = 0;
                 this.addPowerUpText(state, stone.x, 'TIMMERMANNENS GREPP!', '100, 200, 255');
             } else {
-                stone.vx = -stone.vx * bounceEnergy;
+                // Spindelns Väv - make bounce shallower (more toward walls), same speed
+                const spidersWebLevel = state.upgrades.spiders_web?.level || 0;
+                if (spidersWebLevel > 0) {
+                    const angleMultiplier = spidersWebLevel === 1 ? 1.30 : (spidersWebLevel === 2 ? 1.60 : 2.00);
+                    // Flip vx normally
+                    stone.vx = -stone.vx * bounceEnergy;
+                    // Reduce vy to make angle shallower (more horizontal toward walls)
+                    stone.vy = stone.vy * bounceEnergy / angleMultiplier;
+                } else {
+                    stone.vx = -stone.vx * bounceEnergy;
+                }
                 stone.angularVelocity *= 0.5;
             }
         }
@@ -1130,6 +1168,10 @@ export class Physics {
             // Echo_woods upgrade - spawn speed pickups on wall hit
             if (echoWoodsLevel > 0) {
                 this.spawnEchoPickup(state, stone.x);
+                // Trigger stereo echo audio effect
+                // More pickups = more intense echo
+                const intensity = echoWoodsLevel * 0.8; // Level 1 = 0.8, Level 2 = 1.6, Level 3 = 2.4
+                state.triggerEchoAudio?.(intensity);
             }
             
             // Wall_speed effect
