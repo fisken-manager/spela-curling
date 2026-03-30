@@ -465,7 +465,7 @@ function update(deltaTime) {
     updateCombo(deltaTime);
     
     if (state.phase === 'moving') {
-        physics.update(state, deltaTime);
+        physics.update(state, deltaTime, audio);
     } else if (state.phase === 'returning') {
         if (!transition.isTransitioning()) {
             transition.start(state);

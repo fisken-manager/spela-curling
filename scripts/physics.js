@@ -312,7 +312,7 @@ export class Physics {
         this.handleBounds(state, effectiveRadius, audio);
         this.updateWorldPosition(state, dt);
         this.applyPickupAttraction(state);
-        this.checkPowerUps(state, effectiveRadius);
+        this.checkPowerUps(state, effectiveRadius, audio);
         }
 
         applyPickupAttraction(state) {
@@ -391,7 +391,7 @@ export class Physics {
         }
     }
 
-    checkPowerUps(state, effectiveRadius) {
+    checkPowerUps(state, effectiveRadius, audio = null) {
         const { stone } = state;
         const config = state.powerUpConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
@@ -437,7 +437,7 @@ export class Physics {
         this.checkSweepPowerUps(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
         this.checkRotationPowerUps(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
         this.checkSuperBoostPowerUps(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
-        this.checkScoringOrbs(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
+        this.checkScoringOrbs(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength, audio);
         this.checkGrowthPowerUps(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
         this.checkCurlChaosPickups(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
         this.checkSizeShrinkPickups(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
