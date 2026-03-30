@@ -197,7 +197,6 @@ export class AudioEffectsSystem {
 
         // rail_rider: no passive effect
         // double_shops: NO PASSIVE DISTORTION - only event-triggered
-        }
 
         // herrings_last_dance: dynamic based on lives (use last-known lives)
         const herringLevel = upgrades.herrings_last_dance?.level || 0;
