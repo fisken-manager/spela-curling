@@ -294,7 +294,7 @@ export class Physics {
         // Spindelns Väv - center pull force (very gentle)
         const spidersWebLevel = state.upgrades.spiders_web?.level || 0;
         if (spidersWebLevel > 0) {
-            const pullStrength = spidersWebLevel === 1 ? 0.001 : (spidersWebLevel === 2 ? 0.0002 : 0.0004);
+            const pullStrength = spidersWebLevel === 1 ? 0.001 : (spidersWebLevel === 2 ? 0.002 : 0.004);
             const centerPull = -stone.x * pullStrength * dt * 60;
             stone.vx += centerPull;
         }
@@ -1087,11 +1087,14 @@ export class Physics {
                 stone.vx = 0;
                 this.addPowerUpText(state, stone.x, 'TIMMERMANNENS GREPP!', '100, 200, 255');
             } else {
-                // Spindelns Väv - increase bounce angle toward walls
+                // Spindelns Väv - make bounce shallower (more toward walls), same speed
                 const spidersWebLevel = state.upgrades.spiders_web?.level || 0;
                 if (spidersWebLevel > 0) {
-                    const angleMultiplier = 1 + (spidersWebLevel === 1 ? 0.30 : (spidersWebLevel === 2 ? 0.60 : 1.00));
-                    stone.vx = -stone.vx * bounceEnergy * angleMultiplier;
+                    const angleMultiplier = spidersWebLevel === 1 ? 1.30 : (spidersWebLevel === 2 ? 1.60 : 2.00);
+                    // Flip vx normally
+                    stone.vx = -stone.vx * bounceEnergy;
+                    // Reduce vy to make angle shallower (more horizontal toward walls)
+                    stone.vy = stone.vy * bounceEnergy / angleMultiplier;
                 } else {
                     stone.vx = -stone.vx * bounceEnergy;
                 }
@@ -1109,11 +1112,14 @@ export class Physics {
                 stone.vx = 0;
                 this.addPowerUpText(state, stone.x, 'TIMMERMANNENS GREPP!', '100, 200, 255');
             } else {
-                // Spindelns Väv - increase bounce angle toward walls
+                // Spindelns Väv - make bounce shallower (more toward walls), same speed
                 const spidersWebLevel = state.upgrades.spiders_web?.level || 0;
                 if (spidersWebLevel > 0) {
-                    const angleMultiplier = 1 + (spidersWebLevel === 1 ? 0.30 : (spidersWebLevel === 2 ? 0.60 : 1.00));
-                    stone.vx = -stone.vx * bounceEnergy * angleMultiplier;
+                    const angleMultiplier = spidersWebLevel === 1 ? 1.30 : (spidersWebLevel === 2 ? 1.60 : 2.00);
+                    // Flip vx normally
+                    stone.vx = -stone.vx * bounceEnergy;
+                    // Reduce vy to make angle shallower (more horizontal toward walls)
+                    stone.vy = stone.vy * bounceEnergy / angleMultiplier;
                 } else {
                     stone.vx = -stone.vx * bounceEnergy;
                 }
