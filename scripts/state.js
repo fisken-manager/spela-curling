@@ -162,7 +162,6 @@ export class GameState {
             speed: { level: 0 },
             friction: { level: 0 },
             size: { level: 0 },
-            magnetism: { level: 0 },
             // Corrupted
             spin_win: { level: 0 },
             gold_grift: { level: 0 },
@@ -186,6 +185,7 @@ export class GameState {
             // Technical - New
             needle_eye: { level: 0 },
             dimension_door: { level: 0 },
+            cleanse: { level: 0 },
             // Deprecated (kept for saves)
             maxVelocity: { level: 0 },
             frictionReduction: { level: 0 },
@@ -351,8 +351,8 @@ export class GameState {
             { items: this.rotationPowerUps, xRange: 370 * xScale },
             { items: this.superBoostPowerUps, xRange: 100 * xScale },
             { items: this.growthPowerUps, xRange: 100 * xScale },
-            // Only include negative pickups if noNegativePickups is NOT purchased
-            ...(this.upgrades.noNegativePickups.level > 0 ? [] : [
+            // Only include negative pickups if cleanse is NOT purchased
+            ...(this.upgrades.cleanse?.level > 0 ? [] : [
                 { items: this.curlChaosPickups, xRange: 90 * xScale },
                 { items: this.sizeShrinkPickups, xRange: 110 * xScale }
             ])
@@ -427,7 +427,10 @@ export class GameState {
         this.superBoostPowerUps = [];
         this.growthPowerUps = this.generateItems('growth', 600, growth, 100);
         
-        if (this.upgrades.noNegativePickups?.level > 0) {
+        if (this.upgrades.cleanse?.level > 0) {
+            this.curlChaosPickups = [];
+            this.sizeShrinkPickups = [];
+        } else if (this.upgrades.noNegativePickups?.level > 0) {
             this.curlChaosPickups = [];
             this.sizeShrinkPickups = [];
         } else {

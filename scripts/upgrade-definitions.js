@@ -21,11 +21,11 @@ export const UPGRADES = [
         detail: 'sliding gracefully on ice, smooth motion blur, elegant',
         category: 'basic',
         tiers: [
-            { level: 1, cost: 1, effect: '-15% Friktion, -10% studs-effekt', image: 'waifu-friction.jpg' },
-            { level: 2, cost: 5, effect: '-30% Friktion, -20% studs-effekt', image: 'frictionReduction-tier2.jpg' },
-            { level: 3, cost: 10, effect: '-45% Friktion, -30% studs-effekt', image: 'frictionReduction-tier3.jpg' },
-            { level: 4, cost: 15, effect: '-60% Friktion, -40% studs-effekt', image: 'frictionReduction-tier4.jpg' },
-            { level: 5, cost: 25, effect: '-75% Friktion, -50% studs-effekt', image: 'frictionReduction-tier5.jpg' },
+            { level: 1, cost: 1, effect: '-5% Friktion, -10% studs-effekt', image: 'waifu-friction.jpg' },
+            { level: 2, cost: 5, effect: '-10% Friktion, -20% studs-effekt', image: 'frictionReduction-tier2.jpg' },
+            { level: 3, cost: 10, effect: '-15% Friktion, -30% studs-effekt', image: 'frictionReduction-tier3.jpg' },
+            { level: 4, cost: 15, effect: '-20% Friktion, -40% studs-effekt', image: 'frictionReduction-tier4.jpg' },
+            { level: 5, cost: 25, effect: '-25% Friktion, -50% studs-effekt', image: 'frictionReduction-tier5.jpg' },
         ]
     },
     {
@@ -35,27 +35,14 @@ export const UPGRADES = [
         detail: 'holding massive curling stone, powerful stance, giant shadow',
         category: 'basic',
         tiers: [
-            { level: 1, cost: 1, effect: '+25% Storlek, -10% Maxfart', image: 'waifu-size.jpg' },
-            { level: 2, cost: 5, effect: '+50% Storlek, -20% Maxfart', image: 'stoneSize-tier2.jpg' },
-            { level: 3, cost: 10, effect: '+75% Storlek, -30% Maxfart', image: 'stoneSize-tier3.jpg' },
-            { level: 4, cost: 15, effect: '+100% Storlek, -40% Maxfart', image: 'stoneSize-tier4.jpg' },
-            { level: 5, cost: 25, effect: '+125% Storlek, -50% Maxfart', image: 'stoneSize-tier5.jpg' },
+            { level: 1, cost: 1, effect: '+25% Storlek, -1% Maxfart', image: 'waifu-size.jpg' },
+            { level: 2, cost: 5, effect: '+50% Storlek, -2% Maxfart', image: 'stoneSize-tier2.jpg' },
+            { level: 3, cost: 10, effect: '+75% Storlek, -3% Maxfart', image: 'stoneSize-tier3.jpg' },
+            { level: 4, cost: 15, effect: '+100% Storlek, -4% Maxfart', image: 'stoneSize-tier4.jpg' },
+            { level: 5, cost: 25, effect: '+125% Storlek, -5% Maxfart', image: 'stoneSize-tier5.jpg' },
         ]
     },
-    {
-        id: 'magnetism',
-        name: 'Magnetiskt Begär',
-        proverb: 'Det som glimmar dras till den som har tyngd.',
-        detail: 'magnetic aura, glowing orbs orbiting around, attracting light particles',
-        category: 'basic',
-        tiers: [
-            { level: 1, cost: 3, effect: '+10% Magnetism-radie', image: 'waifu-curl.jpg' },
-            { level: 2, cost: 10, effect: '+20% Magnetism-radie', image: 'magnetism-tier2.jpg' },
-            { level: 3, cost: 15, effect: '+30% Magnetism-radie', image: 'magnetism-tier3.jpg' },
-            { level: 4, cost: 25, effect: '+40% Magnetism-radie', image: 'magnetism-tier4.jpg' },
-            { level: 5, cost: 35, effect: '+50% Magnetism-radie', image: 'magnetism-tier5.jpg' },
-        ]
-    },
+
     {
         id: 'coinSpeedBoost',
         name: 'Blodspengar',
@@ -141,6 +128,18 @@ export const UPGRADES = [
             { level: 3, cost: 15, effect: 'Mer Snurr förvandlas till Hastighet vid väggstuds', image: 'spin_to_speed-tier3.jpg' },
         ]
     },
+    {
+        id: 'spiders_web',
+        name: 'Spindelns Väv',
+        proverb: 'Ju närmare centrum du spinner, desta tajtare blir väven.',
+        detail: 'giant spider web with curling stone caught in center, silk threads pulling inward, arachnid aesthetic, glowing web pattern',
+        category: 'corrupted',
+        tiers: [
+            { level: 1, cost: 3, effect: 'Svag dra mot centrum, studs-vinkel +30% vid väggträff', image: 'spiders_web-tier1.jpg' },
+            { level: 2, cost: 10, effect: 'Medel dra mot centrum, studs-vinkel +60% vid väggträff', image: 'spiders_web-tier2.jpg' },
+            { level: 3, cost: 20, effect: 'Stark dra mot centrum, studs-vinkel +100% vid väggträff', image: 'spiders_web-tier3.jpg' },
+        ]
+    },
 
     // === TECHNICAL UPGRADES ===
     {
@@ -174,7 +173,7 @@ export const UPGRADES = [
         detail: 'black hole gravitational pull, swirling vortex, cosmic dread, all-consuming',
         category: 'technical',
         tiers: [
-            { level: 1, cost: 15, effect: 'Passiv dragning av alla pickups (liten radie)', image: 'event_horizon-tier1.jpg' },
+            { level: 1, cost: 10, effect: 'Passiv dragning av alla pickups (liten radie)', image: 'event_horizon-tier1.jpg' },
             { level: 2, cost: 30, effect: 'Passiv dragning (medel radie)', image: 'event_horizon-tier2.jpg' },
             { level: 3, cost: 60, effect: 'Passiv dragning (stor radie)', image: 'event_horizon-tier3.jpg' },
         ]
@@ -214,6 +213,17 @@ export const UPGRADES = [
         ]
     },
 
+    {
+        id: 'cleanse',
+        name: 'Reningsbadet',
+        proverb: 'Bada i klara vatten, curla på ren is.',
+        detail: 'spiritual cleansing ritual, glowing purification, stone emerging pristine from misty waters',
+        category: 'technical',
+        tiers: [
+            { level: 1, cost: 10, effect: 'Ta bort negativa pickups (-storlek & +curl)', image: 'cleanse-tier1.jpg' },
+        ]
+    },
+
     // === HIGH RISK / HIGH REWARD ===
     {
         id: 'tar_launch',
@@ -233,7 +243,7 @@ export const UPGRADES = [
         detail: 'broom becoming ethereal, life essence, desperate sweeping motion, ghostly aura',
         category: 'highrisk',
         tiers: [
-            { level: 1, cost: 10, effect: 'Förvandlar Sweep-pickups till Extra liv, -25% maxhastighet', image: 'sweep_life-tier1.jpg' },
+            { level: 1, cost: 5, effect: 'Förvandlar Sweep-pickups till Extra liv', image: 'sweep_life-tier1.jpg' },
         ]
     },
 
@@ -245,7 +255,7 @@ export const UPGRADES = [
         detail: 'tiny stone passing through needle eye, shrinking effect, mystical portal',
         category: 'technical',
         tiers: [
-            { level: 1, cost: 15, effect: 'Ju mindre sten ju mindre friktion', image: 'needle_eye-tier1.jpg' },
+            { level: 1, cost: 5, effect: 'Ju mindre sten ju mindre friktion', image: 'needle_eye-tier1.jpg' },
         ]
     },
     {

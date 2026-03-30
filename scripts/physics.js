@@ -291,6 +291,14 @@ export class Physics {
         stone.vx += curlAcceleration * dt - decelX * dt;
         stone.vy -= decelY * dt;
         
+        // Spindelns Väv - center pull force (very gentle)
+        const spidersWebLevel = state.upgrades.spiders_web?.level || 0;
+        if (spidersWebLevel > 0) {
+            const pullStrength = spidersWebLevel === 1 ? 0.001 : (spidersWebLevel === 2 ? 0.0002 : 0.0004);
+            const centerPull = -stone.x * pullStrength * dt * 60;
+            stone.vx += centerPull;
+        }
+        
         // Spin_win increases rotation decay
         const spinWinLevel = state.upgrades.spin_win?.level || 0;
         const decayMultiplier = 1 + spinWinLevel * 0.4;
@@ -325,8 +333,9 @@ export class Physics {
             ...(state.rotationPowerUps || []),
             ...(state.superBoostPowerUps || []),
             ...(state.growthPowerUps || []),
-            ...(state.curlChaosPickups || []),
-            ...(state.sizeShrinkPickups || [])
+            // Only include negative pickups if cleanse is NOT active
+            ...(state.upgrades.cleanse?.level > 0 ? [] : state.curlChaosPickups || []),
+            ...(state.upgrades.cleanse?.level > 0 ? [] : state.sizeShrinkPickups || [])
         ];
 
         for (const pickup of allPickups) {
@@ -701,6 +710,9 @@ export class Physics {
     }
 
     checkCurlChaosPickups(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength) {
+        // Skip if cleanse upgrade is active
+        if (state.upgrades.cleanse?.level > 0) return;
+        
         const { stone } = state;
         const config = state.curlChaosConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
@@ -737,6 +749,9 @@ export class Physics {
     }
 
     checkSizeShrinkPickups(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength) {
+        // Skip if cleanse upgrade is active
+        if (state.upgrades.cleanse?.level > 0) return;
+        
         const { stone } = state;
         const config = state.sizeShrinkConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
@@ -1072,7 +1087,14 @@ export class Physics {
                 stone.vx = 0;
                 this.addPowerUpText(state, stone.x, 'TIMMERMANNENS GREPP!', '100, 200, 255');
             } else {
-                stone.vx = -stone.vx * bounceEnergy;
+                // Spindelns Väv - increase bounce angle toward walls
+                const spidersWebLevel = state.upgrades.spiders_web?.level || 0;
+                if (spidersWebLevel > 0) {
+                    const angleMultiplier = 1 + (spidersWebLevel === 1 ? 0.30 : (spidersWebLevel === 2 ? 0.60 : 1.00));
+                    stone.vx = -stone.vx * bounceEnergy * angleMultiplier;
+                } else {
+                    stone.vx = -stone.vx * bounceEnergy;
+                }
                 stone.angularVelocity *= 0.5;
             }
         } else if (stone.x > rightBound) {
@@ -1087,7 +1109,14 @@ export class Physics {
                 stone.vx = 0;
                 this.addPowerUpText(state, stone.x, 'TIMMERMANNENS GREPP!', '100, 200, 255');
             } else {
-                stone.vx = -stone.vx * bounceEnergy;
+                // Spindelns Väv - increase bounce angle toward walls
+                const spidersWebLevel = state.upgrades.spiders_web?.level || 0;
+                if (spidersWebLevel > 0) {
+                    const angleMultiplier = 1 + (spidersWebLevel === 1 ? 0.30 : (spidersWebLevel === 2 ? 0.60 : 1.00));
+                    stone.vx = -stone.vx * bounceEnergy * angleMultiplier;
+                } else {
+                    stone.vx = -stone.vx * bounceEnergy;
+                }
                 stone.angularVelocity *= 0.5;
             }
         }
@@ -1422,12 +1451,8 @@ export class Physics {
             }
         }
         
-        // sweep_life upgrade - reduce sweep effectiveness
-        const sweepLifeLevel = state.upgrades.sweep_life?.level || 0;
-        const effectivenessMultiplier = 1 - (sweepLifeLevel * 0.25);
-        
         if (currentSpeed > this.stopThreshold) {
-            const boost = this.sweepBoost * intensity * effectivenessMultiplier;
+            const boost = this.sweepBoost * intensity;
             stone.vx *= (1 + boost * 0.01);
             stone.vy *= (1 + boost * 0.01);
             stone.angularVelocity *= 0.98;

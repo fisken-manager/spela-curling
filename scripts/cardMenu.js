@@ -325,8 +325,8 @@ export class CardMenu {
         // Special handling for specific upgrades
         const newLevel = currentLevel + 1;
 
-        // noNegativePickups - remove negative pickups
-        if (cardId === 'noNegativePickups' && newLevel > 0) {
+        // cleanse - remove negative pickups
+        if (cardId === 'cleanse' && newLevel > 0) {
             this.state.curlChaosPickups = [];
             this.state.sizeShrinkPickups = [];
         }

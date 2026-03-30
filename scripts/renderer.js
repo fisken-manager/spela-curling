@@ -767,6 +767,9 @@ drawLifePowerUps(state) {
     }
 
     drawCurlChaosPickups(state) {
+        // Don't draw if cleanse upgrade is active
+        if (state.upgrades.cleanse?.level > 0) return;
+        
         const playArea = state.getPlayArea();
         const config = state.curlChaosConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
@@ -833,6 +836,9 @@ drawLifePowerUps(state) {
     }
 
     drawSizeShrinkPickups(state) {
+        // Don't draw if cleanse upgrade is active
+        if (state.upgrades.cleanse?.level > 0) return;
+        
         const playArea = state.getPlayArea();
         const config = state.sizeShrinkConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
