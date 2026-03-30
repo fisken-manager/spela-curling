@@ -255,6 +255,22 @@ export class AudioEffectsSystem {
             params.distortionAmount = Math.max(params.distortionAmount, shopLevel * 8);
         }
 
+        // Spin_win: adds subtle stereo panning based on rotation
+        const spinWinLevel = upgrades.spin_win?.level || 0;
+        if (spinWinLevel > 0 && physics.angularVelocity) {
+            const spin = Math.abs(physics.angularVelocity);
+            // Gentle panning based on rotation direction
+            params.pan = Math.max(-1, Math.min(1, (physics.angularVelocity / 10) * spinWinLevel * 0.3));
+        }
+
+        // Spin_to_speed: adds mechanical stuttering effect via slight pitch modulation
+        const spinToSpeedLevel = upgrades.spin_to_speed?.level || 0;
+        if (spinToSpeedLevel > 0) {
+            // Add slight pitch wobble based on tier
+            const wobble = Math.sin(Date.now() * 0.01) * spinToSpeedLevel * 0.005;
+            params.playbackRate = Math.max(0.95, Math.min(1.05, params.playbackRate + wobble));
+        }
+
         // Cleanse: this should work by reducing other negative effects
         // but the effects themselves are computed from upgrades, so cleanse
         // just means "I don't have negative upgrades" - handled naturally
