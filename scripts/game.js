@@ -415,19 +415,8 @@ function gameLoop(timestamp) {
     prevShopTransition = null;
     
     // Update audio effects based on current upgrades (only during gameplay, not in shop)
-    if (!state.showBuyMenu && audio.isPlaying && audio.effectsSystem) {
-        // Check if any upgrades are active before updating effects
-        const hasUpgrades = audio.effectsSystem.hasActiveEffects(state.upgrades);
-        
-        if (hasUpgrades) {
-            const physicsData = {
-                velocity: state.stone?.velocity || { x: 0, y: 0 },
-                angularVelocity: state.stone?.angularVelocity || 0,
-                lives: state.lives ?? 1,
-                tarBoostActive: state.tarBoostActive || false,
-            };
-            audio.updateEffects(state.upgrades, physicsData);
-        }
+    if (!state.showBuyMenu && audio.isPlaying) {
+        audio.updateEffects(state.upgrades, {});
     }
     
     // Play/stop shop music

@@ -234,26 +234,10 @@ export class AudioController {
         }
     }
 
-    updateEffects(upgrades, physics) {
-        if (!this.effectsSystem || !this.isPlaying) return;
-        
-        this.activeUpgrades = upgrades;
-        this.effectsSystem.updateEffects(upgrades, physics);
-        
-        // Update playback rate if changed by effects system
-        const newRate = this.effectsSystem.getPlaybackRate();
-        if (Math.abs(newRate - this.currentPlaybackRate) > 0.001 && this.sourceNode) {
-            this.currentPlaybackRate = newRate;
-            try {
-                this.sourceNode.playbackRate.linearRampToValueAtTime(newRate, this.audioContext.currentTime + 0.1);
-            } catch (e) {}
-        }
-    }
-
     triggerAudioEffect(eventType, data = {}) {
         if (!this.effectsSystem) return;
         
-        // Call the appropriate trigger method based on event type
+        // Just trigger the effect - no per-frame updates needed
         switch(eventType) {
             case 'wallBounce':
                 this.effectsSystem.triggerWallBounce(this.activeUpgrades);
@@ -283,5 +267,10 @@ export class AudioController {
                 this.effectsSystem.triggerHerringsLastDance(this.activeUpgrades);
                 break;
         }
+    }
+
+    updateEffects(upgrades, physics) {
+        // No per-frame updates needed - just store upgrades
+        this.activeUpgrades = upgrades;
     }
 }
