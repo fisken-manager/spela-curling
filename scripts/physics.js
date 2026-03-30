@@ -275,7 +275,14 @@ export class Physics {
             stone.vx = 0;
             stone.vy = 0;
             stone.angularVelocity = 0;
-            state.phase = 'returning';
+            
+            // If no lives left, game over immediately without scrolling
+            if (state.lives <= 0) {
+                state.gameOver = true;
+                state.phase = 'returning';
+            } else {
+                state.phase = 'returning';
+            }
             return;
         }
 
