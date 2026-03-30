@@ -270,7 +270,24 @@ export class AudioController {
     }
 
     updateEffects(upgrades, physics) {
-        // No per-frame updates needed - just store upgrades
+        if (!this.effectsSystem || !this.isPlaying) return;
+        
         this.activeUpgrades = upgrades;
+        this.effectsSystem.updateEffects(upgrades, physics);
+        
+        // Get target playback rate from effects system
+        const newRate = this.effectsSystem.getPlaybackRate();
+        
+        // Apply to source node with smooth transition
+        if (Math.abs(newRate - this.currentPlaybackRate) > 0.001 && this.sourceNode) {
+            this.currentPlaybackRate = newRate;
+            const now = this.audioContext.currentTime;
+            try {
+                this.sourceNode.playbackRate.linearRampToValueAtTime(newRate, now + 0.05);
+            } catch (e) {
+                // Fallback if ramp fails
+                this.sourceNode.playbackRate.value = newRate;
+            }
+        }
     }
 }
