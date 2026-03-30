@@ -1035,6 +1035,7 @@ export class Physics {
     handleBounds(state, effectiveRadius, audio = null) {
         const { stone } = state;
         const playArea = state.getPlayArea();
+        const speed = Math.sqrt(stone.vx * stone.vx + stone.vy * stone.vy);
         const leftBound = effectiveRadius - playArea.width / 2;
         const rightBound = playArea.width / 2 - effectiveRadius;
         
