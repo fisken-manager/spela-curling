@@ -341,8 +341,9 @@ export class Physics {
             ...(state.rotationPowerUps || []),
             ...(state.superBoostPowerUps || []),
             ...(state.growthPowerUps || []),
-            ...(state.curlChaosPickups || []),
-            ...(state.sizeShrinkPickups || [])
+            // Only include negative pickups if cleanse is NOT active
+            ...(state.upgrades.cleanse?.level > 0 ? [] : state.curlChaosPickups || []),
+            ...(state.upgrades.cleanse?.level > 0 ? [] : state.sizeShrinkPickups || [])
         ];
 
         for (const pickup of allPickups) {
