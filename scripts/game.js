@@ -54,7 +54,8 @@ function setupControls() {
     const rotRangeVal = document.getElementById('rotRange-val');
 
     if (frictionSlider) frictionSlider.addEventListener('input', (e) => {
-        physics.baseFriction = parseFloat(e.target.value);
+        const newVal = parseFloat(e.target.value);
+        physics.baseFriction = newVal;
         frictionVal.textContent = e.target.value;
     });
 
