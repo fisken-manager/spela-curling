@@ -156,15 +156,9 @@ export class AudioController {
         this.sourceNode.buffer = this.audioBuffer;
         this.sourceNode.playbackRate.value = this.currentPlaybackRate;
         
-        // Use effects chain only when upgrades are active
-        const hasEffects = this.effectsSystem && this.effectsSystem.isInitialized && 
-                           this.effectsSystem.hasActiveEffects(this.activeUpgrades);
-
-        if (hasEffects) {
-            this.effectsSystem.connectChain(this.sourceNode, this.audioContext.destination);
-        } else {
-            this.sourceNode.connect(this.audioContext.destination);
-        }
+        // ALWAYS connect directly to destination - no effects chain
+        // Effects are handled via playback rate modulation only
+        this.sourceNode.connect(this.audioContext.destination);
         
         const offset = this.currentPosition * this.audioBuffer.duration;
         this.sourceNode.start(0, offset);
@@ -219,11 +213,7 @@ export class AudioController {
             this.sourceNode = null;
         }
         
-        // Disconnect effects chain
-        if (this.effectsSystem) {
-            this.effectsSystem.disconnectChain();
-        }
-        
+        // No effects chain to disconnect - effects use playback rate only
         this.isPlaying = false;
     }
 
@@ -262,10 +252,36 @@ export class AudioController {
 
     triggerAudioEffect(eventType, data = {}) {
         if (!this.effectsSystem) return;
-        // Pass upgrades from activeUpgrades to the trigger
-        this.effectsSystem.triggerEffect(eventType, data.upgradeId || eventType, {
-            ...data,
-            upgrades: this.activeUpgrades
-        });
+        
+        // Call the appropriate trigger method based on event type
+        switch(eventType) {
+            case 'wallBounce':
+                this.effectsSystem.triggerWallBounce(this.activeUpgrades);
+                break;
+            case 'coinCollect':
+                this.effectsSystem.triggerCoinCollect(this.activeUpgrades);
+                break;
+            case 'dimensionDoor':
+                this.effectsSystem.triggerDimensionDoor(this.activeUpgrades);
+                break;
+            case 'negativePickup':
+                this.effectsSystem.triggerNegativePickup(this.activeUpgrades);
+                break;
+            case 'sweepStart':
+                this.effectsSystem.triggerSweepStart(this.activeUpgrades);
+                break;
+            case 'sweepEnd':
+                this.effectsSystem.triggerSweepEnd(this.activeUpgrades);
+                break;
+            case 'directionChange':
+                this.effectsSystem.triggerDirectionChange(this.activeUpgrades);
+                break;
+            case 'tarBoost':
+                this.effectsSystem.triggerTarBoost(this.activeUpgrades);
+                break;
+            case 'herringsLastDance':
+                this.effectsSystem.triggerHerringsLastDance(this.activeUpgrades);
+                break;
+        }
     }
 }

@@ -227,7 +227,7 @@ export class InputHandler {
                     if (speedPxPerMs > 0.5 * scale && vy < 0 && distance > 10 * scale) {
                         this.state.aimAngle = Math.atan2(vx, -vy);
                         const powerValue = Math.min(100, (speedPxPerMs / scale / 3) * 100);
-                        this.physics.launch(this.state, powerValue);
+                        this.physics.launch(this.state, powerValue, this.audio);
                         flickValid = true;
                     }
                 }

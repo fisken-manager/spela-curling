@@ -159,7 +159,7 @@ export class Physics {
     update(state, deltaTime, audio = null) {
         if (state.phase !== 'moving') return;
         this.updateFrictionBoost(state, deltaTime);
-        this.updateSweepBoost(state, deltaTime);
+        this.updateSweepBoost(state, deltaTime, audio);
         this.updateGrowthBoost(state, deltaTime);
         this.updateTarBoost(state, deltaTime);
         this.updateRailRider(state, deltaTime);
@@ -233,7 +233,7 @@ export class Physics {
         }
     }
 
-    updateSweepBoost(state, deltaTime) {
+    updateSweepBoost(state, deltaTime, audio = null) {
         if (!state.sweepBoost) return;
         
         // Count down grace period for frozen_broom
@@ -248,6 +248,14 @@ export class Physics {
                 state.money += state.frozen_broom_bonus || 0;
                 this.addPowerUpText(state, 0, `+$${state.frozen_broom_bonus}!`, '255, 215, 0');
             }
+            
+            // Trigger sweep end audio effect
+            if (audio && audio.triggerAudioEffect) {
+                audio.triggerAudioEffect('sweepEnd', {
+                    upgradeId: 'sweep_life'
+                });
+            }
+            
             state.sweepBoost = null;
             state.frozen_broom_boost_active = false;
             state.frozen_broom_bonus = 0;
@@ -567,6 +575,13 @@ export class Physics {
                     state.sweepBoost = {
                         timer: config.duration
                     };
+                    
+                    // Trigger sweep start audio effect
+                    if (audio && audio.triggerAudioEffect) {
+                        audio.triggerAudioEffect('sweepStart', {
+                            upgradeId: 'sweep_life'
+                        });
+                    }
                     
                     // frozen_broom - reset tracking when sweep boost starts
                     if (state.upgrades.frozen_broom?.level > 0) {
@@ -1430,10 +1445,20 @@ export class Physics {
         }
     }
 
-    launch(state, flickPower = 50) {
+    launch(state, flickPower = 50, audio = null) {
         const { stone } = state;
         
         state.lives--;
+        
+        // Trigger herrings_last_dance audio effect when at 0 lives
+        if (state.lives === 0 && state.upgrades.herrings_last_dance?.level > 0) {
+            if (audio && audio.triggerAudioEffect) {
+                audio.triggerAudioEffect('herringsLastDance', {
+                    upgradeId: 'herrings_last_dance',
+                    duration: 999 // Long duration
+                });
+            }
+        }
         
         // Reset throw-specific counters
         state.items_collected_this_throw = 0;
@@ -1450,6 +1475,14 @@ export class Physics {
             state.tarBoostActive = true;
             state.tarBoostTimer = 10 + tarLevel * 5;
             state.tar_launchUsed = true;
+            
+            // Trigger tar boost audio effect
+            if (audio && audio.triggerAudioEffect) {
+                audio.triggerAudioEffect('tarBoost', {
+                    upgradeId: 'tar_launch',
+                    duration: 10 + tarLevel * 5
+                });
+            }
         }
         
         const maxVel = this.getMaxVelocity(state);
