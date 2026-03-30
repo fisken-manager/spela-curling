@@ -82,6 +82,11 @@ export class Physics {
             } else {
                 maxVel *= 0.5; // -50% when safe
             }
+            // Update audio effect based on lives (tremolo at 0, muffled at 1+)
+            state.updateHerringsDance?.(state.lives);
+        } else {
+            // Make sure audio is normal when upgrade not active
+            state.updateHerringsDance?.(1);
         }
 
         return maxVel;
@@ -276,6 +281,18 @@ export class Physics {
             stone.vy = 0;
             stone.angularVelocity = 0;
             
+            // Reset friction forge bounce counter when stone stops
+            state.friction_forge_bounce_count = 0;
+            
+            // Reset coin streak when stone stops
+            state.coinStreakCount = 0;
+            if (state.coinStreakTimeout) {
+                clearTimeout(state.coinStreakTimeout);
+            }
+            
+            // Reset all audio effects when stone stops
+            state.resetAudioEffects?.();
+            
             // If no lives left, game over immediately without scrolling
             if (state.lives <= 0) {
                 state.gameOver = true;
@@ -332,7 +349,11 @@ export class Physics {
 
         applyPickupAttraction(state) {
         const eventHorizonLevel = state.upgrades.event_horizon?.level || 0;
-        if (eventHorizonLevel === 0) return;
+        if (eventHorizonLevel === 0) {
+            // No event horizon active, stop any rumble
+            state.updateEventHorizonRumble?.(0, 5);
+            return;
+        }
 
         const eventHorizonRadius = 50 + eventHorizonLevel * 75;
         const eventHorizonStrength = 0.02 + eventHorizonLevel * 0.02;
@@ -353,6 +374,8 @@ export class Physics {
             ...(state.upgrades.cleanse?.level > 0 ? [] : state.sizeShrinkPickups || [])
         ];
 
+        let pickupsInRange = 0;
+
         for (const pickup of allPickups) {
             if (pickup.collected) continue;
 
@@ -363,12 +386,16 @@ export class Physics {
             const dist = Math.sqrt(dx * dx + dy * dy);
 
             if (dist > 0 && dist < eventHorizonRadius) {
+                pickupsInRange++;
                 const pullX = (dx / dist) * eventHorizonStrength * 60;
                 const pullY = (dy / dist) * eventHorizonStrength * 60;
                 pickup.x += pullX;
                 pickup.scrollProgress += pullY / maxScroll;
             }
         }
+
+        // Trigger sub-bass rumble based on pickups in range
+        state.updateEventHorizonRumble?.(pickupsInRange, 5);
     }
 
     applyMagnetismToPickup(state, pickup, objectRadius, maxScroll, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength) {
@@ -954,6 +981,16 @@ export class Physics {
                         stone.vy *= scale;
                     }
                 }
+                
+                // Track coin streak and trigger audio effect
+                state.coinStreakCount = (state.coinStreakCount || 0) + 1;
+                state.triggerCoinChop?.(state.coinStreakCount);
+                
+                // Reset streak after delay
+                clearTimeout(state.coinStreakTimeout);
+                state.coinStreakTimeout = setTimeout(() => {
+                    state.coinStreakCount = 0;
+                }, 2000);
             }
             
             const playArea = state.getPlayArea();
@@ -1134,11 +1171,14 @@ export class Physics {
             // Rail_rider: glide along wall instead of bouncing
             if (canRailRide) {
                 state.rail_rider_active = true;
-                state.rail_rider_timer = 2 + (railRiderLevel - 1);
+                const railRiderDuration = 2 + (railRiderLevel - 1);
+                state.rail_rider_timer = railRiderDuration;
                 state.rail_rider_cooldown = 10;
                 state.rail_rider_wall = 'left';
                 stone.vx = 0;
                 this.addPowerUpText(state, stone.x, 'TIMMERMANNENS GREPP!', '100, 200, 255');
+                // Trigger rail rider pitch bend audio effect
+                state.triggerRailRiderSlide?.(true, railRiderDuration);
             } else {
                 // Spindelns Väv - make bounce shallower (more toward walls), same speed
                 const spidersWebLevel = state.upgrades.spiders_web?.level || 0;
@@ -1159,11 +1199,14 @@ export class Physics {
             // Rail_rider: glide along wall instead of bouncing
             if (canRailRide) {
                 state.rail_rider_active = true;
-                state.rail_rider_timer = 2 + (railRiderLevel - 1);
+                const railRiderDuration = 2 + (railRiderLevel - 1);
+                state.rail_rider_timer = railRiderDuration;
                 state.rail_rider_cooldown = 10;
                 state.rail_rider_wall = 'right';
                 stone.vx = 0;
                 this.addPowerUpText(state, stone.x, 'TIMMERMANNENS GREPP!', '100, 200, 255');
+                // Trigger rail rider pitch bend audio effect
+                state.triggerRailRiderSlide?.(true, railRiderDuration);
             } else {
                 // Spindelns Väv - make bounce shallower (more toward walls), same speed
                 const spidersWebLevel = state.upgrades.spiders_web?.level || 0;
@@ -1194,6 +1237,14 @@ export class Physics {
         const bounced = !state.rail_rider_active && (stone.x <= leftBound || stone.x >= rightBound);
         
         if (bounced) {
+            // Track consecutive bounces for friction_forge audio effect
+            state.friction_forge_bounce_count = (state.friction_forge_bounce_count || 0) + 1;
+            
+            // Trigger metallic ping for friction_forge
+            if (frictionForgeLevel > 0) {
+                state.triggerMetallicPing?.(state.friction_forge_bounce_count);
+            }
+            
             // Wall_ping_coin upgrade - earn money on bounces
             if (wallPingCoinLevel > 0) {
                 state.wall_bounces_since_coin = (state.wall_bounces_since_coin || 0) + 1;
@@ -1461,6 +1512,8 @@ export class Physics {
             state.tarBoostActive = true;
             state.tarBoostTimer = 10 + tarLevel * 5;
             state.tar_launchUsed = true;
+            // Trigger tar boost audio effect
+            state.triggerTarBoost?.(tarLevel, state.tarBoostTimer);
         }
         
         const maxVel = this.getMaxVelocity(state);

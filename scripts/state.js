@@ -747,4 +747,46 @@ export class GameState {
             this.audioController.triggerEchoEffect(intensity);
         }
     }
+
+    triggerTarBoost(level = 1, duration = 10) {
+        if (this.audioController) {
+            this.audioController.triggerTarBoost(level, duration);
+        }
+    }
+
+    updateEventHorizonRumble(pickupCount = 0, maxPickups = 5) {
+        if (this.audioController) {
+            this.audioController.updateEventHorizonRumble(pickupCount, maxPickups);
+        }
+    }
+
+    triggerMetallicPing(bounceCount = 1) {
+        if (this.audioController) {
+            this.audioController.triggerMetallicPing(bounceCount);
+        }
+    }
+
+    triggerRailRiderSlide(active = true, duration = 2) {
+        if (this.audioController) {
+            this.audioController.triggerRailRiderSlide(active, duration);
+        }
+    }
+
+    updateHerringsDance(lives = 1) {
+        if (this.audioController) {
+            this.audioController.updateHerringsDanceEffect(lives);
+        }
+    }
+
+    triggerCoinChop(streakCount = 1) {
+        if (this.audioController) {
+            this.audioController.triggerCoinChop(streakCount);
+        }
+    }
+
+    resetAudioEffects() {
+        if (this.audioController) {
+            this.audioController.resetAudioEffects();
+        }
+    }
 }

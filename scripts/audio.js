@@ -27,6 +27,21 @@ export class AudioController {
         this.mergerNode = null;
         this.dryGain = null;
         this.wetGain = null;
+        // Bitcrusher node for Tjärens Offer
+        this.bitcrusherNode = null;
+        this.tarBoostActive = false;
+        // Sub-bass oscillator for Händelsehorisonten
+        this.subBassOscillator = null;
+        this.subBassGain = null;
+        this.eventHorizonActive = false;
+        // Metallic ping nodes for Slitvargens Flit
+        this.metallicPingNode = null;
+        this.metallicPingGain = null;
+        // Tremolo for Sillens Sista Dans
+        this.tremoloOscillator = null;
+        this.tremoloGain = null;
+        this.herringsLastDanceActive = false;
+        this.lastLives = null;
     }
 
     async init(playlist) {
@@ -325,6 +340,55 @@ export class AudioController {
         }
     }
 
+    // Safety reset - call this to ensure audio returns to normal state
+    resetAudioEffects() {
+        if (!this.audioContext) return;
+        
+        const now = this.audioContext.currentTime;
+        
+        // Reset filter to bypass
+        if (this.filterNode) {
+            this.filterNode.frequency.cancelScheduledValues(now);
+            this.filterNode.Q.cancelScheduledValues(now);
+            this.filterNode.frequency.setValueAtTime(20000, now);
+            this.filterNode.Q.setValueAtTime(1, now);
+        }
+        
+        // Reset gains to normal
+        if (this.dryGain) {
+            this.dryGain.gain.cancelScheduledValues(now);
+            this.dryGain.gain.setValueAtTime(1.0, now);
+        }
+        
+        if (this.wetGain) {
+            this.wetGain.gain.cancelScheduledValues(now);
+            this.wetGain.gain.setValueAtTime(0.0, now);
+        }
+        
+        // Stop tremolo if active
+        if (this.tremoloOscillator) {
+            this.tremoloOscillator.stop();
+            this.tremoloOscillator.disconnect();
+            if (this.tremoloGain) this.tremoloGain.disconnect();
+            this.tremoloOscillator = null;
+            this.tremoloGain = null;
+        }
+        
+        // End tar boost if active
+        if (this.tarBoostActive) {
+            this.endTarBoost();
+        }
+        
+        // Stop sub-bass if active
+        if (this.subBassOscillator) {
+            this.subBassOscillator.stop();
+            this.subBassOscillator.disconnect();
+            if (this.subBassGain) this.subBassGain.disconnect();
+            this.subBassOscillator = null;
+            this.subBassGain = null;
+        }
+    }
+
     triggerTeleportWhoosh(velocityIntensity = 1) {
         if (!this.audioContext || !this.filterNode) return;
         
@@ -388,15 +452,15 @@ export class AudioController {
             this.sourceNode.playbackRate.linearRampToValueAtTime(originalRate, now + duration);
         }
         
-        // Return to bypass state after effect
+        // Return to bypass state after effect - FASTER
         setTimeout(() => {
             if (this.filterNode && this.audioContext) {
                 const restoreTime = this.audioContext.currentTime;
                 this.filterNode.frequency.cancelScheduledValues(restoreTime);
-                this.filterNode.frequency.setTargetAtTime(20000, restoreTime, 0.05);
-                this.filterNode.Q.setTargetAtTime(1, restoreTime, 0.05);
+                this.filterNode.frequency.setValueAtTime(20000, restoreTime); // Hard reset
+                this.filterNode.Q.setValueAtTime(1, restoreTime); // Hard reset
             }
-        }, duration * 1000);
+        }, duration * 1000 + 50); // +50ms buffer
     }
 
     triggerEchoEffect(intensity = 1) {
@@ -404,39 +468,361 @@ export class AudioController {
         
         const now = this.audioContext.currentTime;
         
-        // MUCH MORE NOTICEABLE echo effect
-        // intensity 0.8 -> strong echo (45% wet)
-        // intensity 1.6 -> very strong echo (65% wet)
-        // intensity 2.4 -> overwhelming echo (80% wet)
-        const wetAmount = Math.min(0.8, 0.45 + (intensity * 0.15));
-        const dryAmount = 1.0 - (wetAmount * 0.2); // Keep dry prominent so it doesn't get lost
+        // Intensity-based echo levels
+        const wetAmount = Math.min(0.7, 0.35 + (intensity * 0.15));
+        const dryAmount = 1.0 - (wetAmount * 0.15);
         
-        // Fade in echo quickly over 50ms
+        // Fade in echo quickly over 30ms
         this.dryGain.gain.cancelScheduledValues(now);
         this.wetGain.gain.cancelScheduledValues(now);
         
-        // Immediate jump to echo levels for impact
         this.dryGain.gain.setValueAtTime(dryAmount, now);
         this.wetGain.gain.setValueAtTime(wetAmount, now);
         
-        // Hold for 0.8-2.0 seconds depending on intensity (longer for more noticeable effect)
-        const holdTime = 0.8 + (intensity * 0.5);
+        // Shorter hold time - 0.4 to 1.0 seconds
+        const holdTime = 0.4 + (intensity * 0.3);
         
-        // Fade back to dry more slowly
+        // Fade back to dry faster
         setTimeout(() => {
             if (this.dryGain && this.wetGain && this.audioContext) {
                 const fadeTime = this.audioContext.currentTime;
-                const fadeDuration = 0.6; // Slower fade out
+                const fadeDuration = 0.3; // Fast fade out
                 
                 this.dryGain.gain.cancelScheduledValues(fadeTime);
                 this.wetGain.gain.cancelScheduledValues(fadeTime);
                 
-                this.dryGain.gain.setValueAtTime(this.dryGain.gain.value, fadeTime);
-                this.wetGain.gain.setValueAtTime(this.wetGain.gain.value, fadeTime);
+                this.dryGain.gain.setValueAtTime(1.0, fadeTime);
+                this.wetGain.gain.setValueAtTime(0.0, fadeTime);
                 
                 this.dryGain.gain.linearRampToValueAtTime(1.0, fadeTime + fadeDuration);
                 this.wetGain.gain.linearRampToValueAtTime(0.0, fadeTime + fadeDuration);
             }
         }, holdTime * 1000);
+    }
+
+    // === Tjärens Offer (tar_launch) - Inferno Mode ===
+    triggerTarBoost(level = 1, duration = 10) {
+        if (!this.audioContext || !this.filterNode) return;
+        
+        const now = this.audioContext.currentTime;
+        this.tarBoostActive = true;
+        
+        // Intensity based on tar_launch level - MORE EXTREME
+        const intensity = level === 1 ? 2.0 : 3.0;
+        
+        // Create bitcrusher effect using waveshaper for distortion - MORE DISTORTION
+        if (!this.bitcrusherNode) {
+            this.bitcrusherNode = this.audioContext.createWaveShaper();
+            this.bitcrusherNode.curve = this._makeDistortionCurve(intensity * 100); // Doubled from 50 to 100
+            this.bitcrusherNode.oversample = '4x';
+        } else {
+            this.bitcrusherNode.curve = this._makeDistortionCurve(intensity * 100);
+        }
+        
+        // Ramp up distortion faster - 0.3s
+        const rampUpTime = 0.3;
+        
+        // More dramatic filter sweep - start lower, peak higher
+        this.filterNode.frequency.cancelScheduledValues(now);
+        this.filterNode.Q.cancelScheduledValues(now);
+        
+        this.filterNode.frequency.setValueAtTime(400, now); // Start very muffled (400Hz)
+        this.filterNode.frequency.exponentialRampToValueAtTime(6000, now + rampUpTime); // Peak much higher
+        this.filterNode.frequency.exponentialRampToValueAtTime(400, now + duration - 0.3); // Close near end
+        
+        // Increase Q for more resonance/character
+        this.filterNode.Q.setValueAtTime(5, now);
+        this.filterNode.Q.linearRampToValueAtTime(8, now + rampUpTime);
+        this.filterNode.Q.linearRampToValueAtTime(5, now + duration - 0.3);
+        
+        // Insert bitcrusher into the chain temporarily
+        if (this.filterNode && this.dryGain) {
+            this.filterNode.disconnect();
+            this.filterNode.connect(this.bitcrusherNode);
+            this.bitcrusherNode.connect(this.dryGain);
+        }
+        
+        // End the effect after duration
+        setTimeout(() => {
+            this.endTarBoost();
+        }, duration * 1000);
+    }
+    
+    endTarBoost() {
+        if (!this.audioContext || !this.tarBoostActive) return;
+        
+        const now = this.audioContext.currentTime;
+        this.tarBoostActive = false;
+        
+        // Ramp down distortion and return to bypass
+        if (this.filterNode && this.dryGain && this.bitcrusherNode) {
+            this.filterNode.frequency.cancelScheduledValues(now);
+            this.filterNode.Q.cancelScheduledValues(now);
+            
+            // Hard reset to bypass
+            this.filterNode.frequency.setValueAtTime(20000, now);
+            this.filterNode.Q.setValueAtTime(1, now);
+            
+            // Remove bitcrusher from chain
+            this.filterNode.disconnect();
+            this.bitcrusherNode.disconnect();
+            this.filterNode.connect(this.dryGain);
+        }
+    }
+    
+    _makeDistortionCurve(amount) {
+        const k = typeof amount === 'number' ? amount : 50;
+        const n_samples = 44100;
+        const curve = new Float32Array(n_samples);
+        const deg = Math.PI / 180;
+        for (let i = 0; i < n_samples; ++i) {
+            const x = i * 2 / n_samples - 1;
+            curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x));
+        }
+        return curve;
+    }
+
+    // === Händelsehorisonten (event_horizon) - Sub-bass Rumble ===
+    updateEventHorizonRumble(pickupCount = 0, maxPickups = 5) {
+        if (!this.audioContext) return;
+        
+        const now = this.audioContext.currentTime;
+        
+        // Create or update sub-bass oscillator
+        if (!this.subBassOscillator && pickupCount > 0) {
+            this.subBassOscillator = this.audioContext.createOscillator();
+            this.subBassOscillator.type = 'sine';
+            this.subBassOscillator.frequency.value = 45; // 45Hz sub-bass
+            
+            this.subBassGain = this.audioContext.createGain();
+            this.subBassGain.gain.value = 0;
+            
+            this.subBassOscillator.connect(this.subBassGain);
+            this.subBassGain.connect(this.audioContext.destination);
+            this.subBassOscillator.start();
+        }
+        
+        if (this.subBassGain) {
+            // Volume scales with pickup count (0 to 0.25 max)
+            const rumbleVolume = Math.min(0.25, (pickupCount / maxPickups) * 0.25);
+            this.subBassGain.gain.setTargetAtTime(rumbleVolume, now, 0.1);
+        }
+        
+        // Stop if no pickups
+        if (pickupCount === 0 && this.subBassOscillator) {
+            if (this.subBassGain) {
+                this.subBassGain.gain.setTargetAtTime(0, now, 0.2);
+            }
+            setTimeout(() => {
+                if (this.subBassOscillator) {
+                    this.subBassOscillator.stop();
+                    this.subBassOscillator.disconnect();
+                    this.subBassOscillator = null;
+                    if (this.subBassGain) {
+                        this.subBassGain.disconnect();
+                        this.subBassGain = null;
+                    }
+                }
+            }, 300);
+        }
+    }
+
+    // === Slitvargens Flit (friction_forge) - Metallic Ping ===
+    triggerMetallicPing(bounceCount = 1) {
+        if (!this.audioContext) return;
+        
+        const now = this.audioContext.currentTime;
+        
+        // Create metallic ping using bandpass filter + short decay
+        const pingOsc = this.audioContext.createOscillator();
+        const pingGain = this.audioContext.createGain();
+        const pingFilter = this.audioContext.createBiquadFilter();
+        
+        // Ping frequency slides from 1200Hz down to 600Hz
+        pingOsc.type = 'triangle';
+        pingOsc.frequency.setValueAtTime(1200, now);
+        pingOsc.frequency.exponentialRampToValueAtTime(600, now + 0.15);
+        
+        // Sharp bandpass for metallic character
+        pingFilter.type = 'bandpass';
+        pingFilter.frequency.value = 1000;
+        pingFilter.Q.value = 15;
+        
+        // Volume based on bounce streak
+        const volume = Math.min(0.3, 0.1 + (bounceCount * 0.05));
+        pingGain.gain.setValueAtTime(volume, now);
+        pingGain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+        
+        pingOsc.connect(pingFilter);
+        pingFilter.connect(pingGain);
+        pingGain.connect(this.audioContext.destination);
+        
+        pingOsc.start(now);
+        pingOsc.stop(now + 0.35);
+        
+        // Add harmonic overtones to music if bounce streak is high
+        if (bounceCount >= 3 && this.filterNode) {
+            this.filterNode.Q.setTargetAtTime(3 + (bounceCount * 0.5), now, 0.1);
+        }
+    }
+
+    // === Timmermannens Grepp (rail_rider) - Pitch Bend UP (without speed change) ===
+    triggerRailRiderSlide(active = true, duration = 2) {
+        if (!this.audioContext || !this.sourceNode) return;
+        
+        const now = this.audioContext.currentTime;
+        
+        if (active) {
+            // Pitch UP using detune (cents) - doesn't affect playback speed
+            // +600 cents = +6 semitones (tritone up) - very noticeable but musical
+            const originalDetune = 0;
+            const bentDetune = 600; // 6 semitones up (was 400)
+            
+            // Also add high-pass filter to make it feel "airy" while sliding
+            if (this.filterNode) {
+                this.filterNode.frequency.cancelScheduledValues(now);
+                this.filterNode.frequency.setValueAtTime(20000, now);
+                // High-pass sweep: cut bass, emphasize treble for "sliding on rails" feel
+                this.filterNode.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+                this.filterNode.Q.setValueAtTime(1, now);
+                this.filterNode.Q.linearRampToValueAtTime(4, now + 0.2);
+            }
+            
+            // Immediate dramatic pitch rise
+            this.sourceNode.detune.cancelScheduledValues(now);
+            this.sourceNode.detune.setValueAtTime(originalDetune, now);
+            this.sourceNode.detune.linearRampToValueAtTime(bentDetune, now + 0.1);
+            
+            // Hold the bent pitch for most of the duration
+            const holdEnd = now + duration - 0.4;
+            if (holdEnd > now + 0.2) {
+                this.sourceNode.detune.setValueAtTime(bentDetune, holdEnd);
+            }
+            
+            // Schedule return to normal pitch
+            setTimeout(() => {
+                if (this.sourceNode && this.audioContext) {
+                    const returnTime = this.audioContext.currentTime;
+                    // Return with exponential curve
+                    this.sourceNode.detune.cancelScheduledValues(returnTime);
+                    this.sourceNode.detune.setValueAtTime(bentDetune, returnTime);
+                    this.sourceNode.detune.linearRampToValueAtTime(originalDetune, returnTime + 0.4);
+                    
+                    // Reset filter
+                    if (this.filterNode) {
+                        this.filterNode.frequency.cancelScheduledValues(returnTime);
+                        this.filterNode.Q.cancelScheduledValues(returnTime);
+                        this.filterNode.frequency.setValueAtTime(20000, returnTime);
+                        this.filterNode.Q.setValueAtTime(1, returnTime);
+                    }
+                }
+            }, duration * 1000);
+        }
+    }
+
+    // === Sillens Sista Dans (herrings_last_dance) - Tremolo vs Muffled ===
+    updateHerringsDanceEffect(lives = 1) {
+        if (!this.audioContext || !this.filterNode) return;
+        
+        const now = this.audioContext.currentTime;
+        
+        // If lives changed, update effect
+        if (this.lastLives !== lives) {
+            this.lastLives = lives;
+            
+            if (lives === 0) {
+                // At 0 lives: Add tremolo (panic effect)
+                if (!this.tremoloOscillator) {
+                    this.tremoloOscillator = this.audioContext.createOscillator();
+                    this.tremoloOscillator.type = 'sine';
+                    this.tremoloOscillator.frequency.value = 5; // 5Hz tremolo
+                    
+                    this.tremoloGain = this.audioContext.createGain();
+                    this.tremoloGain.gain.value = 0.3; // 30% depth
+                    
+                    // Connect tremolo to modulate the dry gain
+                    if (this.dryGain) {
+                        this.tremoloOscillator.connect(this.tremoloGain);
+                        this.tremoloGain.connect(this.dryGain.gain);
+                        this.tremoloOscillator.start();
+                    }
+                }
+                
+                // Remove any lowpass muffling - return to full frequency
+                this.filterNode.frequency.setTargetAtTime(20000, now, 0.3);
+                
+            } else {
+                // At 1+ lives: Stop tremolo and return to normal
+                if (this.tremoloOscillator) {
+                    this.tremoloOscillator.stop();
+                    this.tremoloOscillator.disconnect();
+                    this.tremoloGain.disconnect();
+                    this.tremoloOscillator = null;
+                    this.tremoloGain = null;
+                }
+                
+                // Return to normal frequency (not muffled!)
+                this.filterNode.frequency.setTargetAtTime(20000, now, 0.3);
+            }
+        }
+    }
+
+    // === Blodspengar (coinSpeedBoost) - Staccato Chop + Filter ===
+    triggerCoinChop(streakCount = 1) {
+        if (!this.audioContext || !this.dryGain || !this.filterNode) return;
+        
+        const now = this.audioContext.currentTime;
+        
+        // Intensity based on streak - more coins = more aggressive effect
+        const maxStreak = 5;
+        const intensity = Math.min(streakCount / maxStreak, 1.0); // 0.0 to 1.0
+        
+        // Create staccato chop effect - rapidly gate the volume
+        const chopDuration = 0.1 + (intensity * 0.1); // 100ms to 200ms (SHORTER!)
+        const numChops = 2 + Math.floor(intensity * 3); // 2 to 5 chops
+        const chopInterval = chopDuration / numChops;
+        
+        // Cancel any existing gain schedules
+        this.dryGain.gain.cancelScheduledValues(now);
+        this.filterNode.frequency.cancelScheduledValues(now);
+        
+        // Create the chop pattern (volume drops to near-zero then back)
+        let currentTime = now;
+        for (let i = 0; i < numChops; i++) {
+            // Chop closed (silent)
+            this.dryGain.gain.setValueAtTime(0.1, currentTime);
+            currentTime += chopInterval * 0.3; // 30% of interval is "chopped"
+            
+            // Chop open (loud)
+            this.dryGain.gain.setValueAtTime(1.0, currentTime);
+            currentTime += chopInterval * 0.7; // 70% of interval is "open"
+        }
+        
+        // High-pass filter opens up for brighter energy, then returns to bypass
+        const peakFreq = 3000 + (intensity * 4000); // 3000Hz to 7000Hz
+        
+        this.filterNode.frequency.setValueAtTime(20000, now); // Start bypassed
+        this.filterNode.frequency.exponentialRampToValueAtTime(peakFreq, now + chopDuration * 0.3);
+        this.filterNode.frequency.exponentialRampToValueAtTime(20000, now + chopDuration); // Return to bypass!
+        
+        // Increase Q briefly
+        this.filterNode.Q.setValueAtTime(1, now);
+        this.filterNode.Q.linearRampToValueAtTime(2 + intensity * 2, now + chopDuration * 0.3);
+        this.filterNode.Q.linearRampToValueAtTime(1, now + chopDuration);
+        
+        // Ensure everything resets after chops
+        setTimeout(() => {
+            if (this.dryGain && this.filterNode && this.audioContext) {
+                const resetTime = this.audioContext.currentTime;
+                this.dryGain.gain.cancelScheduledValues(resetTime);
+                this.filterNode.frequency.cancelScheduledValues(resetTime);
+                this.filterNode.Q.cancelScheduledValues(resetTime);
+                
+                // Hard reset to normal
+                this.dryGain.gain.setValueAtTime(1.0, resetTime);
+                this.filterNode.frequency.setValueAtTime(20000, resetTime);
+                this.filterNode.Q.setValueAtTime(1, resetTime);
+            }
+        }, chopDuration * 1000 + 50); // +50ms buffer
     }
 }
