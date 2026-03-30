@@ -22,6 +22,7 @@ export class TransitionController {
         this.startWorldY = state.stone.worldY;
         this.targetYPx = state.screenHeight - state.restOffsetPx;
         this.wasInScrollZone = state.inScrollZone;
+        this.startScrollProgress = state.scrollProgress;
     }
 
     update(deltaTime, state, scrollController) {
@@ -52,10 +53,12 @@ export class TransitionController {
                 state.scrollProgress = state.stone.worldY / maxScroll;
             }
         } else {
-            // When not in scroll zone, recalculate worldY from current scrollProgress
-            // to preserve the scroll position instead of resetting it
+            // When not in scroll zone, animate scrollProgress back down to 0
+            // so the content scrolls down as the stone returns
             const maxScroll = state.pageHeight - state.screenHeight;
             if (maxScroll > 0) {
+                const targetScrollProgress = 0;
+                state.scrollProgress = this.startScrollProgress + (targetScrollProgress - this.startScrollProgress) * eased;
                 state.stone.worldY = state.scrollProgress * maxScroll;
             }
         }
