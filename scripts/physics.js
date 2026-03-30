@@ -6,7 +6,7 @@ export class Physics {
         this.sweepBoost = 1.5;
         this.stopThreshold = 0.1;
         
-        this.baseFriction = 0.01;
+        this.baseFriction = 1.6;
         this.baseCurlStrength = 0.2;
         this.angularDecayFactor = 0.15;
         
@@ -32,7 +32,7 @@ export class Physics {
         // Tung Börda - size penalty to max velocity
         const sizeLevel = state.upgrades.size?.level || 0;
         if (sizeLevel > 0) {
-            maxVel *= (1 - sizeLevel * 0.1);
+            maxVel *= (1 - sizeLevel * 0.01);
         }
         
         // Friction forge permanent speed bonus
