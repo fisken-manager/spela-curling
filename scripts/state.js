@@ -724,11 +724,27 @@ export class GameState {
         this.transitionDistance = this.stoneYPx / this.screenHeight - 0.5;
     }
 
-triggerScreenShake(intensity, duration) {
+    triggerScreenShake(intensity, duration) {
         this.screenShake = { intensity, duration, timer: duration };
     }
 
-triggerRingFlash(x, y, color) {
+    triggerRingFlash(x, y, color) {
         this.ringFlash = { x, y, color, radius: 0, maxRadius: 60, duration: 0.2, timer: 0.2 };
+    }
+
+    setAudioController(audioController) {
+        this.audioController = audioController;
+    }
+
+    triggerTeleportAudio(intensity = 1) {
+        if (this.audioController) {
+            this.audioController.triggerTeleportWhoosh(intensity);
+        }
+    }
+
+    triggerEchoAudio(intensity = 1) {
+        if (this.audioController) {
+            this.audioController.triggerEchoEffect(intensity);
+        }
     }
 }

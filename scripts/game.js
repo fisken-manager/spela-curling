@@ -12,6 +12,7 @@ import { ShopTransition } from './shopTransition.js';
 
 const audio = new AudioController();
 const state = new GameState();
+state.setAudioController(audio);
 const physics = new Physics();
 const transition = new TransitionController();
 let input = null;
@@ -454,7 +455,7 @@ function update(deltaTime) {
     
     if (state.phase === 'moving') {
         physics.update(state, deltaTime);
-    } else if (state.phase === 'returning') {
+    } else if (state.phase === 'returning' && !state.gameOver) {
         if (!transition.isTransitioning()) {
             transition.start(state);
         }
