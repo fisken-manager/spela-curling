@@ -275,18 +275,32 @@ export class AudioController {
         this.activeUpgrades = upgrades;
         this.effectsSystem.updateEffects(upgrades, physics);
         
-        // Get target playback rate from effects system
-        const newRate = this.effectsSystem.getPlaybackRate();
+        // Only apply playback rate if there are active effects
+        const hasActiveEffects = this.effectsSystem.activeEffects.size > 0;
         
-        // Apply to source node with smooth transition
-        if (Math.abs(newRate - this.currentPlaybackRate) > 0.001 && this.sourceNode) {
-            this.currentPlaybackRate = newRate;
+        if (hasActiveEffects) {
+            // Get target playback rate from effects system
+            const newRate = this.effectsSystem.getPlaybackRate();
+            
+            // Apply to source node with smooth transition
+            if (Math.abs(newRate - this.currentPlaybackRate) > 0.001 && this.sourceNode) {
+                this.currentPlaybackRate = newRate;
+                const now = this.audioContext.currentTime;
+                try {
+                    this.sourceNode.playbackRate.linearRampToValueAtTime(newRate, now + 0.05);
+                } catch (e) {
+                    // Fallback if ramp fails
+                    this.sourceNode.playbackRate.value = newRate;
+                }
+            }
+        } else if (this.currentPlaybackRate !== 1.0) {
+            // No active effects - return to normal playback rate
+            this.currentPlaybackRate = 1.0;
             const now = this.audioContext.currentTime;
             try {
-                this.sourceNode.playbackRate.linearRampToValueAtTime(newRate, now + 0.05);
+                this.sourceNode.playbackRate.linearRampToValueAtTime(1.0, now + 0.05);
             } catch (e) {
-                // Fallback if ramp fails
-                this.sourceNode.playbackRate.value = newRate;
+                this.sourceNode.playbackRate.value = 1.0;
             }
         }
     }
