@@ -36,6 +36,16 @@ export class AudioEffectsSystem {
         console.log('AudioEffectsSystem initialized');
     }
 
+    hasActiveEffects(upgrades) {
+        // Check if any upgrade has a level > 0
+        for (const upgradeId in upgrades) {
+            if (upgrades[upgradeId]?.level > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     createBiquadFilter(name, type, freq, gain = 0) {
         const filter = this.audioContext.createBiquadFilter();
         filter.type = type;
