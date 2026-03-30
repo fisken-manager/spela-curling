@@ -309,7 +309,7 @@ export class Physics {
         stone.x += stone.vx * dt * 60;
         stone.rotation += stone.angularVelocity * dt;
         
-        this.handleBounds(state, effectiveRadius);
+        this.handleBounds(state, effectiveRadius, audio);
         this.updateWorldPosition(state, dt);
         this.applyPickupAttraction(state);
         this.checkPowerUps(state, effectiveRadius);
@@ -787,7 +787,7 @@ export class Physics {
         }
     }
 
-    checkScoringOrbs(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength) {
+    checkScoringOrbs(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength, audio = null) {
         const { stone } = state;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
 
@@ -806,7 +806,7 @@ export class Physics {
             const collisionDistance = orbRadius + effectiveRadius;
 
             if (dist < collisionDistance) {
-                this.collectScoringOrb(state, orb);
+                this.collectScoringOrb(state, orb, audio);
             } else {
                 // Coin speed boost doubles magnetism for yellow orbs
                 const orbMagnetism = (orb.type === 'yellow' && coinSpeedBoostLevel > 0) ? combinedMagnetism * 2 : combinedMagnetism;
@@ -815,7 +815,7 @@ export class Physics {
         }
     }
 
-    collectScoringOrb(state, orb) {
+    collectScoringOrb(state, orb, audio = null) {
         orb.collected = true;
         
         // Track items collected for spin_win penalty
@@ -823,6 +823,14 @@ export class Physics {
         
         const now = Date.now();
         const config = state.scoringOrbConfig[orb.type];
+        
+        // Trigger coin collect audio effect for yellow orbs
+        if (orb.type === 'yellow' && audio && audio.triggerAudioEffect) {
+            audio.triggerAudioEffect('coinCollect', {
+                amount: config.money || 1,
+                combo: state.comboMultiplier || 1
+            });
+        }
         
         // Gold_grift upgrade - convert orbs to money
         const goldGriftLevel = state.upgrades.gold_grift?.level || 0;
@@ -1024,7 +1032,7 @@ export class Physics {
         });
     }
 
-    handleBounds(state, effectiveRadius) {
+    handleBounds(state, effectiveRadius, audio = null) {
         const { stone } = state;
         const playArea = state.getPlayArea();
         const leftBound = effectiveRadius - playArea.width / 2;
@@ -1065,10 +1073,18 @@ export class Physics {
             if (stone.x < leftBound) {
                 // Wrap from left to right
                 stone.x = rightBound;
+                // Trigger dimension door audio effect
+                if (audio && audio.triggerAudioEffect) {
+                    audio.triggerAudioEffect('dimensionDoor');
+                }
                 return; // Skip all other wall handling
             } else if (stone.x > rightBound) {
                 // Wrap from right to left
                 stone.x = leftBound;
+                // Trigger dimension door audio effect
+                if (audio && audio.triggerAudioEffect) {
+                    audio.triggerAudioEffect('dimensionDoor');
+                }
                 return; // Skip all other wall handling
             }
         }
@@ -1099,6 +1115,15 @@ export class Physics {
                     stone.vx = -stone.vx * bounceEnergy;
                 }
                 stone.angularVelocity *= 0.5;
+                
+                // Trigger wall bounce audio effect
+                if (audio && audio.triggerAudioEffect) {
+                    audio.triggerAudioEffect('wallBounce', {
+                        velocity: speed,
+                        wallSpeedLevel: wallSpeedLevel,
+                        dimensionDoorActive: dimensionDoorLevel > 0
+                    });
+                }
             }
         } else if (stone.x > rightBound) {
             stone.x = rightBound;
@@ -1124,6 +1149,15 @@ export class Physics {
                     stone.vx = -stone.vx * bounceEnergy;
                 }
                 stone.angularVelocity *= 0.5;
+                
+                // Trigger wall bounce audio effect
+                if (audio && audio.triggerAudioEffect) {
+                    audio.triggerAudioEffect('wallBounce', {
+                        velocity: speed,
+                        wallSpeedLevel: wallSpeedLevel,
+                        dimensionDoorActive: dimensionDoorLevel > 0
+                    });
+                }
             }
         }
         
