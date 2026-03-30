@@ -1,3 +1,5 @@
+import { AudioEffectsSystem } from './audio-effects.js';
+
 export class AudioController {
     constructor() {
         this.audioContext = null;
@@ -16,6 +18,9 @@ export class AudioController {
         this.shopGainNode = null;
         this.isShopPlaying = false;
         this.gainNode = null;
+        this.effectsSystem = null;
+        this.activeUpgrades = {};
+        this.currentPlaybackRate = 1.0;
     }
 
     async init(playlist) {
@@ -23,6 +28,10 @@ export class AudioController {
         this.playlist = playlist;
         this.currentIndex = 0;
         this.audioBuffers = new Array(playlist.length);
+        
+        // Initialize effects system
+        this.effectsSystem = new AudioEffectsSystem(this.audioContext);
+        this.effectsSystem.init();
         
         if (playlist.length > 0) {
             // Load the first song
@@ -38,7 +47,7 @@ export class AudioController {
             this._loadRemainingSongs(playlist);
         }
         
-        console.log(`Playlist initialized, playing first of ${playlist.length} tracks`);
+        console.log(`Playlist initialized with audio effects, playing first of ${playlist.length} tracks`);
     }
 
     async _loadRemainingSongs(playlist) {
@@ -145,8 +154,14 @@ export class AudioController {
         
         this.sourceNode = this.audioContext.createBufferSource();
         this.sourceNode.buffer = this.audioBuffer;
-        this.sourceNode.playbackRate.value = this.playbackRate;
-        this.sourceNode.connect(this.audioContext.destination);
+        this.sourceNode.playbackRate.value = this.currentPlaybackRate;
+        
+        // Use effects chain instead of direct connection
+        if (this.effectsSystem && this.effectsSystem.isInitialized) {
+            this.effectsSystem.connectChain(this.sourceNode, this.audioContext.destination);
+        } else {
+            this.sourceNode.connect(this.audioContext.destination);
+        }
         
         const offset = this.currentPosition * this.audioBuffer.duration;
         this.sourceNode.start(0, offset);
@@ -201,6 +216,11 @@ export class AudioController {
             this.sourceNode = null;
         }
         
+        // Disconnect effects chain
+        if (this.effectsSystem) {
+            this.effectsSystem.disconnectChain();
+        }
+        
         this.isPlaying = false;
     }
 
@@ -215,8 +235,30 @@ export class AudioController {
 
     setPlaybackRate(rate) {
         this.playbackRate = rate;
+        this.currentPlaybackRate = rate;
         if (this.sourceNode) {
-            this.sourceNode.playbackRate.value = rate;
+            this.sourceNode.playbackRate.linearRampToValueAtTime(rate, this.audioContext.currentTime + 0.1);
         }
+    }
+
+    updateEffects(upgrades, physics) {
+        if (!this.effectsSystem || !this.isPlaying) return;
+        
+        this.activeUpgrades = upgrades;
+        this.effectsSystem.updateFromUpgrades(upgrades, physics);
+        
+        // Update playback rate if changed by effects system
+        const newRate = this.effectsSystem.getPlaybackRate();
+        if (Math.abs(newRate - this.currentPlaybackRate) > 0.001 && this.sourceNode) {
+            this.currentPlaybackRate = newRate;
+            try {
+                this.sourceNode.playbackRate.linearRampToValueAtTime(newRate, this.audioContext.currentTime + 0.1);
+            } catch (e) {}
+        }
+    }
+
+    triggerAudioEffect(name, data) {
+        if (!this.effectsSystem) return;
+        this.effectsSystem.triggerEffect(name, data);
     }
 }
