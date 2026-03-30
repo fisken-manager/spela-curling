@@ -156,7 +156,7 @@ export class Physics {
         return config.radius;
     }
 
-    update(state, deltaTime) {
+    update(state, deltaTime, audio = null) {
         if (state.phase !== 'moving') return;
         this.updateFrictionBoost(state, deltaTime);
         this.updateSweepBoost(state, deltaTime);
@@ -169,7 +169,7 @@ export class Physics {
         const dt = deltaTime / steps;
 
         for (let i = 0; i < steps; i++) {
-            this.physicsStep(state, dt);
+            this.physicsStep(state, dt, audio);
         }
     }
 
@@ -255,7 +255,7 @@ export class Physics {
         }
     }
 
-    physicsStep(state, dt) {
+    physicsStep(state, dt, audio = null) {
         const { stone } = state;
         
         const speed = Math.sqrt(stone.vx * stone.vx + stone.vy * stone.vy);
@@ -1155,8 +1155,12 @@ export class Physics {
             
             // Friction_forge upgrade - permanent speed bonus but current speed penalty
             if (frictionForgeLevel > 0) {
-                const permBonus = frictionForgeLevel * 0.03;
-                state.permanentSpeedBonus = (state.permanentSpeedBonus || 0) + permBonus;
+                // +3% per bounce, capped by tier
+                const maxBonus = frictionForgeLevel === 1 ? 2.0 : (frictionForgeLevel === 2 ? 4.0 : 6.0);
+                state.permanentSpeedBonus = (state.permanentSpeedBonus || 0);
+                if (state.permanentSpeedBonus < maxBonus) {
+                    state.permanentSpeedBonus = Math.min(state.permanentSpeedBonus + 0.03, maxBonus);
+                }
                 
                 const currentPenalty = 0.2 + frictionForgeLevel * 0.05;
                 const speed = Math.sqrt(stone.vx ** 2 + stone.vy ** 2);
