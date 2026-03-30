@@ -2,85 +2,122 @@ export class AudioEffectsSystem {
     constructor(audioContext) {
         this.audioContext = audioContext;
         this.isInitialized = false;
+        this.targetPlaybackRate = 1.0;
+        this.activeEffects = new Map(); // { upgradeId: { expiresAt, rateMultiplier } }
     }
 
     init() {
         if (this.isInitialized) return;
         this.isInitialized = true;
-        console.log('AudioEffectsSystem initialized (minimal)');
+        console.log('AudioEffectsSystem initialized (pitch modulation only)');
     }
 
-    triggerEffect(upgradeId, duration = 0.3) {
+    // Calculate combined playback rate from all active effects
+    updateEffects(upgrades, physics = {}) {
         if (!this.isInitialized) return;
         
-        // No permanent effects - just brief moments
-        // Could add sound effects here later if needed
+        const now = this.audioContext.currentTime;
+        
+        // Clean up expired effects
+        for (const [upgradeId, effect] of this.activeEffects.entries()) {
+            if (effect.expiresAt <= now) {
+                this.activeEffects.delete(upgradeId);
+            }
+        }
+        
+        // Calculate combined rate (multiply all active multipliers)
+        let combinedRate = 1.0;
+        for (const [upgradeId, effect] of this.activeEffects.entries()) {
+            combinedRate *= effect.rateMultiplier;
+        }
+        
+        // Clamp to reasonable range
+        this.targetPlaybackRate = Math.max(0.85, Math.min(1.15, combinedRate));
     }
 
+    getPlaybackRate() {
+        return this.targetPlaybackRate;
+    }
+
+    // Add a temporary pitch effect
+    addPitchEffect(upgradeId, rateMultiplier, duration = 0.3) {
+        if (!this.isInitialized) return;
+        
+        const now = this.audioContext.currentTime;
+        
+        // Extend existing effect or create new
+        const existing = this.activeEffects.get(upgradeId);
+        if (existing && existing.expiresAt > now) {
+            existing.expiresAt = now + duration;
+        } else {
+            this.activeEffects.set(upgradeId, {
+                rateMultiplier,
+                expiresAt: now + duration
+            });
+        }
+    }
+
+    // Event triggers
     triggerWallBounce(upgrades) {
-        // Brief audio moment - could play a sound effect
+        if (upgrades.wall_speed?.level > 0) {
+            this.addPitchEffect('wall_speed', 0.95, 0.4); // Brief pitch dip
+        }
+        if (upgrades.echo_woods?.level > 0) {
+            this.addPitchEffect('echo_woods', 0.97, 0.5); // Slight pitch dip
+        }
+        if (upgrades.friction_forge?.level > 0) {
+            this.addPitchEffect('friction_forge', 0.96, 0.3);
+        }
     }
 
     triggerCoinCollect(upgrades) {
-        // Brief audio moment - could play a sound effect
+        if (upgrades.gold_grift?.level > 0) {
+            this.addPitchEffect('gold_grift', 1.02, 0.3); // Brief pitch up
+        }
+        if (upgrades.coinSpeedBoost?.level > 0) {
+            this.addPitchEffect('coinSpeedBoost', 1.01, 0.25);
+        }
     }
 
     triggerDimensionDoor(upgrades) {
         if (upgrades.dimension_door?.level > 0) {
-            // Create a portal warp sound effect (separate from music)
+            // Portal warp: 0.98 → 0.95 (dip) → 1.02 (rise) over 0.3s
             const now = this.audioContext.currentTime;
-            
-            // Create oscillator for portal whoosh
-            const osc = this.audioContext.createOscillator();
-            osc.type = 'sine';
-            
-            // Pitch drops then rises (portal warp)
-            osc.frequency.setValueAtTime(800, now);
-            osc.frequency.linearRampToValueAtTime(400, now + 0.15);
-            osc.frequency.linearRampToValueAtTime(1000, now + 0.3);
-            
-            // Gain envelope (fade in and out)
-            const gain = this.audioContext.createGain();
-            gain.gain.setValueAtTime(0, now);
-            gain.gain.linearRampToValueAtTime(0.15, now + 0.05);
-            gain.gain.linearRampToValueAtTime(0.1, now + 0.25);
-            gain.gain.linearRampToValueAtTime(0, now + 0.35);
-            
-            osc.connect(gain);
-            gain.connect(this.audioContext.destination);
-            
-            osc.start(now);
-            osc.stop(now + 0.35);
-            
-            // Cleanup
-            osc.onended = () => {
-                osc.disconnect();
-                gain.disconnect();
-            };
+            this.addPitchEffect('dimension_door_1', 0.98, 0.15);
+            this.addPitchEffect('dimension_door_2', 0.95, 0.25);
+            this.addPitchEffect('dimension_door_3', 1.02, 0.4);
+        }
+    }
+
+    triggerNegativePickup(upgrades) {
+        if (upgrades.cursed_harvest?.level > 0) {
+            this.addPitchEffect('cursed_harvest', 0.94, 0.4); // Pitch down
         }
     }
 
     triggerSweepStart(upgrades) {
-        // Start sweep effect
+        if (upgrades.sweep_life?.level > 0) {
+            this.addPitchEffect('sweep_life', 1.03, 2.0); // Pitch up while sweeping
+        }
     }
 
     triggerSweepEnd(upgrades) {
-        // End sweep effect
-    }
-
-    triggerNegativePickup(upgrades) {
-        // Brief negative effect
-    }
-
-    triggerDirectionChange(upgrades) {
-        // Brief direction change effect
+        // Remove sweep effect
+        this.activeEffects.delete('sweep_life');
+        if (upgrades.frozen_broom?.level > 0) {
+            this.addPitchEffect('frozen_broom', 0.96, 0.5); // Pitch down
+        }
     }
 
     triggerTarBoost(upgrades) {
-        // Tar boost effect
+        if (upgrades.tar_launch?.level > 0) {
+            this.addPitchEffect('tar_launch', 1.04, 10.0); // Speed up during boost
+        }
     }
 
     triggerHerringsLastDance(upgrades) {
-        // Last dance effect
+        if (upgrades.herrings_last_dance?.level > 0) {
+            this.addPitchEffect('herrings_last_dance', 1.05, 999); // Fast when last life
+        }
     }
 }
