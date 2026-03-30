@@ -54,8 +54,7 @@ function setupControls() {
     const rotRangeVal = document.getElementById('rotRange-val');
 
     if (frictionSlider) frictionSlider.addEventListener('input', (e) => {
-        const newVal = parseFloat(e.target.value);
-        physics.baseFriction = newVal;
+        physics.baseFriction = parseFloat(e.target.value);
         frictionVal.textContent = e.target.value;
     });
 
@@ -414,11 +413,6 @@ function gameLoop(timestamp) {
     }
     prevShopTransition = null;
     
-    // Update audio effects based on current upgrades (only during gameplay, not in shop)
-    if (!state.showBuyMenu && audio.isPlaying) {
-        audio.updateEffects(state.upgrades, {});
-    }
-    
     // Play/stop shop music
     if (state.showBuyMenu && !prevShowBuyMenu) {
         cardMenu.resetEntrance();
@@ -459,7 +453,7 @@ function update(deltaTime) {
     updateCombo(deltaTime);
     
     if (state.phase === 'moving') {
-        physics.update(state, deltaTime, audio);
+        physics.update(state, deltaTime);
     } else if (state.phase === 'returning') {
         if (!transition.isTransitioning()) {
             transition.start(state);

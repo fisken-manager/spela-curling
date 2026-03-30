@@ -1,5 +1,3 @@
-import { AudioEffectsSystem } from './audio-effects.js';
-
 export class AudioController {
     constructor() {
         this.audioContext = null;
@@ -18,9 +16,6 @@ export class AudioController {
         this.shopGainNode = null;
         this.isShopPlaying = false;
         this.gainNode = null;
-        this.effectsSystem = null;
-        this.activeUpgrades = {};
-        this.currentPlaybackRate = 1.0;
     }
 
     async init(playlist) {
@@ -28,10 +23,6 @@ export class AudioController {
         this.playlist = playlist;
         this.currentIndex = 0;
         this.audioBuffers = new Array(playlist.length);
-        
-        // Initialize effects system
-        this.effectsSystem = new AudioEffectsSystem(this.audioContext);
-        this.effectsSystem.init();
         
         if (playlist.length > 0) {
             // Load the first song
@@ -47,7 +38,7 @@ export class AudioController {
             this._loadRemainingSongs(playlist);
         }
         
-        console.log(`Playlist initialized with audio effects, playing first of ${playlist.length} tracks`);
+        console.log(`Playlist initialized, playing first of ${playlist.length} tracks`);
     }
 
     async _loadRemainingSongs(playlist) {
@@ -154,10 +145,7 @@ export class AudioController {
         
         this.sourceNode = this.audioContext.createBufferSource();
         this.sourceNode.buffer = this.audioBuffer;
-        this.sourceNode.playbackRate.value = this.currentPlaybackRate;
-        
-        // ALWAYS connect directly to destination - no effects chain
-        // Effects are handled via playback rate modulation only
+        this.sourceNode.playbackRate.value = this.playbackRate;
         this.sourceNode.connect(this.audioContext.destination);
         
         const offset = this.currentPosition * this.audioBuffer.duration;
@@ -213,7 +201,6 @@ export class AudioController {
             this.sourceNode = null;
         }
         
-        // No effects chain to disconnect - effects use playback rate only
         this.isPlaying = false;
     }
 
@@ -228,80 +215,8 @@ export class AudioController {
 
     setPlaybackRate(rate) {
         this.playbackRate = rate;
-        this.currentPlaybackRate = rate;
         if (this.sourceNode) {
-            this.sourceNode.playbackRate.linearRampToValueAtTime(rate, this.audioContext.currentTime + 0.1);
-        }
-    }
-
-    triggerAudioEffect(eventType, data = {}) {
-        if (!this.effectsSystem) return;
-        
-        // Just trigger the effect - no per-frame updates needed
-        switch(eventType) {
-            case 'wallBounce':
-                this.effectsSystem.triggerWallBounce(this.activeUpgrades);
-                break;
-            case 'coinCollect':
-                this.effectsSystem.triggerCoinCollect(this.activeUpgrades);
-                break;
-            case 'dimensionDoor':
-                this.effectsSystem.triggerDimensionDoor(this.activeUpgrades);
-                break;
-            case 'negativePickup':
-                this.effectsSystem.triggerNegativePickup(this.activeUpgrades);
-                break;
-            case 'sweepStart':
-                this.effectsSystem.triggerSweepStart(this.activeUpgrades);
-                break;
-            case 'sweepEnd':
-                this.effectsSystem.triggerSweepEnd(this.activeUpgrades);
-                break;
-            case 'directionChange':
-                this.effectsSystem.triggerDirectionChange(this.activeUpgrades);
-                break;
-            case 'tarBoost':
-                this.effectsSystem.triggerTarBoost(this.activeUpgrades);
-                break;
-            case 'herringsLastDance':
-                this.effectsSystem.triggerHerringsLastDance(this.activeUpgrades);
-                break;
-        }
-    }
-
-    updateEffects(upgrades, physics) {
-        if (!this.effectsSystem || !this.isPlaying) return;
-        
-        this.activeUpgrades = upgrades;
-        this.effectsSystem.updateEffects(upgrades, physics);
-        
-        // Only apply playback rate if there are active effects
-        const hasActiveEffects = this.effectsSystem.activeEffects.size > 0;
-        
-        if (hasActiveEffects) {
-            // Get target playback rate from effects system
-            const newRate = this.effectsSystem.getPlaybackRate();
-            
-            // Apply to source node with smooth transition
-            if (Math.abs(newRate - this.currentPlaybackRate) > 0.001 && this.sourceNode) {
-                this.currentPlaybackRate = newRate;
-                const now = this.audioContext.currentTime;
-                try {
-                    this.sourceNode.playbackRate.linearRampToValueAtTime(newRate, now + 0.05);
-                } catch (e) {
-                    // Fallback if ramp fails
-                    this.sourceNode.playbackRate.value = newRate;
-                }
-            }
-        } else if (this.currentPlaybackRate !== 1.0) {
-            // No active effects - return to normal playback rate
-            this.currentPlaybackRate = 1.0;
-            const now = this.audioContext.currentTime;
-            try {
-                this.sourceNode.playbackRate.linearRampToValueAtTime(1.0, now + 0.05);
-            } catch (e) {
-                this.sourceNode.playbackRate.value = 1.0;
-            }
+            this.sourceNode.playbackRate.value = rate;
         }
     }
 }

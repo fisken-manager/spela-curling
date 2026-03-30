@@ -1,3 +1,39 @@
+# Playback Rate Pitch Modulation - Implementation Plan
+
+> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
+
+**Goal:** Implement audio effects using only playback rate pitch modulation - no nodes, just smooth pitch changes to the music.
+
+**Architecture:** Calculate target playback rate based on active events. Apply pitch modulation using sourceNode.playbackRate.linearRampToValueAtTime(). Clean audio always since no nodes are created.
+
+**Tech Stack:** Vanilla JavaScript, Web Audio API playbackRate
+
+---
+
+## Problem
+
+Current system creates separate sound effects on top of music. User wants music itself to be modulated (pitch changes).
+
+## Solution
+
+Use `sourceNode.playbackRate` to change pitch:
+- No additional nodes created ever
+- Music always plays through direct connection
+- Brief pitch changes during events
+- Smooth transitions using Web Audio API ramps
+
+---
+
+## Task 1: Rewrite AudioEffectsSystem for Pitch Modulation Only
+
+**Files:**
+- Modify: `scripts/audio-effects.js`
+
+**Step 1: Remove all node creation, keep only playback rate calculation**
+
+Replace entire file with:
+
+```javascript
 export class AudioEffectsSystem {
     constructor(audioContext) {
         this.audioContext = audioContext;
@@ -65,9 +101,6 @@ export class AudioEffectsSystem {
         if (upgrades.echo_woods?.level > 0) {
             this.addPitchEffect('echo_woods', 0.97, 0.5); // Slight pitch dip
         }
-        if (upgrades.friction_forge?.level > 0) {
-            this.addPitchEffect('friction_forge', 0.96, 0.3);
-        }
     }
 
     triggerCoinCollect(upgrades) {
@@ -121,3 +154,95 @@ export class AudioEffectsSystem {
         }
     }
 }
+```
+
+**Step 2: Commit**
+
+```bash
+git add scripts/audio-effects.js
+git commit -m "refactor: switch to playback rate pitch modulation only
+
+- Remove all node creation
+- Calculate pitch effects using playback rate multipliers
+- Each event adds temporary rate multiplier
+- Clean audio always - no nodes ever created"
+```
+
+---
+
+## Task 2: Apply Playback Rate in AudioController
+
+**Files:**
+- Modify: `scripts/audio.js`
+
+**Step 1: Update updateEffects to apply playback rate**
+
+Replace the `updateEffects` method with:
+
+```javascript
+updateEffects(upgrades, physics) {
+    if (!this.effectsSystem || !this.isPlaying) return;
+    
+    this.activeUpgrades = upgrades;
+    this.effectsSystem.updateEffects(upgrades, physics);
+    
+    // Get target playback rate from effects system
+    const newRate = this.effectsSystem.getPlaybackRate();
+    
+    // Apply to source node with smooth transition
+    if (Math.abs(newRate - this.currentPlaybackRate) > 0.001 && this.sourceNode) {
+        this.currentPlaybackRate = newRate;
+        const now = this.audioContext.currentTime;
+        try {
+            this.sourceNode.playbackRate.linearRampToValueAtTime(newRate, now + 0.05);
+        } catch (e) {
+            // Fallback if ramp fails
+            this.sourceNode.playbackRate.value = newRate;
+        }
+    }
+}
+```
+
+**Step 2: Commit**
+
+```bash
+git add scripts/audio.js
+git commit -m "feat: apply pitch modulation via playback rate
+
+- Get target playback rate from effects system
+- Apply smooth transitions using linearRampToValueAtTime
+- 50ms transition time for smooth pitch changes"
+```
+
+---
+
+## Task 3: Test All Effects
+
+**Testing Guide:**
+
+1. **Start game, no upgrades** → Music plays at normal pitch (1.0)
+2. **Buy dimension_door** → Pass through wall → Hear pitch: normal → dip → rise
+3. **Buy wall_speed** → Hit wall → Brief pitch dip
+4. **Buy gold_grift** → Collect coin → Brief pitch up
+5. **Buy tar_launch** → Throw stone → Music speeds up for 10 seconds
+6. **Multiple effects** → Pitch changes blend multiplicatively
+
+**Expected Results:**
+- Clean audio always
+- Smooth pitch transitions
+- Effects clearly audible but not jarring
+- No distortion or artifacts
+
+---
+
+## Summary
+
+This implements pitch modulation using only `playbackRate`:
+- **Zero nodes created** - Clean audio path always
+- **Event-triggered** - Pitch changes only during specific events
+- **Smooth transitions** - 50ms ramp time prevents jarring changes
+- **Multiplicative blending** - Multiple effects combine naturally
+
+**Files Modified:** 2 (audio-effects.js, audio.js)
+**Lines Changed:** ~100
+**Testing:** 6 specific effect scenarios

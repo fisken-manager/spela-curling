@@ -6,7 +6,7 @@ export class Physics {
         this.sweepBoost = 1.5;
         this.stopThreshold = 0.1;
         
-        this.baseFriction = 1.6;
+        this.baseFriction = 0.01;
         this.baseCurlStrength = 0.2;
         this.angularDecayFactor = 0.15;
         
@@ -32,7 +32,7 @@ export class Physics {
         // Tung Börda - size penalty to max velocity
         const sizeLevel = state.upgrades.size?.level || 0;
         if (sizeLevel > 0) {
-            maxVel *= (1 - sizeLevel * 0.01);
+            maxVel *= (1 - sizeLevel * 0.1);
         }
         
         // Friction forge permanent speed bonus
@@ -49,6 +49,13 @@ export class Physics {
         if (state.tarBoostActive && state.tarBoostTimer > 0) {
             const tarLevel = state.upgrades.tar_launch?.level || 0;
             maxVel *= (1 + tarLevel);
+        }
+        
+        // Spin_win penalty based on items collected
+        const spinWinLevel = state.upgrades.spin_win?.level || 0;
+        if (spinWinLevel > 0 && state.items_collected_this_throw > 0) {
+            const penalty = 1 - (spinWinLevel * 0.05 * state.items_collected_this_throw);
+            maxVel *= Math.max(0.3, penalty);
         }
         
         // Gold_grift loop penalty
@@ -156,10 +163,10 @@ export class Physics {
         return config.radius;
     }
 
-    update(state, deltaTime, audio = null) {
+    update(state, deltaTime) {
         if (state.phase !== 'moving') return;
         this.updateFrictionBoost(state, deltaTime);
-        this.updateSweepBoost(state, deltaTime, audio);
+        this.updateSweepBoost(state, deltaTime);
         this.updateGrowthBoost(state, deltaTime);
         this.updateTarBoost(state, deltaTime);
         this.updateRailRider(state, deltaTime);
@@ -169,7 +176,7 @@ export class Physics {
         const dt = deltaTime / steps;
 
         for (let i = 0; i < steps; i++) {
-            this.physicsStep(state, dt, audio);
+            this.physicsStep(state, dt);
         }
     }
 
@@ -233,7 +240,7 @@ export class Physics {
         }
     }
 
-    updateSweepBoost(state, deltaTime, audio = null) {
+    updateSweepBoost(state, deltaTime) {
         if (!state.sweepBoost) return;
         
         // Count down grace period for frozen_broom
@@ -248,14 +255,6 @@ export class Physics {
                 state.money += state.frozen_broom_bonus || 0;
                 this.addPowerUpText(state, 0, `+$${state.frozen_broom_bonus}!`, '255, 215, 0');
             }
-            
-            // Trigger sweep end audio effect
-            if (audio && audio.triggerAudioEffect) {
-                audio.triggerAudioEffect('sweepEnd', {
-                    upgradeId: 'sweep_life'
-                });
-            }
-            
             state.sweepBoost = null;
             state.frozen_broom_boost_active = false;
             state.frozen_broom_bonus = 0;
@@ -263,7 +262,7 @@ export class Physics {
         }
     }
 
-    physicsStep(state, dt, audio = null) {
+    physicsStep(state, dt) {
         const { stone } = state;
         
         const speed = Math.sqrt(stone.vx * stone.vx + stone.vy * stone.vy);
@@ -299,28 +298,21 @@ export class Physics {
         stone.vx += curlAcceleration * dt - decelX * dt;
         stone.vy -= decelY * dt;
         
-        // Spindelns Väv - center pull force (very gentle)
-        const spidersWebLevel = state.upgrades.spiders_web?.level || 0;
-        if (spidersWebLevel > 0) {
-            const pullStrength = spidersWebLevel === 1 ? 0.001 : (spidersWebLevel === 2 ? 0.002 : 0.004);
-            const centerPull = -stone.x * pullStrength * dt * 60;
-            stone.vx += centerPull;
-        }
-        
-        // Spin_win increases rotation decay
-        const spinWinLevel = state.upgrades.spin_win?.level || 0;
-        const decayMultiplier = 1 + spinWinLevel * 0.4;
-        stone.angularVelocity -= stone.angularVelocity * this.baseFriction * dt * this.angularDecayFactor * decayMultiplier;
+        stone.angularVelocity -= stone.angularVelocity * this.baseFriction * dt * this.angularDecayFactor;
         if (Math.abs(stone.angularVelocity) < 0.01) stone.angularVelocity = 0;
+        
+        const damping = state.frictionBoost ? 0.9999 : 0.9997;
+        stone.vx *= damping;
+        stone.vy *= damping;
         
         const effectiveRadius = this.getEffectiveRadius(state);
         stone.x += stone.vx * dt * 60;
         stone.rotation += stone.angularVelocity * dt;
         
-        this.handleBounds(state, effectiveRadius, audio);
+        this.handleBounds(state, effectiveRadius);
         this.updateWorldPosition(state, dt);
         this.applyPickupAttraction(state);
-        this.checkPowerUps(state, effectiveRadius, audio);
+        this.checkPowerUps(state, effectiveRadius);
         }
 
         applyPickupAttraction(state) {
@@ -341,9 +333,8 @@ export class Physics {
             ...(state.rotationPowerUps || []),
             ...(state.superBoostPowerUps || []),
             ...(state.growthPowerUps || []),
-            // Only include negative pickups if cleanse is NOT active
-            ...(state.upgrades.cleanse?.level > 0 ? [] : state.curlChaosPickups || []),
-            ...(state.upgrades.cleanse?.level > 0 ? [] : state.sizeShrinkPickups || [])
+            ...(state.curlChaosPickups || []),
+            ...(state.sizeShrinkPickups || [])
         ];
 
         for (const pickup of allPickups) {
@@ -364,94 +355,38 @@ export class Physics {
         }
     }
 
-    applyMagnetismToPickup(state, pickup, objectRadius, maxScroll, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength) {
-        if (magnetismRadius <= 0 && eventHorizonRadius <= 0) return;
-        if (combinedMagnetism <= 0 && eventHorizonStrength <= 0) return;
-
-        const { stone } = state;
-        const pickupWorldY = pickup.scrollProgress * maxScroll;
-        const dy = stone.worldY - pickupWorldY;
-        const dx = stone.x - pickup.x;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist <= 0) return;
-
-        // Weight based on area: π × r². Scale relative to green orb (r=8, area=64π)
-        const weightScale = 64 / (objectRadius * objectRadius);
-
-        // Magnetism + spin_win pull
-        if (combinedMagnetism > 0) {
-            const effRadius = magnetismRadius * weightScale;
-            const effStrength = combinedMagnetism * weightScale;
-            if (dist < effRadius && effStrength > 0) {
-                pickup.x += (dx / dist) * effStrength * 60;
-                pickup.scrollProgress += (dy / dist) * effStrength * 60 / maxScroll;
-            }
-        }
-
-        // Event horizon pull (same weight-based scaling)
-        if (eventHorizonRadius > 0) {
-            const effRadius = eventHorizonRadius * weightScale;
-            const effStrength = eventHorizonStrength * weightScale;
-            if (dist < effRadius && effStrength > 0) {
-                pickup.x += (dx / dist) * effStrength * 60;
-                pickup.scrollProgress += (dy / dist) * effStrength * 60 / maxScroll;
-            }
-        }
-    }
-
-    checkPowerUps(state, effectiveRadius, audio = null) {
+    checkPowerUps(state, effectiveRadius) {
         const { stone } = state;
         const config = state.powerUpConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
-
-        // Pre-compute magnetism values for all pickups
-        const magnetismLevel = state.upgrades.magnetism?.level || 0;
-        const sizeBonusFactor = 1 + ((state.upgrades.size?.level || 0) * 0.2);
-        const baseMagnetismRadius = magnetismLevel > 0 ? (50 + magnetismLevel * 50) * sizeBonusFactor : 0;
-        const magnetismStrength = magnetismLevel > 0 ? (0.05 + magnetismLevel * 0.05) : 0;
-
-        const spinWinLevel = state.upgrades.spin_win?.level || 0;
-        const spin = Math.abs(stone.angularVelocity);
-        const spinWinScale = spinWinLevel > 0 ? Math.min(1, spin / 10) : 0;
-        const spinWinStrength = spinWinLevel > 0 ? (0.1 * spinWinLevel) * spinWinScale : 0;
-        const spinWinRadius = spinWinLevel > 0 ? (50 + spinWinLevel * 50) * sizeBonusFactor * (1 + spin * spinWinLevel * 0.5) : 0;
-
-        const eventHorizonLevel = state.upgrades.event_horizon?.level || 0;
-        const eventHorizonRadius = eventHorizonLevel > 0 ? 50 + eventHorizonLevel * 75 : 0;
-        const eventHorizonStrength = eventHorizonLevel > 0 ? (0.02 + eventHorizonLevel * 0.02) : 0;
-
-        const combinedMagnetism = magnetismStrength + spinWinStrength;
-        const magnetismRadius = baseMagnetismRadius + spinWinRadius;
-
+        
         for (const powerUp of state.powerUps) {
             if (powerUp.collected) continue;
-
+            
             const powerUpWorldY = powerUp.scrollProgress * maxScroll;
             const effectiveWorldY = this.getStoneEffectiveWorldY(state);
             const dy = Math.abs(effectiveWorldY - powerUpWorldY);
             const dx = Math.abs(stone.x - powerUp.x);
-
+            
             const collisionDistance = config.radius + effectiveRadius;
-
+            
             if (dy < collisionDistance && dx < collisionDistance) {
                 this.collectPowerUp(state, powerUp, effectiveRadius);
-            } else {
-                this.applyMagnetismToPickup(state, powerUp, config.radius, maxScroll, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
             }
         }
-
-        this.checkLifePowerUps(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
-        this.checkShopPowerUps(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
-        this.checkSweepPowerUps(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength, audio);
-        this.checkRotationPowerUps(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
-        this.checkSuperBoostPowerUps(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
-        this.checkScoringOrbs(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength, audio);
-        this.checkGrowthPowerUps(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
-        this.checkCurlChaosPickups(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
-        this.checkSizeShrinkPickups(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
+        
+        this.checkLifePowerUps(state, effectiveRadius);
+        this.checkShopPowerUps(state, effectiveRadius);
+        this.checkSweepPowerUps(state, effectiveRadius);
+        this.checkRotationPowerUps(state, effectiveRadius);
+        this.checkSuperBoostPowerUps(state, effectiveRadius);
+        this.checkScoringOrbs(state, effectiveRadius);
+        this.checkGrowthPowerUps(state, effectiveRadius);
+        this.checkCurlChaosPickups(state, effectiveRadius);
+        this.checkSizeShrinkPickups(state, effectiveRadius);
     }
 
-    checkLifePowerUps(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength) {
+    checkLifePowerUps(state, effectiveRadius) {
         const { stone } = state;
         const config = state.lifePowerUpConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
@@ -485,13 +420,11 @@ export class Physics {
                 const screenX = playArea.left + playArea.width / 2 + lifePowerUp.x;
                 const screenY = state.stoneYPx;
                 state.triggerRingFlash(screenX, screenY, '255, 50, 50');
-            } else {
-                this.applyMagnetismToPickup(state, lifePowerUp, config.radius, maxScroll, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
             }
         }
     }
 
-    checkShopPowerUps(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength) {
+    checkShopPowerUps(state, effectiveRadius) {
         const { stone } = state;
         const config = state.shopPowerUpConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
@@ -530,14 +463,11 @@ export class Physics {
                 state.shopTransitionFishX = playArea.left + playArea.width / 2 + shopPowerUp.x;
                 state.shopTransitionFishY = state.stoneYPx;
 
-                state.triggerRingFlash(state.shopTransitionFishX, state.shopTransitionFishY, '0, 191, 255');
-            } else {
-                this.applyMagnetismToPickup(state, shopPowerUp, config.radius, maxScroll, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
-            }
+                state.triggerRingFlash(state.shopTransitionFishX, state.shopTransitionFishY, '0, 191, 255');            }
         }
     }
 
-    checkSweepPowerUps(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength, audio = null) {
+    checkSweepPowerUps(state, effectiveRadius) {
         const { stone } = state;
         const config = state.sweepPowerUpConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
@@ -576,13 +506,6 @@ export class Physics {
                         timer: config.duration
                     };
                     
-                    // Trigger sweep start audio effect
-                    if (audio && audio.triggerAudioEffect) {
-                        audio.triggerAudioEffect('sweepStart', {
-                            upgradeId: 'sweep_life'
-                        });
-                    }
-                    
                     // frozen_broom - reset tracking when sweep boost starts
                     if (state.upgrades.frozen_broom?.level > 0) {
                         state.frozen_broom_boost_active = true;
@@ -598,13 +521,11 @@ export class Physics {
                 
                 state.sweepPowerUpCollected = sweepPowerUp;
                 state.triggerScreenShake(8, 0.15);
-            } else {
-                this.applyMagnetismToPickup(state, sweepPowerUp, config.radius, maxScroll, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
             }
         }
     }
 
-    checkRotationPowerUps(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength) {
+    checkRotationPowerUps(state, effectiveRadius) {
         const { stone } = state;
         const config = state.rotationPowerUpConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
@@ -629,13 +550,11 @@ export class Physics {
                 
                 state.rotationPowerUpCollected = rotationPowerUp;
                 this.addPowerUpText(state, rotationPowerUp.x, 'SNURR!', '200, 50, 255');
-            } else {
-                this.applyMagnetismToPickup(state, rotationPowerUp, config.radius, maxScroll, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
             }
         }
     }
 
-    checkSuperBoostPowerUps(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength) {
+    checkSuperBoostPowerUps(state, effectiveRadius) {
         const { stone } = state;
         const config = state.superBoostPowerUpConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
@@ -684,13 +603,11 @@ export class Physics {
                 };
                 
                 this.addPowerUpText(state, superBoostPowerUp.x, 'SUPER!', '255, 140, 0');
-            } else {
-                this.applyMagnetismToPickup(state, superBoostPowerUp, config.radius, maxScroll, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
             }
         }
     }
 
-    checkGrowthPowerUps(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength) {
+    checkGrowthPowerUps(state, effectiveRadius) {
         const { stone } = state;
         const config = state.growthPowerUpConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
@@ -718,16 +635,11 @@ export class Physics {
                     state.stoneYPx,
                     '72, 187, 120'
                 );
-            } else {
-                this.applyMagnetismToPickup(state, growthPowerUp, config.radius, maxScroll, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
             }
         }
     }
 
-    checkCurlChaosPickups(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength) {
-        // Skip if cleanse upgrade is active
-        if (state.upgrades.cleanse?.level > 0) return;
-        
+    checkCurlChaosPickups(state, effectiveRadius) {
         const { stone } = state;
         const config = state.curlChaosConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
@@ -757,16 +669,11 @@ export class Physics {
                     state.stoneYPx,
                     '255, 50, 50'
                 );
-            } else {
-                this.applyMagnetismToPickup(state, pickup, config.radius, maxScroll, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
             }
         }
     }
 
-    checkSizeShrinkPickups(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength) {
-        // Skip if cleanse upgrade is active
-        if (state.upgrades.cleanse?.level > 0) return;
-        
+    checkSizeShrinkPickups(state, effectiveRadius) {
         const { stone } = state;
         const config = state.sizeShrinkConfig;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
@@ -796,41 +703,80 @@ export class Physics {
                     state.stoneYPx,
                     '200, 50, 255'
                 );
-            } else {
-                this.applyMagnetismToPickup(state, pickup, config.radius, maxScroll, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength);
             }
         }
     }
 
-    checkScoringOrbs(state, effectiveRadius, magnetismRadius, combinedMagnetism, eventHorizonRadius, eventHorizonStrength, audio = null) {
+    checkScoringOrbs(state, effectiveRadius) {
         const { stone } = state;
         const maxScroll = Math.max(1, state.pageHeight - state.screenHeight);
-
-        const coinSpeedBoostLevel = state.upgrades.coinSpeedBoost?.level || 0;
+        
+        // Basic magnetism upgrade
+        const magnetismLevel = state.upgrades.magnetism?.level || 0;
+        const sizeBonusFactor = 1 + ((state.upgrades.size?.level || 0) * 0.2);
+        const baseMagnetismRadius = magnetismLevel > 0 ? (50 + magnetismLevel * 50) * sizeBonusFactor : 0;
+        
+        // Spin_win upgrade - magnetism scales with rotation
+        const spinWinLevel = state.upgrades.spin_win?.level || 0;
+        const rotationBonus = spinWinLevel > 0 ? Math.abs(stone.angularVelocity) * spinWinLevel * 10 : 0;
+        const magnetismRadius = baseMagnetismRadius + rotationBonus;
+        
+        // Event_horizon upgrade - passive attraction for all pickups
+        const eventHorizonLevel = state.upgrades.event_horizon?.level || 0;
+        const eventHorizonRadius = eventHorizonLevel > 0 ? 50 + eventHorizonLevel * 75 : 0;
+        
+        // Combined magnetism strength
+        const combinedMagnetism = magnetismLevel > 0 ? (0.05 + magnetismLevel * 0.05) : 0;
+        const eventHorizonStrength = eventHorizonLevel > 0 ? (0.02 + eventHorizonLevel * 0.02) : 0;
 
         for (const orb of state.scoringOrbs) {
             if (orb.collected) continue;
-
+            
             const orbWorldY = orb.scrollProgress * maxScroll;
             const effectiveWorldY = this.getStoneEffectiveWorldY(state);
             const dy = effectiveWorldY - orbWorldY;
             const dx = stone.x - orb.x;
             const dist = Math.sqrt(dx * dx + dy * dy);
-
+            
             const orbRadius = this.getEffectiveOrbRadius(state, orb.type);
             const collisionDistance = orbRadius + effectiveRadius;
-
+            
             if (dist < collisionDistance) {
-                this.collectScoringOrb(state, orb, audio);
+                this.collectScoringOrb(state, orb);
             } else {
-                // Coin speed boost doubles magnetism for yellow orbs
-                const orbMagnetism = (orb.type === 'yellow' && coinSpeedBoostLevel > 0) ? combinedMagnetism * 2 : combinedMagnetism;
-                this.applyMagnetismToPickup(state, orb, orbRadius, maxScroll, magnetismRadius, orbMagnetism, eventHorizonRadius, eventHorizonStrength);
+                // Apply magnetism
+                let effectiveRadius2 = magnetismRadius;
+                let strength = combinedMagnetism;
+                
+                // Spin_win uses rotation-scaled magnetism
+                if (spinWinLevel > 0 && dist < magnetismRadius) {
+                    strength = combinedMagnetism * (1 + Math.abs(stone.angularVelocity) * 0.1);
+                }
+                
+                // Coin speed boost increases yellow orb magnetism
+                if (orb.type === 'yellow' && state.upgrades.coinSpeedBoost?.level > 0) {
+                    strength *= 2;
+                }
+                
+                if (dist < effectiveRadius2 && strength > 0) {
+                    const pullX = (dx / dist) * strength * 60;
+                    const pullY = (dy / dist) * strength * 60;
+                    orb.x += pullX;
+                    orb.scrollProgress += pullY / maxScroll;
+                }
+                
+                // Event horizon passive attraction
+                if (eventHorizonLevel > 0 && dist < eventHorizonRadius) {
+                    const pullX = (dx / dist) * eventHorizonStrength * 60;
+                    const pullY = (dy / dist) * eventHorizonStrength * 60;
+                    orb.x += pullX;
+                    orb.scrollProgress += pullY / maxScroll;
+                }
             }
         }
     }
 
-    collectScoringOrb(state, orb, audio = null) {
+    collectScoringOrb(state, orb) {
         orb.collected = true;
         
         // Track items collected for spin_win penalty
@@ -838,15 +784,6 @@ export class Physics {
         
         const now = Date.now();
         const config = state.scoringOrbConfig[orb.type];
-        
-        // Trigger coin collect audio effect for yellow orbs
-        if (orb.type === 'yellow' && audio && audio.triggerAudioEffect) {
-            audio.triggerAudioEffect('coinCollect', {
-                amount: config.money || 1,
-                combo: state.comboMultiplier || 1,
-                upgradeId: 'gold_grift'
-            });
-        }
         
         // Gold_grift upgrade - convert orbs to money
         const goldGriftLevel = state.upgrades.gold_grift?.level || 0;
@@ -1048,10 +985,9 @@ export class Physics {
         });
     }
 
-    handleBounds(state, effectiveRadius, audio = null) {
+    handleBounds(state, effectiveRadius) {
         const { stone } = state;
         const playArea = state.getPlayArea();
-        const speed = Math.sqrt(stone.vx * stone.vx + stone.vy * stone.vy);
         const leftBound = effectiveRadius - playArea.width / 2;
         const rightBound = playArea.width / 2 - effectiveRadius;
         
@@ -1090,22 +1026,10 @@ export class Physics {
             if (stone.x < leftBound) {
                 // Wrap from left to right
                 stone.x = rightBound;
-                // Trigger dimension door audio effect
-                if (audio && audio.triggerAudioEffect) {
-                    audio.triggerAudioEffect('dimensionDoor', {
-                        upgradeId: 'dimension_door'
-                    });
-                }
                 return; // Skip all other wall handling
             } else if (stone.x > rightBound) {
                 // Wrap from right to left
                 stone.x = leftBound;
-                // Trigger dimension door audio effect
-                if (audio && audio.triggerAudioEffect) {
-                    audio.triggerAudioEffect('dimensionDoor', {
-                        upgradeId: 'dimension_door'
-                    });
-                }
                 return; // Skip all other wall handling
             }
         }
@@ -1124,28 +1048,8 @@ export class Physics {
                 stone.vx = 0;
                 this.addPowerUpText(state, stone.x, 'TIMMERMANNENS GREPP!', '100, 200, 255');
             } else {
-                // Spindelns Väv - make bounce shallower (more toward walls), same speed
-                const spidersWebLevel = state.upgrades.spiders_web?.level || 0;
-                if (spidersWebLevel > 0) {
-                    const angleMultiplier = spidersWebLevel === 1 ? 1.30 : (spidersWebLevel === 2 ? 1.60 : 2.00);
-                    // Flip vx normally
-                    stone.vx = -stone.vx * bounceEnergy;
-                    // Reduce vy to make angle shallower (more horizontal toward walls)
-                    stone.vy = stone.vy * bounceEnergy / angleMultiplier;
-                } else {
-                    stone.vx = -stone.vx * bounceEnergy;
-                }
+                stone.vx = -stone.vx * bounceEnergy;
                 stone.angularVelocity *= 0.5;
-                
-                // Trigger wall bounce audio effect
-                if (audio && audio.triggerAudioEffect) {
-                    audio.triggerAudioEffect('wallBounce', {
-                        velocity: speed,
-                        wallSpeedLevel: wallSpeedLevel,
-                        dimensionDoorActive: dimensionDoorLevel > 0,
-                        upgradeId: 'wall_speed'
-                    });
-                }
             }
         } else if (stone.x > rightBound) {
             stone.x = rightBound;
@@ -1159,28 +1063,8 @@ export class Physics {
                 stone.vx = 0;
                 this.addPowerUpText(state, stone.x, 'TIMMERMANNENS GREPP!', '100, 200, 255');
             } else {
-                // Spindelns Väv - make bounce shallower (more toward walls), same speed
-                const spidersWebLevel = state.upgrades.spiders_web?.level || 0;
-                if (spidersWebLevel > 0) {
-                    const angleMultiplier = spidersWebLevel === 1 ? 1.30 : (spidersWebLevel === 2 ? 1.60 : 2.00);
-                    // Flip vx normally
-                    stone.vx = -stone.vx * bounceEnergy;
-                    // Reduce vy to make angle shallower (more horizontal toward walls)
-                    stone.vy = stone.vy * bounceEnergy / angleMultiplier;
-                } else {
-                    stone.vx = -stone.vx * bounceEnergy;
-                }
+                stone.vx = -stone.vx * bounceEnergy;
                 stone.angularVelocity *= 0.5;
-                
-                // Trigger wall bounce audio effect
-                if (audio && audio.triggerAudioEffect) {
-                    audio.triggerAudioEffect('wallBounce', {
-                        velocity: speed,
-                        wallSpeedLevel: wallSpeedLevel,
-                        dimensionDoorActive: dimensionDoorLevel > 0,
-                        upgradeId: 'wall_speed'
-                    });
-                }
             }
         }
         
@@ -1212,12 +1096,8 @@ export class Physics {
             
             // Friction_forge upgrade - permanent speed bonus but current speed penalty
             if (frictionForgeLevel > 0) {
-                // +3% per bounce, capped by tier
-                const maxBonus = frictionForgeLevel === 1 ? 2.0 : (frictionForgeLevel === 2 ? 4.0 : 6.0);
-                state.permanentSpeedBonus = (state.permanentSpeedBonus || 0);
-                if (state.permanentSpeedBonus < maxBonus) {
-                    state.permanentSpeedBonus = Math.min(state.permanentSpeedBonus + 0.03, maxBonus);
-                }
+                const permBonus = frictionForgeLevel * 0.03;
+                state.permanentSpeedBonus = (state.permanentSpeedBonus || 0) + permBonus;
                 
                 const currentPenalty = 0.2 + frictionForgeLevel * 0.05;
                 const speed = Math.sqrt(stone.vx ** 2 + stone.vy ** 2);
@@ -1445,20 +1325,10 @@ export class Physics {
         }
     }
 
-    launch(state, flickPower = 50, audio = null) {
+    launch(state, flickPower = 50) {
         const { stone } = state;
         
         state.lives--;
-        
-        // Trigger herrings_last_dance audio effect when at 0 lives
-        if (state.lives === 0 && state.upgrades.herrings_last_dance?.level > 0) {
-            if (audio && audio.triggerAudioEffect) {
-                audio.triggerAudioEffect('herringsLastDance', {
-                    upgradeId: 'herrings_last_dance',
-                    duration: 999 // Long duration
-                });
-            }
-        }
         
         // Reset throw-specific counters
         state.items_collected_this_throw = 0;
@@ -1475,14 +1345,6 @@ export class Physics {
             state.tarBoostActive = true;
             state.tarBoostTimer = 10 + tarLevel * 5;
             state.tar_launchUsed = true;
-            
-            // Trigger tar boost audio effect
-            if (audio && audio.triggerAudioEffect) {
-                audio.triggerAudioEffect('tarBoost', {
-                    upgradeId: 'tar_launch',
-                    duration: 10 + tarLevel * 5
-                });
-            }
         }
         
         const maxVel = this.getMaxVelocity(state);
@@ -1536,8 +1398,12 @@ export class Physics {
             }
         }
         
+        // sweep_life upgrade - reduce sweep effectiveness
+        const sweepLifeLevel = state.upgrades.sweep_life?.level || 0;
+        const effectivenessMultiplier = 1 - (sweepLifeLevel * 0.25);
+        
         if (currentSpeed > this.stopThreshold) {
-            const boost = this.sweepBoost * intensity;
+            const boost = this.sweepBoost * intensity * effectivenessMultiplier;
             stone.vx *= (1 + boost * 0.01);
             stone.vy *= (1 + boost * 0.01);
             stone.angularVelocity *= 0.98;
