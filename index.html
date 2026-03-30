@@ -19,12 +19,18 @@
   <div id="physics-controls">
     <h3>Physics <span id="toggle-controls" class="toggle-arrow">▼</span></h3>
     <div id="controls-content">
-      <label><span>Friction: <span id="friction-val">1.6</span></span><input type="range" id="friction" min="0.001"
+      <label><span>Friction Scale: <span id="friction-val">1.6</span></span><input type="range" id="friction" min="0.001"
           max="2.0" step="0.001" value="1.6"></label>
       <label><span>Curl: <span id="curl-val">0.05</span></span><input type="range" id="curl" min="0" max="1" step="0.01"
           value="0.05"></label>
-      <label><span>Ang Decay: <span id="angDecay-val">0.5</span></span><input type="range" id="angDecay" min="0.01"
-          max="2" step="0.01" value="0.5"></label>
+      <label><span>Contact Segments: <span id="angDecay-val">8</span></span><input type="range" id="angDecay" min="0.5"
+          max="2" step="0.1" value="1.0"></label>
+      <label><span>μ₀ (Mu Zero): <span id="mu0-val">0.009</span></span><input type="range" id="mu0" min="0.001"
+          max="0.100" step="0.001" value="0.009"></label>
+      <label><span>Curl Amplification: <span id="curlAmp-val">1.0</span></span><input type="range" id="curlAmp" min="0"
+          max="5" step="0.1" value="1.0"></label>
+      <label><span>Direct Curl Force: <span id="curlForce-val">0.004</span></span><input type="range" id="curlForce" min="0"
+          max="0.05" step="0.001" value="0.004"></label>
       <label><span>Max Vel: <span id="maxVel-val">22</span></span><input type="range" id="maxVel" min="5" max="50"
           step="1" value="22"></label>
       <label><span>Rot Range: <span id="rotRange-val">10</span></span><input type="range" id="rotRange" min="0" max="30"

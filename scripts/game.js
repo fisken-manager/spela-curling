@@ -43,10 +43,6 @@ function setupControls() {
         controlsPanel.classList.toggle('collapsed');
     });
 
-    const frictionSlider = document.getElementById('friction');
-    const frictionVal = document.getElementById('friction-val');
-    const curlSlider = document.getElementById('curl');
-    const curlVal = document.getElementById('curl-val');
     const angDecaySlider = document.getElementById('angDecay');
     const angDecayVal = document.getElementById('angDecay-val');
     const maxVelSlider = document.getElementById('maxVel');
@@ -54,19 +50,31 @@ function setupControls() {
     const rotRangeSlider = document.getElementById('rotRange');
     const rotRangeVal = document.getElementById('rotRange-val');
 
-    if (frictionSlider) frictionSlider.addEventListener('input', (e) => {
-        physics.baseFriction = parseFloat(e.target.value);
-        frictionVal.textContent = e.target.value;
-    });
-
-    if (curlSlider) curlSlider.addEventListener('input', (e) => {
-        physics.baseCurlStrength = parseFloat(e.target.value);
-        curlVal.textContent = e.target.value;
-    });
-
     if (angDecaySlider) angDecaySlider.addEventListener('input', (e) => {
-        physics.angularDecayFactor = parseFloat(e.target.value);
-        angDecayVal.textContent = e.target.value;
+        // Controls running band segments for discrete contact physics
+        physics.runningBandSegments = Math.max(4, Math.min(16, Math.round(parseFloat(e.target.value) * 8)));
+        angDecayVal.textContent = physics.runningBandSegments;
+    });
+
+    const mu0Slider = document.getElementById('mu0');
+    const mu0Val = document.getElementById('mu0-val');
+    if (mu0Slider) mu0Slider.addEventListener('input', (e) => {
+        physics.mu0 = parseFloat(e.target.value);
+        mu0Val.textContent = e.target.value;
+    });
+
+    const curlAmpSlider = document.getElementById('curlAmp');
+    const curlAmpVal = document.getElementById('curlAmp-val');
+    if (curlAmpSlider) curlAmpSlider.addEventListener('input', (e) => {
+        physics.curlAmplification = parseFloat(e.target.value);
+        curlAmpVal.textContent = e.target.value;
+    });
+
+    const curlForceSlider = document.getElementById('curlForce');
+    const curlForceVal = document.getElementById('curlForce-val');
+    if (curlForceSlider) curlForceSlider.addEventListener('input', (e) => {
+        physics.rotationCurlStrength = parseFloat(e.target.value);
+        curlForceVal.textContent = e.target.value;
     });
 
     if (maxVelSlider) maxVelSlider.addEventListener('input', (e) => {

@@ -6,9 +6,12 @@ export class Physics {
         this.sweepBoost = 1.5;
         this.stopThreshold = 0.1;
         
-        this.baseFriction = 1.6;
-        this.baseCurlStrength = 0.2;
-        this.angularDecayFactor = 0.15;
+        // Curling physics parameters
+        this.mu0 = 0.009;  // Velocity-dependent friction constant
+        this.runningBandSegments = 8;  // Number of contact points on running band
+        this.curlAmplification = 1.0;  // Amplification factor for curl forces
+        this.rotationCurlStrength = 0.004;  // Direct lateral curl force coefficient
+        this.baseCurlStrength = 0.2;  // Legacy support
         
         this.minAngularVelocity = -10;
         this.maxAngularVelocity = 10;
@@ -92,11 +95,11 @@ export class Physics {
         return maxVel;
     }
 
-    getEffectiveFriction(state) {
+    getEffectiveMu0(state) {
         const loopCount = state.loopCount || 1;
         const loopFrictionMultiplier = Math.pow(1.05, Math.max(0, loopCount - 1));
         
-        // Basic friction reduction
+        // Basic friction reduction (now affects mu0 instead of constant friction)
         const frictionLevel = state.upgrades.friction?.level || 0;
         const legacyLevel = state.upgrades.frictionReduction?.level || 0;
         const reduction = Math.max(frictionLevel, legacyLevel) * 0.05;
@@ -105,7 +108,7 @@ export class Physics {
         const sizeLevel = state.upgrades.size?.level || 0;
         const sizePenalty = sizeLevel > 0 ? 0 : sizeLevel * 0.02;
         
-        let friction = this.baseFriction * (1 - reduction + sizePenalty) * loopFrictionMultiplier;
+        let mu0 = this.mu0 * (1 - reduction + sizePenalty) * loopFrictionMultiplier;
         
         // needle_eye upgrade - friction decreases when stone is smaller
         const needleEyeLevel = state.upgrades.needle_eye?.level || 0;
@@ -116,11 +119,16 @@ export class Physics {
             // Smaller stone = lower fraction of friction
             if (sizeRatio < 1) {
                 const frictionReduction = (1 - sizeRatio) * needleEyeLevel * 0.15;
-                friction *= (1 - frictionReduction);
+                mu0 *= (1 - frictionReduction);
             }
         }
         
-        return friction;
+        return mu0;
+    }
+    
+    // Legacy support - redirects to getEffectiveMu0 for compatibility
+    getEffectiveFriction(state) {
+        return this.getEffectiveMu0(state);
     }
 
     getEffectiveCurl(state, dt = 0) {
@@ -303,24 +311,85 @@ export class Physics {
             return;
         }
 
-        let mu = this.getEffectiveFriction(state);
+        // Get effective mu0 (can be modified by upgrades)
+        let mu0 = this.getEffectiveMu0(state);
+        
+        // Apply friction boost and sweeping effects to mu0
         if (state.frictionBoost) {
-            mu *= state.frictionBoost.frictionMultiplier;
+            mu0 *= state.frictionBoost.frictionMultiplier;
         }
         if (state.isSweeping) {
-            mu *= 0.6;
+            mu0 *= 0.6;
         }
-        const frictionDecel = mu;
-        const speedNorm = speed || 0.001;
-        const decelX = (stone.vx / speedNorm) * frictionDecel;
-        const decelY = (stone.vy / speedNorm) * frictionDecel;
         
-        const forwardVelocity = stone.vy;
-        const curlStrength = this.getEffectiveCurl(state, dt);
-        const curlAcceleration = curlStrength * stone.angularVelocity * Math.abs(forwardVelocity) / speedNorm;
+        // Rail rider: zero friction while gliding on wall
+        if (state.rail_rider_active) {
+            mu0 = 0;
+        }
         
-        stone.vx += curlAcceleration * dt - decelX * dt;
-        stone.vy -= decelY * dt;
+        // Velocity-dependent friction: μ = μ₀ × v^(-1/2) with minimum floor
+        // Add base friction so stone always slows down, even at high speeds
+        const minFriction = mu0 * 0.5;  // Minimum friction floor (50% of mu0)
+        const speedFactor = Math.pow(speed + 0.001, -0.5);
+        const mu = Math.max(minFriction, mu0 * speedFactor);
+        
+        // Normal force (simplified - mass cancels out in acceleration)
+        // Increased base multiplier for better game feel
+        const g = 20.0;  // Increased from 9.81 for stronger friction forces
+        const fN = g * this.curlAmplification;
+        
+        // Discrete running band contact model
+        const effectiveRadius = this.getEffectiveRadius(state);
+        const r = effectiveRadius * 0.6;  // running band radius (60% of stone radius)
+        const N = this.runningBandSegments;
+        
+        // Moment of inertia for a disk: I = 0.5 * m * r^2
+        // Using unit mass (m=1) for simplicity: I = 0.5 * r^2
+        const momentOfInertia = 0.5 * r * r;
+        
+        let totalFx = 0;
+        let totalFy = 0;
+        let totalTorque = 0;
+        
+        for (let i = 0; i < N; i++) {
+            const angle = (2 * Math.PI * i) / N;
+            
+            // Position of contact point relative to center
+            const rx = r * Math.cos(angle);
+            const ry = r * Math.sin(angle);
+            
+            // Local velocity at contact point: V + ω × r
+            // ω is angular velocity (scalar), so ω × r = (-ω*ry, ω*rx)
+            const vLocalX = stone.vx - stone.angularVelocity * ry;
+            const vLocalY = stone.vy + stone.angularVelocity * rx;
+            const vLocalSpeed = Math.sqrt(vLocalX * vLocalX + vLocalY * vLocalY);
+            
+            // Velocity-dependent friction at this contact point with minimum floor
+            const muLocal = Math.max(minFriction, mu0 * Math.pow(vLocalSpeed + 0.001, -0.5));
+            
+            // Friction force opposes local velocity
+            if (vLocalSpeed > 0.001) {
+                const fx = -muLocal * fN * (vLocalX / vLocalSpeed) / N;
+                const fy = -muLocal * fN * (vLocalY / vLocalSpeed) / N;
+                
+                // Torque: r × F = rx * fy - ry * fx
+                const torque = (rx * fy - ry * fx);
+                
+                totalFx += fx;
+                totalFy += fy;
+                totalTorque += torque;
+            }
+        }
+        
+        // Apply forces to update velocity
+        stone.vx += totalFx * dt * 60;
+        stone.vy += totalFy * dt * 60;
+        // Angular acceleration = torque / I
+        stone.angularVelocity += (totalTorque / momentOfInertia) * dt * 60;
+        
+        // Subtle additional curl - direct lateral force based on rotation
+        const curlLateralForce = this.rotationCurlStrength * stone.angularVelocity * Math.abs(stone.vy) / (speed + 0.001);
+        stone.vx += curlLateralForce * dt * 60;
         
         // Spindelns Väv - center pull force (very gentle)
         const spidersWebLevel = state.upgrades.spiders_web?.level || 0;
@@ -330,24 +399,21 @@ export class Physics {
             stone.vx += centerPull;
         }
         
-        stone.angularVelocity -= stone.angularVelocity * this.baseFriction * dt * this.angularDecayFactor;
-        if (Math.abs(stone.angularVelocity) < 0.01) stone.angularVelocity = 0;
-        
-        const damping = state.frictionBoost ? 0.9999 : 0.9997;
-        stone.vx *= damping;
-        stone.vy *= damping;
-        
-        const effectiveRadius = this.getEffectiveRadius(state);
+        // Update position and rotation
         stone.x += stone.vx * dt * 60;
         stone.rotation += stone.angularVelocity * dt;
+        
+        // Clamp angular velocity to reasonable bounds
+        stone.angularVelocity = Math.max(-20, Math.min(20, stone.angularVelocity));
+        if (Math.abs(stone.angularVelocity) < 0.01) stone.angularVelocity = 0;
         
         this.handleBounds(state, effectiveRadius);
         this.updateWorldPosition(state, dt);
         this.applyPickupAttraction(state);
         this.checkPowerUps(state, effectiveRadius);
-        }
+    }
 
-        applyPickupAttraction(state) {
+    applyPickupAttraction(state) {
         const eventHorizonLevel = state.upgrades.event_horizon?.level || 0;
         if (eventHorizonLevel === 0) {
             // No event horizon active, stop any rumble
