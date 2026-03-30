@@ -260,8 +260,12 @@ export class AudioController {
         }
     }
 
-    triggerAudioEffect(name, data) {
+    triggerAudioEffect(eventType, data = {}) {
         if (!this.effectsSystem) return;
-        this.effectsSystem.triggerEffect(name, data);
+        // Pass upgrades from activeUpgrades to the trigger
+        this.effectsSystem.triggerEffect(eventType, data.upgradeId || eventType, {
+            ...data,
+            upgrades: this.activeUpgrades
+        });
     }
 }

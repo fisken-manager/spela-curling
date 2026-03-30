@@ -828,7 +828,8 @@ export class Physics {
         if (orb.type === 'yellow' && audio && audio.triggerAudioEffect) {
             audio.triggerAudioEffect('coinCollect', {
                 amount: config.money || 1,
-                combo: state.comboMultiplier || 1
+                combo: state.comboMultiplier || 1,
+                upgradeId: 'gold_grift'
             });
         }
         
@@ -1076,7 +1077,9 @@ export class Physics {
                 stone.x = rightBound;
                 // Trigger dimension door audio effect
                 if (audio && audio.triggerAudioEffect) {
-                    audio.triggerAudioEffect('dimensionDoor');
+                    audio.triggerAudioEffect('dimensionDoor', {
+                        upgradeId: 'dimension_door'
+                    });
                 }
                 return; // Skip all other wall handling
             } else if (stone.x > rightBound) {
@@ -1084,7 +1087,9 @@ export class Physics {
                 stone.x = leftBound;
                 // Trigger dimension door audio effect
                 if (audio && audio.triggerAudioEffect) {
-                    audio.triggerAudioEffect('dimensionDoor');
+                    audio.triggerAudioEffect('dimensionDoor', {
+                        upgradeId: 'dimension_door'
+                    });
                 }
                 return; // Skip all other wall handling
             }
@@ -1122,7 +1127,8 @@ export class Physics {
                     audio.triggerAudioEffect('wallBounce', {
                         velocity: speed,
                         wallSpeedLevel: wallSpeedLevel,
-                        dimensionDoorActive: dimensionDoorLevel > 0
+                        dimensionDoorActive: dimensionDoorLevel > 0,
+                        upgradeId: 'wall_speed'
                     });
                 }
             }
@@ -1156,7 +1162,8 @@ export class Physics {
                     audio.triggerAudioEffect('wallBounce', {
                         velocity: speed,
                         wallSpeedLevel: wallSpeedLevel,
-                        dimensionDoorActive: dimensionDoorLevel > 0
+                        dimensionDoorActive: dimensionDoorLevel > 0,
+                        upgradeId: 'wall_speed'
                     });
                 }
             }

@@ -5,19 +5,24 @@ export class AudioEffectsSystem {
         this.isInitialized = false;
         this.targetPlaybackRate = 1.0;
         
-        // Effect parameter definitions
-        this.effectDefinitions = {
-            highpass: { type: 'biquad', filterType: 'highpass', defaultFreq: 1000, defaultQ: 1 },
-            lowpass: { type: 'biquad', filterType: 'lowpass', defaultFreq: 8000, defaultQ: 1 },
-            lowshelf: { type: 'biquad', filterType: 'lowshelf', defaultFreq: 200, defaultGain: 0 },
-            delay: { type: 'delay', defaultTime: 0.15, defaultFeedback: 0.3 },
-            distortion: { type: 'waveshaper', defaultAmount: 0 },
-            bitcrusher: { type: 'bitcrusher', defaultBits: 16, defaultNormFreq: 1 },
-            compressor: { type: 'dynamics', defaultThreshold: -24, defaultRatio: 4 },
-            reverb: { type: 'convolution', defaultWet: 0 },
-            stereoWidth: { type: 'stereo', defaultWidth: 1 },
-            panner: { type: 'panner', defaultPan: 0 },
+        // Track passive effects (always active when upgrade owned)
+        this.passiveParams = {
+            highpassFreq: 80,
+            lowpassFreq: 20000,
+            lowshelfGain: 0,
+            delayTime: 0.001,
+            distortionAmount: 0,
+            compressorThreshold: -24,
+            compressorRatio: 1,
+            pan: 0,
+            playbackRate: 1.0,
         };
+        
+        // Track active temporary effects
+        this.activeEffects = {};  // { upgradeId: { expiresAt, params } }
+        
+        // Combined params (passive + active effects blended)
+        this.currentParams = { ...this.passiveParams };
     }
 
     init() {
@@ -33,11 +38,10 @@ export class AudioEffectsSystem {
         this.createStereoPanner('panner');
         
         this.isInitialized = true;
-        console.log('AudioEffectsSystem initialized');
+        console.log('AudioEffectsSystem initialized (event-triggered)');
     }
 
     hasActiveEffects(upgrades) {
-        // Check if any upgrade has a level > 0
         for (const upgradeId in upgrades) {
             if (upgrades[upgradeId]?.level > 0) {
                 return true;
@@ -106,7 +110,6 @@ export class AudioEffectsSystem {
     connectChain(sourceNode, destinationNode) {
         if (!this.isInitialized) this.init();
         
-        // Chain: source → highpass → lowpass → delay → distortion → compressor → panner → destination
         const chain = [
             this.effectNodes.highpass,
             this.effectNodes.lowpass,
@@ -116,15 +119,12 @@ export class AudioEffectsSystem {
             this.effectNodes.panner
         ];
         
-        // Connect source to first effect
         sourceNode.connect(chain[0]);
         
-        // Connect effects in series
         for (let i = 0; i < chain.length - 1; i++) {
             chain[i].connect(chain[i + 1]);
         }
         
-        // Connect last effect to destination
         chain[chain.length - 1].connect(destinationNode);
     }
 
@@ -136,22 +136,13 @@ export class AudioEffectsSystem {
         });
     }
 
-    updateFromUpgrades(upgrades, physics = {}) {
-        if (!this.isInitialized) return;
-        
-        // Calculate effect parameters based on upgrades
-        const params = this.calculateEffectParams(upgrades, physics);
-        
-        // Apply to effect nodes
-        this.applyParams(params);
-    }
-
-    calculateEffectParams(upgrades, physics) {
+    // Update passive effects based on owned upgrades (continuous)
+    updatePassiveEffects(upgrades) {
         const params = {
-            highpassFreq: 80,  // default nearly transparent
+            highpassFreq: 80,
             lowpassFreq: 20000,
             lowshelfGain: 0,
-            delayTime: 0.001,  // default = no delay heard
+            delayTime: 0.001,
             distortionAmount: 0,
             compressorThreshold: -24,
             compressorRatio: 1,
@@ -159,230 +150,372 @@ export class AudioEffectsSystem {
             playbackRate: 1.0,
         };
 
-        // Speed upgrade: highpass filter brightens sound
+        // === PASSIVE UPGRADES (always active when owned) ===
+        
+        // speed: brightens sound
         const speedLevel = upgrades.speed?.level || 0;
         if (speedLevel > 0) {
-            params.highpassFreq = Math.min(1000 + (speedLevel * 500), 8000);
-            params.playbackRate = 1.0 + (speedLevel * 0.01);
+            params.highpassFreq = 200 + (speedLevel * 150); // 350-950 Hz (moderate)
         }
 
-        // Friction upgrade: chorus-like effect via delay modulation
+        // friction: slippery feel (subtle delay)
         const frictionLevel = upgrades.friction?.level || 0;
         if (frictionLevel > 0) {
-            params.delayTime = 0.005 + (frictionLevel * 0.003); // subtle chorus
+            params.delayTime = 0.003 + (frictionLevel * 0.002); // 0.005-0.013s
         }
 
-        // Size upgrade: lowshelf boost for "heaviness"
+        // size: heavier feel (bass boost)
         const sizeLevel = upgrades.size?.level || 0;
         if (sizeLevel > 0) {
-            params.lowshelfGain = sizeLevel * 4;
-            params.playbackRate = Math.max(0.94, 1.0 - (sizeLevel * 0.006));
+            params.lowshelfGain = sizeLevel * 3; // 3-15 dB (moderate bass)
+            params.playbackRate = 1.0 - (sizeLevel * 0.003); // 0.985-0.97 (slight pitch down)
         }
 
-        // Glass cannon: distortion + compression
-        const glassLevel = upgrades.glass_cannon?.level || 0;
-        if (glassLevel > 0) {
-            params.distortionAmount = glassLevel * 20;
-            params.compressorThreshold = -20 - (glassLevel * 5);
-            params.compressorRatio = 4 + (glassLevel * 2);
-        }
-
-        // Gold grift: bitcrushing effect via waveshaper
-        const griftLevel = upgrades.gold_grift?.level || 0;
-        if (griftLevel > 0) {
-            params.distortionAmount = Math.max(params.distortionAmount, griftLevel * 30);
-            params.lowpassFreq = Math.min(params.lowpassFreq, 8000 - (griftLevel * 1500));
-        }
-
-        // Spiders web: lowpass dampening
+        // spiders_web: muffled feel
         const spiderLevel = upgrades.spiders_web?.level || 0;
         if (spiderLevel > 0) {
-            params.lowpassFreq = Math.min(params.lowpassFreq, 8000 - (spiderLevel * 1500));
+            params.lowpassFreq = 12000 - (spiderLevel * 1000); // 11000-8000 Hz
         }
 
-        // Friction forge: lowpass + distortion
-        const forgeLevel = upgrades.friction_forge?.level || 0;
-        if (forgeLevel > 0) {
-            params.lowpassFreq = Math.min(params.lowpassFreq, 2000 - (forgeLevel * 300));
-            params.distortionAmount = Math.max(params.distortionAmount, forgeLevel * 15);
+        // glass_cannon: subtle grit
+        const glassLevel = upgrades.glass_cannon?.level || 0;
+        if (glassLevel > 0) {
+            params.distortionAmount = glassLevel * 8; // 8-40 (light distortion)
         }
 
-        // Snap curl: panning based on velocity
-        const snapLevel = upgrades.snap_curl?.level || 0;
-        if (snapLevel > 0 && physics.velocity) {
-            params.pan = Math.max(-1, Math.min(1, physics.velocity.x * 0.5));
-        }
-
-        // Tar launch: heavy compression during boost
+        // tar_launch: baseline compression (when NOT boosted)
         const tarLevel = upgrades.tar_launch?.level || 0;
         if (tarLevel > 0) {
-            if (physics.tarBoostActive) {
-                params.compressorThreshold = -12;
-                params.compressorRatio = 8 + (tarLevel * 4);
-                params.distortionAmount = Math.max(params.distortionAmount, 50 + (tarLevel * 25));
-            } else {
-                // Baseline compression even when not boosted
-                params.compressorThreshold = Math.min(params.compressorThreshold, -18);
-                params.compressorRatio = Math.max(params.compressorRatio, 3);
-            }
+            params.compressorThreshold = -20 - (tarLevel * 2); // -22 to -30
+            params.compressorRatio = 2 + tarLevel; // 2-4 ratio
         }
 
-        // Herring's last dance: dynamic based on lives
+        // spin_to_speed: mechanical texture (pitch wobble)
+        const spinToSpeedLevel = upgrades.spin_to_speed?.level || 0;
+        if (spinToSpeedLevel > 0) {
+            const wobble = Math.sin(Date.now() * 0.005) * spinToSpeedLevel * 0.003;
+            params.playbackRate = Math.max(0.95, Math.min(1.05, params.playbackRate + wobble));
+        }
+
+        // rail_rider: narrow stereo
+        const railLevel = upgrades.rail_rider?.level || 0;
+        if (railLevel > 0) {
+            // Keep centered (pan = 0)
+        }
+
+        // double_shops: slight saturation
+        const shopLevel = upgrades.double_shops?.level || 0;
+        if (shopLevel > 0) {
+            params.distortionAmount = Math.max(params.distortionAmount, shopLevel * 5);
+        }
+
+        // herrings_last_dance: dynamic based on lives (use last-known lives)
+        const herringLevel = upgrades.herrings_last_dance?.level || 0;
+        if (herringLevel > 0) {
+            // Will be updated dynamically in updateEffects
+            params.playbackRate = Math.max(params.playbackRate, 1.0);
+        }
+
+        // needle_eye: size affects friction
+        const needleLevel = upgrades.needle_eye?.level || 0;
+        if (needleLevel > 0 && sizeLevel > 0) {
+            const frictionReduction = (sizeLevel * needleLevel * 0.002);
+            params.delayTime = Math.max(0.001, params.delayTime - frictionReduction);
+        }
+
+        // event_horizon: slight pull (lowpass)
+        const horizonLevel = upgrades.event_horizon?.level || 0;
+        if (horizonLevel > 0) {
+            params.lowpassFreq = Math.min(params.lowpassFreq, 16000 - (horizonLevel * 1500));
+        }
+
+        // cleanse: removes negative effects (already handled by default params)
+        // No audio effect itself, just prevents negative upgrades from applying
+
+        this.passiveParams = params;
+    }
+
+    // Trigger a temporary effect (short duration)
+    triggerTemporaryEffect(upgradeId, duration = 0.5, customParams = null) {
+        if (!this.isInitialized) return;
+        
+        const now = this.audioContext.currentTime;
+        const expiresAt = now + duration;
+        
+        // Don't re-trigger if already active (except if expired)
+        if (this.activeEffects[upgradeId]) {
+            if (this.activeEffects[upgradeId].expiresAt > now) {
+                // Extend duration
+                this.activeEffects[upgradeId].expiresAt = expiresAt;
+                return;
+            }
+        }
+        
+        const params = customParams || this.getEffectParamsForUpgrade(upgradeId);
+        
+        if (params) {
+            this.activeEffects[upgradeId] = {
+                expiresAt,
+                params
+            };
+        }
+    }
+
+    // Get effect parameters for a specific upgrade
+    getEffectParamsForUpgrade(upgradeId) {
+        switch(upgradeId) {
+            case 'gold_grift':
+                // Metallic shimmer on coin pickup
+                return { distortionAmount: 15, lowpassFreq: 6000 };
+                
+            case 'coinSpeedBoost':
+                // Bright shimmer
+                return { highpassFreq: 1200 };
+                
+            case 'wall_speed':
+                // Echo on wall bounce
+                return { delayTime: 0.08 };
+                
+            case 'echo_woods':
+                // Reverb feel on wall bounce
+                return { delayTime: 0.12, lowpassFreq: 8000 };
+                
+            case 'wall_ping_coin':
+                // Coin from wall - metallic
+                return { distortionAmount: 10 };
+                
+            case 'dimension_door':
+                // Flanger on wall pass
+                return { delayTime: 0.05 };
+                
+            case 'cursed_harvest':
+                // Dark on negative pickup
+                return { playbackRate: 0.94, lowpassFreq: 5000 };
+                
+            case 'friction_forge':
+                // Industrial grit on wall bounce
+                return { distortionAmount: 20, lowpassFreq: 3000 };
+                
+            case 'sweep_life':
+                // Ethereal when sweeping
+                return { delayTime: 0.1, highpassFreq: 600 };
+                
+            case 'frozen_broom':
+                // Crystalline when NOT sweeping
+                return { distortionAmount: 5, delayTime: 0.04 };
+                
+            case 'spin_win':
+                // Pan based on spin
+                return { pan: 0.3 }; // Will be adjusted dynamically
+                
+            case 'snap_curl':
+                // Snap on direction change
+                return { highpassFreq: 800 };
+                
+            default:
+                return null;
+        }
+    }
+
+    // Trigger effect on specific event
+    triggerEffect(eventType, upgradeId, data = {}) {
+        if (!this.isInitialized) return;
+        
+        // Handle different event types
+        switch(eventType) {
+            case 'wallBounce':
+                // Trigger wall-related effects
+                const wallUpgrades = ['wall_speed', 'echo_woods', 'wall_ping_coin', 'friction_forge'];
+                for (const id of wallUpgrades) {
+                    if (data.upgrades && data.upgrades[id]?.level > 0) {
+                        this.triggerTemporaryEffect(id, 0.5);
+                    }
+                }
+                break;
+                
+            case 'coinCollect':
+                // Trigger coin-related effects
+                const coinUpgrades = ['gold_grift', 'coinSpeedBoost'];
+                for (const id of coinUpgrades) {
+                    if (data.upgrades && data.upgrades[id]?.level > 0) {
+                        this.triggerTemporaryEffect(id, 0.3);
+                    }
+                }
+                break;
+                
+            case 'dimensionDoor':
+                // Flanger effect
+                if (data.upgrades && data.upgrades.dimension_door?.level > 0) {
+                    this.triggerTemporaryEffect('dimension_door', 0.3);
+                }
+                break;
+                
+            case 'sweepStart':
+                // Start sweep effect
+                if (data.upgrades && data.upgrades.sweep_life?.level > 0) {
+                    this.triggerTemporaryEffect('sweep_life', 999); // Long duration, ends on sweepEnd
+                }
+                break;
+                
+            case 'sweepEnd':
+                // End sweep effect
+                delete this.activeEffects['sweep_life'];
+                if (data.upgrades && data.upgrades.frozen_broom?.level > 0) {
+                    this.triggerTemporaryEffect('frozen_broom', 0.5);
+                }
+                break;
+                
+            case 'negativePickup':
+                // Negative pickup effect
+                if (data.upgrades && data.upgrades.cursed_harvest?.level > 0) {
+                    this.triggerTemporaryEffect('cursed_harvest', 0.5);
+                }
+                break;
+                
+            case 'directionChange':
+                // Direction change effect
+                if (data.upgrades && data.upgrades.snap_curl?.level > 0) {
+                    this.triggerTemporaryEffect('snap_curl', 0.2);
+                }
+                break;
+                
+            case 'tarBoost':
+                // Heavy compression during boost
+                if (data.upgrades && data.upgrades.tar_launch?.level > 0) {
+                    this.triggerTemporaryEffect('tar_launch', 10, {
+                        compressorThreshold: -10,
+                        compressorRatio: 8,
+                        distortionAmount: 40
+                    });
+                }
+                break;
+                
+            case 'spin':
+                // Spin panning
+                if (data.upgrades && data.upgrades.spin_win?.level > 0) {
+                    const pan = Math.max(-1, Math.min(1, (data.angularVelocity || 0) * 0.1));
+                    this.triggerTemporaryEffect('spin_win', 0.3, { pan });
+                }
+                break;
+        }
+    }
+
+    // Update effects (call every frame)
+    updateEffects(upgrades, physics = {}) {
+        if (!this.isInitialized) return;
+        
+        // Update passive effects
+        this.updatePassiveEffects(upgrades);
+        
+        // Clean up expired effects
+        const now = this.audioContext.currentTime;
+        for (const upgradeId in this.activeEffects) {
+            if (this.activeEffects[upgradeId].expiresAt <= now) {
+                delete this.activeEffects[upgradeId];
+            }
+        }
+        
+        // Start with passive params
+        const blended = { ...this.passiveParams };
+        
+        // Blend in all active temporary effects
+        for (const upgradeId in this.activeEffects) {
+            const effect = this.activeEffects[upgradeId];
+            
+            // Blend each parameter (average or max depending on type)
+            if (effect.params.highpassFreq) {
+                blended.highpassFreq = Math.max(blended.highpassFreq, effect.params.highpassFreq);
+            }
+            if (effect.params.lowpassFreq) {
+                blended.lowpassFreq = Math.min(blended.lowpassFreq, effect.params.lowpassFreq);
+            }
+            if (effect.params.lowshelfGain) {
+                blended.lowshelfGain += effect.params.lowshelfGain;
+            }
+            if (effect.params.delayTime) {
+                blended.delayTime = Math.max(blended.delayTime, effect.params.delayTime);
+            }
+            if (effect.params.distortionAmount) {
+                blended.distortionAmount += effect.params.distortionAmount;
+            }
+            if (effect.params.compressorThreshold) {
+                blended.compressorThreshold = Math.min(blended.compressorThreshold, effect.params.compressorThreshold);
+            }
+            if (effect.params.compressorRatio) {
+                blended.compressorRatio = Math.max(blended.compressorRatio, effect.params.compressorRatio);
+            }
+            if (effect.params.pan !== undefined) {
+                blended.pan += effect.params.pan;
+            }
+            if (effect.params.playbackRate) {
+                blended.playbackRate *= effect.params.playbackRate;
+            }
+        }
+        
+        // Clamp blended values
+        blended.pan = Math.max(-1, Math.min(1, blended.pan));
+        blended.playbackRate = Math.max(0.9, Math.min(1.1, blended.playbackRate));
+        
+        // Update herring's last dance based on current lives
         const herringLevel = upgrades.herrings_last_dance?.level || 0;
         if (herringLevel > 0) {
             const lives = physics.lives ?? 1;
             if (lives === 0) {
-                params.highpassFreq = 80; // Full bandwidth
-                params.playbackRate = 1.05; // Slightly faster/pitched up
-                params.distortionAmount = Math.max(params.distortionAmount, 40);
+                // Last life - boost everything
+                blended.playbackRate = Math.max(blended.playbackRate, 1.05);
+                blended.distortionAmount += 10;
             } else {
-                params.lowpassFreq = Math.min(params.lowpassFreq, lives * 1000 + 2000);
+                // Have lives - slightly muffled
+                blended.lowpassFreq = Math.min(blended.lowpassFreq, 14000 - (lives * 1000));
             }
         }
-
-        // Dimension door: subtle delay effect
-        const doorLevel = upgrades.dimension_door?.level || 0;
-        if (doorLevel > 0) {
-            params.delayTime = Math.max(params.delayTime, 0.01 + (doorLevel * 0.01));
-        }
-
-        // Cursed harvest: pitch down + reverb feeling via delay
-        const harvestLevel = upgrades.cursed_harvest?.level || 0;
-        if (harvestLevel > 0) {
-            params.playbackRate = Math.max(0.92, params.playbackRate - (harvestLevel * 0.02));
-            params.delayTime = Math.max(params.delayTime, 0.02 + (harvestLevel * 0.01));
-        }
-
-        // Echo woods: delay/reverb feel
-        const echoLevel = upgrades.echo_woods?.level || 0;
-        if (echoLevel > 0) {
-            params.delayTime = Math.max(params.delayTime, 0.02 + (echoLevel * 0.015));
-        }
-
-        // Double shops: slight saturation feel
-        const shopLevel = upgrades.double_shops?.level || 0;
-        if (shopLevel > 0) {
-            params.distortionAmount = Math.max(params.distortionAmount, shopLevel * 8);
-        }
-
-        // Spin_win: adds subtle stereo panning based on rotation
-        const spinWinLevel = upgrades.spin_win?.level || 0;
-        if (spinWinLevel > 0 && physics.angularVelocity) {
-            const spin = Math.abs(physics.angularVelocity);
-            // Gentle panning based on rotation direction
-            params.pan = Math.max(-1, Math.min(1, (physics.angularVelocity / 10) * spinWinLevel * 0.3));
-        }
-
-        // Spin_to_speed: adds mechanical stuttering effect via slight pitch modulation
-        const spinToSpeedLevel = upgrades.spin_to_speed?.level || 0;
-        if (spinToSpeedLevel > 0) {
-            // Add slight pitch wobble based on tier
-            const wobble = Math.sin(Date.now() * 0.01) * spinToSpeedLevel * 0.005;
-            params.playbackRate = Math.max(0.95, Math.min(1.05, params.playbackRate + wobble));
-        }
-
-        // Cleanse: this should work by reducing other negative effects
-        // but the effects themselves are computed from upgrades, so cleanse
-        // just means "I don't have negative upgrades" - handled naturally
-
-        return params;
+        
+        // Apply blended params
+        this.currentParams = blended;
+        this.applyParams(blended);
+        
+        // Update playback rate
+        this.targetPlaybackRate = blended.playbackRate;
     }
 
     applyParams(params) {
         const now = this.audioContext.currentTime;
-        const rampTime = 0.15; // 150ms smooth transition
+        const rampTime = 0.05; // 50ms snap-back
 
-        // Highpass filter
         try {
             this.effectNodes.highpass.frequency.linearRampToValueAtTime(
                 Math.max(20, params.highpassFreq), now + rampTime
             );
         } catch (e) {}
 
-        // Lowpass filter
         try {
             this.effectNodes.lowpass.frequency.linearRampToValueAtTime(
                 Math.max(100, Math.min(20000, params.lowpassFreq)), now + rampTime
             );
         } catch (e) {}
 
-        // Lowshelf gain
         try {
             this.effectNodes.lowshelf.gain.linearRampToValueAtTime(params.lowshelfGain, now + rampTime);
         } catch (e) {}
 
-        // Delay time
         try {
             this.effectNodes.delay.delayTime.linearRampToValueAtTime(params.delayTime, now + rampTime);
         } catch (e) {}
 
-        // Distortion
         if (params.distortionAmount > 0) {
             this.effectNodes.distortion.curve = this.makeDistortionCurve(params.distortionAmount);
         } else {
             this.effectNodes.distortion.curve = null;
         }
 
-        // Compressor
         try {
             this.effectNodes.compressor.threshold.linearRampToValueAtTime(params.compressorThreshold, now + rampTime);
             this.effectNodes.compressor.ratio.linearRampToValueAtTime(params.compressorRatio, now + rampTime);
         } catch (e) {}
 
-        // Panner
         try {
             this.effectNodes.panner.pan.linearRampToValueAtTime(params.pan, now + rampTime);
         } catch (e) {}
-
-        // Playback rate
-        this.targetPlaybackRate = params.playbackRate;
-    }
-
-    triggerEffect(name, data = {}) {
-        switch (name) {
-            case 'wallBounce':
-                this.triggerWallBounceEffect(data);
-                break;
-            case 'coinCollect':
-                this.triggerCoinCollectEffect(data);
-                break;
-            case 'dimensionDoor':
-                this.triggerDimensionDoorEffect();
-                break;
-        }
-    }
-
-    triggerWallBounceEffect(data) {
-        if (!this.isInitialized) return;
-        const now = this.audioContext.currentTime;
-        
-        // Momentary boost to delay for bounce echo
-        const delayLevel = data.wallSpeedLevel || 0;
-        if (delayLevel > 0) {
-            const bounceDelay = 0.1 + (delayLevel * 0.05);
-            this.effectNodes.delay.delayTime.setValueAtTime(bounceDelay, now);
-            this.effectNodes.delay.delayTime.linearRampToValueAtTime(0.001, now + 0.3);
-        }
-    }
-
-    triggerCoinCollectEffect(data) {
-        if (!this.isInitialized) return;
-        // Subtle frequency boost momentarily
-        const now = this.audioContext.currentTime;
-        const originalFreq = this.effectNodes.lowshelf.frequency.value;
-        
-        this.effectNodes.lowshelf.frequency.setValueAtTime(400, now);
-        this.effectNodes.lowshelf.frequency.linearRampToValueAtTime(originalFreq, now + 0.1);
-    }
-
-    triggerDimensionDoorEffect() {
-        if (!this.isInitialized) return;
-        const now = this.audioContext.currentTime;
-        
-        // Flanger swoosh: modulate delay time quickly
-        this.effectNodes.delay.delayTime.setValueAtTime(0.005, now);
-        this.effectNodes.delay.delayTime.linearRampToValueAtTime(0.03, now + 0.05);
-        this.effectNodes.delay.delayTime.linearRampToValueAtTime(0.001, now + 0.2);
     }
 
     setPlaybackRate(rate) {
