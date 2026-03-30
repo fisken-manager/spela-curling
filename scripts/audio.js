@@ -248,7 +248,7 @@ export class AudioController {
         if (!this.effectsSystem || !this.isPlaying) return;
         
         this.activeUpgrades = upgrades;
-        this.effectsSystem.updateFromUpgrades(upgrades, physics);
+        this.effectsSystem.updateEffects(upgrades, physics);
         
         // Update playback rate if changed by effects system
         const newRate = this.effectsSystem.getPlaybackRate();
