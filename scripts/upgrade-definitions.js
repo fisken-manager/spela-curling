@@ -111,9 +111,9 @@ export const UPGRADES = [
         detail: 'sparks flying, forge background, industrial aesthetic, hammer and anvil',
         category: 'corrupted',
         tiers: [
-            { level: 1, cost: 3, effect: '+3% maxfart per studs upp till 200%, -20% aktuell fart', image: 'friction_forge-tier1.jpg' },
-            { level: 2, cost: 10, effect: '+3% maxfart per studs upp till 400%, -25% aktuell fart', image: 'friction_forge-tier2.jpg' },
-            { level: 3, cost: 20, effect: '+3% maxfart per studs upp till 600%, -30% aktuell fart', image: 'friction_forge-tier3.jpg' },
+            { level: 1, cost: 3, effect: '+3% maxfart per studs upp till 300%, -20% aktuell fart', image: 'friction_forge-tier1.jpg' },
+            { level: 2, cost: 10, effect: '+3% maxfart per studs upp till 500%, -25% aktuell fart', image: 'friction_forge-tier2.jpg' },
+            { level: 3, cost: 20, effect: '+3% maxfart per studs upp till 700%, -30% aktuell fart', image: 'friction_forge-tier3.jpg' },
         ]
     },
     {
@@ -209,7 +209,7 @@ export const UPGRADES = [
         detail: 'market stall, multiple vendors, bustling atmosphere, night market',
         category: 'technical',
         tiers: [
-            { level: 1, cost: 10, effect: '2x shop-pickups spawnar', image: 'double_shops-tier1.jpg' },
+            { level: 1, cost: 5, effect: '2x shop-pickups spawnar', image: 'double_shops-tier1.jpg' },
         ]
     },
 
