@@ -1,0 +1,48 @@
+name: Deploy All to GitHub Pages
+
+on:
+  push:
+    branches: [main, test]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          
+      - name: Fetch test branch
+        run: |
+          git fetch origin test:test
+          git worktree add test-folder test
+          
+      - name: Build combined site
+        run: |
+          # Create deploy folder
+          mkdir deploy
+          
+          # Copy main to root
+          cp -r . deploy/ 2>/dev/null || true
+          rm -rf deploy/.git deploy/test-folder deploy/deploy
+          
+          # Copy test to /test
+          mkdir -p deploy/test
+          cp -r test-folder/. deploy/test/
+          rm -rf deploy/test/.git
+          
+      - name: Deploy to gh-pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd deploy
+          git init
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"  
+          git add .
+          git commit -m "Deploy: main + test"
+          git push --force "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git" HEAD:gh-pages

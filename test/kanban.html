@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spela Curling - Kanban</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Work+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Work Sans', sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 100vh;
+      color: #fff;
+      padding: 20px;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .header h1 {
+      font-family: 'Space Mono', monospace;
+      font-size: 2.5rem;
+      background: linear-gradient(90deg, #e94560, #ff6b6b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .board {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .column {
+      background: rgba(255,255,255,0.05);
+      border-radius: 12px;
+      padding: 15px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .column-header {
+      font-family: 'Space Mono', monospace;
+      font-weight: 700;
+      font-size: 1.1rem;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
+    .todo .column-header { background: linear-gradient(135deg, #f39c12, #e67e22); }
+    .progress .column-header { background: linear-gradient(135deg, #3498db, #2980b9); }
+    .done .column-header { background: linear-gradient(135deg, #27ae60, #2ecc71); }
+    
+    .task {
+      background: rgba(255,255,255,0.08);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 10px;
+      border-left: 3px solid;
+    }
+    .todo .task { border-left-color: #e67e22; }
+    .progress .task { border-left-color: #3498db; }
+    .done .task { border-left-color: #27ae60; }
+    
+    .task-title {
+      font-weight: 600;
+      margin-bottom: 5px;
+      color: #fff;
+    }
+    .task-desc {
+      font-size: 0.85rem;
+      color: #b0b0b0;
+      line-height: 1.4;
+    }
+    .empty {
+      color: #666;
+      font-style: italic;
+      text-align: center;
+      padding: 20px;
+    }
+    .back-link {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background: linear-gradient(135deg, #e94560, #ff6b6b);
+      color: #fff;
+      text-decoration: none;
+      border-radius: 25px;
+      font-weight: 600;
+    }
+    @media (max-width: 768px) {
+      .board { grid-template-columns: 1fr; }
+      .header h1 { font-size: 1.8rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🥌 Spela Curling - Kanban</h1>
+    <a href="index.html" class="back-link">⬅ Tillbaka till spelet</a>
+    <a href="https://github.com/fisken-manager/spela-curling/blob/main/KANBAN.md" class="back-link" style="margin-left: 10px;">📋 Redigera</a>
+  </div>
+
+  <div class="board">
+    <!-- TODO Column -->
+    <div class="column todo">
+      <div class="column-header">📋 TODO</div>
+      <div class="empty">(tomt just nu)</div>
+    </div>
+
+    <!-- IN PROGRESS Column -->
+    <div class="column progress">
+      <div class="column-header">🚧 IN PROGRESS</div>
+      <div class="empty">(tomt just nu)</div>
+    </div>
+
+    <!-- DONE Column -->
+    <div class="column done">
+      <div class="column-header">✅ DONE</div>
+      <div class="task">
+        <div class="task-title">GitHub Pages miljöer</div>
+        <div class="task-desc">✅ LIVE: <a href="https://fisken-manager.github.io/spela-curling/" style="color:#2ecc71;">Prod</a> + <a href="https://fisken-manager.github.io/spela-curling/test/" style="color:#e67e22;">Test</a></div>
+      </div>
+      <div class="task">
+        <div class="task-title">Pickup-färger</div>
+        <div class="task-desc">✅ Curl Chaos: Brun (var röd)</div>
+      </div>
+      <div class="task">
+        <div class="task-title">Pickup-färger del 2</div>
+        <div class="task-desc">✅ Sweep: Cyan (var grön), Size Shrink: Grå (var lila)</div>
+      </div>
+      <div class="task">
+        <div class="task-title">Shop-animering</div>
+        <div class="task-desc">✅ Loop-end shoppar använder samma animation som power-up shoppar</div>
+      </div>
+      <div class="task">
+        <div class="task-title">Shop-musik</div>
+        <div class="task-desc">✅ Spelmusik fade-out, shop-musik spelas i alla shoppar</div>
+      </div>
+      <div class="task">
+        <div class="task-title">Kvastens Vila</div>
+        <div class="task-desc">✅ Grace period (0.5s) för att undvika oavsiktlig förverkning</div>
+      </div>
+      <div class="task">
+        <div class="task-title">Grytans Glip</div>
+        <div class="task-desc">✅ Pac-Man style vägg-wrapping, $5, chibi waifu med blått hår</div>
+      </div>
+      <div class="task">
+        <div class="task-title">Sillens Sista Dans</div>
+        <div class="task-desc">✅ 0 liv = +50% fart, 1+ liv = -50% fart, $5</div>
+      </div>
+      <div class="task">
+        <div class="task-title">Test-version: Gratis rerolls</div>
+        <div class="task-desc">✅ På /test/ är rerolls gratis</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
