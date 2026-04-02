@@ -795,6 +795,36 @@ export class GameState {
         }
     }
 
+    triggerWallSpeedRush(level = 1, speedRatio = 1) {
+        if (this.audioController) {
+            this.audioController.triggerWallSpeedRush(level, speedRatio);
+        }
+    }
+
+    triggerSpinToSpeedWarp(level = 1, spinMagnitude = 1) {
+        if (this.audioController) {
+            this.audioController.triggerSpinToSpeedWarp(level, spinMagnitude);
+        }
+    }
+
+    triggerSnapCurlWhip(level = 1, direction = 1) {
+        if (this.audioController) {
+            this.audioController.triggerSnapCurlWhip(level, direction);
+        }
+    }
+
+    triggerWallPingCoinPulse(level = 1) {
+        if (this.audioController) {
+            this.audioController.triggerWallPingCoinPulse(level);
+        }
+    }
+
+    triggerSweepLifeBloom() {
+        if (this.audioController) {
+            this.audioController.triggerSweepLifeBloom();
+        }
+    }
+
     resetAudioEffects() {
         if (this.audioController) {
             this.audioController.resetAudioEffects();

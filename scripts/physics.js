@@ -236,6 +236,7 @@ export class Physics {
                 // Direction changed - apply snap curl bonus
                 const curlBonus = 1 + snapCurlLevel;
                 state.stone.angularVelocity *= curlBonus;
+                state.triggerSnapCurlWhip?.(snapCurlLevel, currentDirection);
             }
             state.last_rotation_direction = currentDirection;
         }
@@ -669,6 +670,7 @@ export class Physics {
                     // Sweep life upgrade - gives extra life instead of sweep
                     const oldMaxVel = this.getMaxVelocity(state);
                     state.lives++;
+                    state.triggerSweepLifeBloom?.();
                     const newMaxVel = this.getMaxVelocity(state);
                     const currentSpeed = Math.sqrt(stone.vx ** 2 + stone.vy ** 2);
                     if (currentSpeed > 0.001 && oldMaxVel > 0) {
@@ -1326,6 +1328,7 @@ export class Physics {
                     state.money += 1;
                     state.wall_bounces_since_coin = 0;
                     this.addPowerUpText(state, stone.x, `+$1`, '255, 215, 0');
+                    state.triggerWallPingCoinPulse?.(wallPingCoinLevel);
                 }
             }
             
@@ -1356,6 +1359,7 @@ export class Physics {
                     const boost = spinMagnitude * conversionRate;
                     stone.vx += (stone.vx / speed) * boost;
                     stone.vy += (stone.vy / speed) * boost;
+                    state.triggerSpinToSpeedWarp?.(spinToSpeedLevel, spinMagnitude);
                     
                     // Clear or reduce spin based on tier
                     if (spinToSpeedLevel < 3) {
@@ -1401,6 +1405,8 @@ export class Physics {
                     stone.vx *= scale;
                     stone.vy *= scale;
                 }
+
+                state.triggerWallSpeedRush?.(wallSpeedLevel, maxVel > 0 ? newSpeed / maxVel : 1);
             }
             
             // Visual effects

@@ -825,4 +825,233 @@ export class AudioController {
             }
         }, chopDuration * 1000 + 50); // +50ms buffer
     }
+
+    triggerWallSpeedRush(level = 1, speedRatio = 1) {
+        if (!this.audioContext || !this.filterNode || !this.sourceNode) return;
+
+        const now = this.audioContext.currentTime;
+        const intensity = Math.min(1.4, Math.max(0.5, (level * 0.35) + (speedRatio * 0.5)));
+        const duration = 0.16 + (intensity * 0.06);
+        const peakFreq = 4500 + (intensity * 2800);
+        const peakDetune = 120 + (level * 45);
+
+        this.filterNode.type = 'highpass';
+        this.filterNode.frequency.cancelScheduledValues(now);
+        this.filterNode.Q.cancelScheduledValues(now);
+        this.sourceNode.detune.cancelScheduledValues(now);
+        if (this.dryGain) this.dryGain.gain.cancelScheduledValues(now);
+
+        this.filterNode.frequency.setValueAtTime(220, now);
+        this.filterNode.frequency.exponentialRampToValueAtTime(peakFreq, now + duration * 0.35);
+        this.filterNode.frequency.exponentialRampToValueAtTime(20000, now + duration);
+
+        this.filterNode.Q.setValueAtTime(1.2, now);
+        this.filterNode.Q.linearRampToValueAtTime(3.2 + level, now + duration * 0.3);
+        this.filterNode.Q.linearRampToValueAtTime(1, now + duration);
+
+        this.sourceNode.detune.setValueAtTime(0, now);
+        this.sourceNode.detune.linearRampToValueAtTime(peakDetune, now + duration * 0.25);
+        this.sourceNode.detune.linearRampToValueAtTime(0, now + duration);
+
+        if (this.dryGain) {
+            this.dryGain.gain.setValueAtTime(1.0, now);
+            this.dryGain.gain.linearRampToValueAtTime(0.82, now + duration * 0.15);
+            this.dryGain.gain.linearRampToValueAtTime(1.0, now + duration);
+        }
+
+        setTimeout(() => {
+            if (this.filterNode && this.audioContext && this.sourceNode) {
+                const resetTime = this.audioContext.currentTime;
+                this.filterNode.type = 'lowpass';
+                this.filterNode.frequency.cancelScheduledValues(resetTime);
+                this.filterNode.Q.cancelScheduledValues(resetTime);
+                this.filterNode.frequency.setValueAtTime(20000, resetTime);
+                this.filterNode.Q.setValueAtTime(1, resetTime);
+                this.sourceNode.detune.cancelScheduledValues(resetTime);
+                this.sourceNode.detune.setValueAtTime(0, resetTime);
+            }
+        }, duration * 1000 + 40);
+    }
+
+    triggerSpinToSpeedWarp(level = 1, spinMagnitude = 1) {
+        if (!this.audioContext || !this.filterNode || !this.sourceNode || !this.dryGain) return;
+
+        const now = this.audioContext.currentTime;
+        const intensity = Math.min(1.5, Math.max(0.4, (level * 0.25) + (spinMagnitude * 0.08)));
+        const wobbleDuration = 0.22 + (intensity * 0.08);
+        const wobbleDepth = 0.03 + (intensity * 0.025);
+
+        this.filterNode.type = 'bandpass';
+        this.filterNode.frequency.cancelScheduledValues(now);
+        this.filterNode.Q.cancelScheduledValues(now);
+        this.sourceNode.playbackRate.cancelScheduledValues(now);
+        this.dryGain.gain.cancelScheduledValues(now);
+
+        this.filterNode.frequency.setValueAtTime(700, now);
+        this.filterNode.frequency.linearRampToValueAtTime(2600 + (intensity * 1200), now + wobbleDuration * 0.3);
+        this.filterNode.frequency.linearRampToValueAtTime(20000, now + wobbleDuration);
+
+        this.filterNode.Q.setValueAtTime(3, now);
+        this.filterNode.Q.linearRampToValueAtTime(8 + (level * 1.2), now + wobbleDuration * 0.25);
+        this.filterNode.Q.linearRampToValueAtTime(1, now + wobbleDuration);
+
+        const baseRate = this.playbackRate;
+        const midTime = now + wobbleDuration * 0.22;
+        const lateTime = now + wobbleDuration * 0.52;
+        this.sourceNode.playbackRate.setValueAtTime(baseRate, now);
+        this.sourceNode.playbackRate.linearRampToValueAtTime(baseRate - wobbleDepth, midTime);
+        this.sourceNode.playbackRate.linearRampToValueAtTime(baseRate + wobbleDepth * 1.4, lateTime);
+        this.sourceNode.playbackRate.linearRampToValueAtTime(baseRate, now + wobbleDuration);
+
+        this.dryGain.gain.setValueAtTime(1.0, now);
+        this.dryGain.gain.linearRampToValueAtTime(0.88, now + wobbleDuration * 0.2);
+        this.dryGain.gain.linearRampToValueAtTime(1.0, now + wobbleDuration);
+
+        setTimeout(() => {
+            if (this.filterNode && this.audioContext && this.sourceNode && this.dryGain) {
+                const resetTime = this.audioContext.currentTime;
+                this.filterNode.type = 'lowpass';
+                this.filterNode.frequency.cancelScheduledValues(resetTime);
+                this.filterNode.Q.cancelScheduledValues(resetTime);
+                this.filterNode.frequency.setValueAtTime(20000, resetTime);
+                this.filterNode.Q.setValueAtTime(1, resetTime);
+                this.sourceNode.playbackRate.cancelScheduledValues(resetTime);
+                this.sourceNode.playbackRate.setValueAtTime(this.playbackRate, resetTime);
+                this.dryGain.gain.cancelScheduledValues(resetTime);
+                this.dryGain.gain.setValueAtTime(1.0, resetTime);
+            }
+        }, wobbleDuration * 1000 + 40);
+    }
+
+    triggerSnapCurlWhip(level = 1, direction = 1) {
+        if (!this.audioContext || !this.filterNode || !this.sourceNode || !this.dryGain) return;
+
+        const now = this.audioContext.currentTime;
+        const duration = 0.14 + (level * 0.03);
+        const detunePeak = direction * (90 + level * 35);
+
+        this.filterNode.type = 'bandpass';
+        this.filterNode.frequency.cancelScheduledValues(now);
+        this.filterNode.Q.cancelScheduledValues(now);
+        this.sourceNode.detune.cancelScheduledValues(now);
+        this.dryGain.gain.cancelScheduledValues(now);
+
+        this.filterNode.frequency.setValueAtTime(1400, now);
+        this.filterNode.frequency.linearRampToValueAtTime(3600 + level * 400, now + duration * 0.3);
+        this.filterNode.frequency.linearRampToValueAtTime(20000, now + duration);
+
+        this.filterNode.Q.setValueAtTime(2, now);
+        this.filterNode.Q.linearRampToValueAtTime(10, now + duration * 0.2);
+        this.filterNode.Q.linearRampToValueAtTime(1, now + duration);
+
+        this.sourceNode.detune.setValueAtTime(-detunePeak * 0.35, now);
+        this.sourceNode.detune.linearRampToValueAtTime(detunePeak, now + duration * 0.22);
+        this.sourceNode.detune.linearRampToValueAtTime(0, now + duration);
+
+        this.dryGain.gain.setValueAtTime(1.0, now);
+        this.dryGain.gain.setValueAtTime(0.65, now + 0.01);
+        this.dryGain.gain.linearRampToValueAtTime(1.0, now + duration);
+
+        setTimeout(() => {
+            if (this.filterNode && this.audioContext && this.sourceNode && this.dryGain) {
+                const resetTime = this.audioContext.currentTime;
+                this.filterNode.type = 'lowpass';
+                this.filterNode.frequency.cancelScheduledValues(resetTime);
+                this.filterNode.Q.cancelScheduledValues(resetTime);
+                this.filterNode.frequency.setValueAtTime(20000, resetTime);
+                this.filterNode.Q.setValueAtTime(1, resetTime);
+                this.sourceNode.detune.cancelScheduledValues(resetTime);
+                this.sourceNode.detune.setValueAtTime(0, resetTime);
+                this.dryGain.gain.cancelScheduledValues(resetTime);
+                this.dryGain.gain.setValueAtTime(1.0, resetTime);
+            }
+        }, duration * 1000 + 40);
+    }
+
+    triggerWallPingCoinPulse(level = 1) {
+        if (!this.audioContext || !this.filterNode || !this.dryGain) return;
+
+        const now = this.audioContext.currentTime;
+        const duration = 0.12 + (level * 0.02);
+        const pulseCount = 2 + level;
+        const pulseStep = duration / pulseCount;
+
+        this.filterNode.type = 'highpass';
+        this.filterNode.frequency.cancelScheduledValues(now);
+        this.filterNode.Q.cancelScheduledValues(now);
+        this.dryGain.gain.cancelScheduledValues(now);
+
+        let t = now;
+        for (let i = 0; i < pulseCount; i++) {
+            this.dryGain.gain.setValueAtTime(0.72, t);
+            t += pulseStep * 0.35;
+            this.dryGain.gain.setValueAtTime(1.0, t);
+            t += pulseStep * 0.65;
+        }
+
+        this.filterNode.frequency.setValueAtTime(500, now);
+        this.filterNode.frequency.exponentialRampToValueAtTime(5200 + (level * 800), now + duration * 0.35);
+        this.filterNode.frequency.exponentialRampToValueAtTime(20000, now + duration);
+
+        this.filterNode.Q.setValueAtTime(1.5, now);
+        this.filterNode.Q.linearRampToValueAtTime(6 + level, now + duration * 0.25);
+        this.filterNode.Q.linearRampToValueAtTime(1, now + duration);
+
+        setTimeout(() => {
+            if (this.dryGain && this.filterNode && this.audioContext) {
+                const resetTime = this.audioContext.currentTime;
+                this.dryGain.gain.cancelScheduledValues(resetTime);
+                this.dryGain.gain.setValueAtTime(1.0, resetTime);
+                this.filterNode.type = 'lowpass';
+                this.filterNode.frequency.cancelScheduledValues(resetTime);
+                this.filterNode.Q.cancelScheduledValues(resetTime);
+                this.filterNode.frequency.setValueAtTime(20000, resetTime);
+                this.filterNode.Q.setValueAtTime(1, resetTime);
+            }
+        }, duration * 1000 + 30);
+    }
+
+    triggerSweepLifeBloom() {
+        if (!this.audioContext || !this.filterNode || !this.dryGain || !this.wetGain) return;
+
+        const now = this.audioContext.currentTime;
+        const duration = 0.55;
+
+        this.filterNode.type = 'lowpass';
+        this.filterNode.frequency.cancelScheduledValues(now);
+        this.filterNode.Q.cancelScheduledValues(now);
+        this.dryGain.gain.cancelScheduledValues(now);
+        this.wetGain.gain.cancelScheduledValues(now);
+
+        this.dryGain.gain.setValueAtTime(1.0, now);
+        this.dryGain.gain.linearRampToValueAtTime(0.62, now + 0.08);
+        this.dryGain.gain.linearRampToValueAtTime(1.0, now + duration);
+
+        this.wetGain.gain.setValueAtTime(0.0, now);
+        this.wetGain.gain.linearRampToValueAtTime(0.28, now + 0.16);
+        this.wetGain.gain.linearRampToValueAtTime(0.0, now + duration);
+
+        this.filterNode.frequency.setValueAtTime(420, now);
+        this.filterNode.frequency.exponentialRampToValueAtTime(6800, now + duration * 0.45);
+        this.filterNode.frequency.exponentialRampToValueAtTime(20000, now + duration);
+
+        this.filterNode.Q.setValueAtTime(2, now);
+        this.filterNode.Q.linearRampToValueAtTime(5, now + duration * 0.2);
+        this.filterNode.Q.linearRampToValueAtTime(1, now + duration);
+
+        setTimeout(() => {
+            if (this.filterNode && this.audioContext && this.dryGain && this.wetGain) {
+                const resetTime = this.audioContext.currentTime;
+                this.filterNode.type = 'lowpass';
+                this.filterNode.frequency.cancelScheduledValues(resetTime);
+                this.filterNode.Q.cancelScheduledValues(resetTime);
+                this.filterNode.frequency.setValueAtTime(20000, resetTime);
+                this.filterNode.Q.setValueAtTime(1, resetTime);
+                this.dryGain.gain.cancelScheduledValues(resetTime);
+                this.dryGain.gain.setValueAtTime(1.0, resetTime);
+                this.wetGain.gain.cancelScheduledValues(resetTime);
+                this.wetGain.gain.setValueAtTime(0.0, resetTime);
+            }
+        }, duration * 1000 + 40);
+    }
 }
