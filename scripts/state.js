@@ -242,6 +242,8 @@ export class GameState {
         this.sizeShrinkConfig = {
             radius: 25
         };
+        this.curlChaosStrength = 0;
+        this.sizeShrinkPenalty = 0;
     }
     
     generateItems(type, baseSeed, pixelSpacing, xRange, minPixelOffset = 0) {
@@ -622,6 +624,15 @@ export class GameState {
     resetForNewThrow() {
         this.frictionBoost = null;
         this.sweepBoost = null;
+        this.tar_launchUsed = false;
+        this.tarBoostActive = false;
+        this.tarBoostTimer = 0;
+        this.items_collected_this_throw = 0;
+        this.wall_bounces_since_coin = 0;
+        this.frozen_broom_boost_active = false;
+        this.frozen_broom_bonus = 0;
+        this.frozen_broom_forfeited = false;
+        this.frozen_broom_gracePeriod = 0;
     }
     
     formatScore(score) {

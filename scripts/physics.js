@@ -104,9 +104,9 @@ export class Physics {
         const legacyLevel = state.upgrades.frictionReduction?.level || 0;
         const reduction = Math.max(frictionLevel, legacyLevel) * 0.05;
         
-        // Size penalty for Vattnad Väg (larger stones = more friction)
+        // Larger stones create more drag.
         const sizeLevel = state.upgrades.size?.level || 0;
-        const sizePenalty = sizeLevel > 0 ? 0 : sizeLevel * 0.02;
+        const sizePenalty = sizeLevel > 0 ? sizeLevel * 0.02 : 0;
         
         let mu0 = this.mu0 * (1 - reduction + sizePenalty) * loopFrictionMultiplier;
         
@@ -114,8 +114,8 @@ export class Physics {
         const needleEyeLevel = state.upgrades.needle_eye?.level || 0;
         if (needleEyeLevel > 0) {
             const currentRadius = this.getEffectiveRadius(state);
-            const baseRadius = 30;
-            const sizeRatio = currentRadius / baseRadius;
+            const normalRadius = this.getBaseRadiusBeforeShrink(state);
+            const sizeRatio = normalRadius > 0 ? currentRadius / normalRadius : 1;
             // Smaller stone = lower fraction of friction
             if (sizeRatio < 1) {
                 const frictionReduction = (1 - sizeRatio) * needleEyeLevel * 0.15;
@@ -153,22 +153,28 @@ export class Physics {
     }
 
     getEffectiveRadius(state) {
+        const baseRadius = this.getBaseRadiusBeforeShrink(state);
+
+        // Size penalty from sizeShrink pickups
+        const sizePenalty = state.sizeShrinkPenalty || 0;
+
+        return Math.max(10, baseRadius - sizePenalty);
+    }
+
+    getBaseRadiusBeforeShrink(state) {
         const baseRadius = 30;
-        
+
         // Basic size upgrade
         const sizeLevel = state.upgrades.size?.level || 0;
         const legacyLevel = state.upgrades.stoneSize?.level || 0;
         const sizeBonus = Math.max(sizeLevel, legacyLevel) * 8;
-        
+
         // Size penalty from speed upgrade (Hastig Leda)
         const speedLevel = state.upgrades.speed?.level || 0;
         const speedSizePenalty = speedLevel * 3; // -3 radius per level = -10% per level
-        
-        // Size penalty from sizeShrink pickups
-        const sizePenalty = state.sizeShrinkPenalty || 0;
-        
+
         const growthMultiplier = state.growthBoost ? state.growthPowerUpConfig.growthMultiplier : 1;
-        return Math.max(10, (baseRadius + sizeBonus - speedSizePenalty - sizePenalty) * growthMultiplier);
+        return Math.max(10, (baseRadius + sizeBonus - speedSizePenalty) * growthMultiplier);
     }
 
     getEffectiveOrbRadius(state, orbType) {
@@ -1326,7 +1332,11 @@ export class Physics {
             // Friction_forge upgrade - permanent speed bonus but current speed penalty
             if (frictionForgeLevel > 0) {
                 const permBonus = frictionForgeLevel * 0.03;
-                state.permanentSpeedBonus = (state.permanentSpeedBonus || 0) + permBonus;
+                const maxPermanentBonus = frictionForgeLevel === 1 ? 3 : (frictionForgeLevel === 2 ? 5 : 7);
+                state.permanentSpeedBonus = Math.min(
+                    maxPermanentBonus,
+                    (state.permanentSpeedBonus || 0) + permBonus
+                );
                 
                 const currentPenalty = 0.2 + frictionForgeLevel * 0.05;
                 const speed = Math.sqrt(stone.vx ** 2 + stone.vy ** 2);
@@ -1608,12 +1618,7 @@ export class Physics {
         state.input.stoneStartX = state.stone.x;
         state.input.stoneStartYPx = state.stoneYPx;
         state.input.flickHistory = [];
-        
-        // Reset throw-specific upgrades
-        state.tar_launchUsed = false;
-        state.tarBoostActive = false;
-        state.tarBoostTimer = 0;
-        state.items_collected_this_throw = 0;
+        state.resetForNewThrow();
         
         // Friction_forge permanent bonus carries across throws but resets on gameover
         // (permanentSpeedBonus resets in state.resetGame())
